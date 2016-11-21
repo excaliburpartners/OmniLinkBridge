@@ -1,4 +1,5 @@
-﻿using System.Runtime.Serialization;
+﻿using HAI_Shared;
+using System.Runtime.Serialization;
 
 namespace HAILogger
 {
@@ -9,9 +10,15 @@ namespace HAILogger
         public ushort id { get; set; }
 
         [DataMember]
+        public enuZoneType zonetype { get; set; }
+
+        [DataMember]
         public string name { get; set; }
 
         [DataMember]
         public string status { get; set; }
+
+        [DataMember]
+        public string temp { get; set; }
     }
 }

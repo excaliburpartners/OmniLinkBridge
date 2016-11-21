@@ -119,35 +119,57 @@ namespace HAILogger
             return names;
         }
 
+        public List<NameContract> ListZonesTemp()
+        {
+            Event.WriteVerbose("WebService", "ListZonesTemp");
+
+            List<NameContract> names = new List<NameContract>();
+            for (ushort i = 1; i < WebService.HAC.Zones.Count; i++)
+            {
+                clsZone zone = WebService.HAC.Zones[i];
+
+                if (zone.IsTemperatureZone() && zone.DefaultProperties == false)
+                    names.Add(new NameContract() { id = i, name = zone.Name });
+            }
+            return names;
+        }
+
         public ZoneContract GetZone(ushort id)
         {
             Event.WriteVerbose("WebService", "GetZone: " + id);
 
             WebOperationContext ctx = WebOperationContext.Current;
 
-            switch (WebService.HAC.Zones[id].ZoneType)
+            if (WebService.HAC.Zones[id].IsTemperatureZone())
             {
-                case enuZoneType.EntryExit:
-                case enuZoneType.X2EntryDelay:
-                case enuZoneType.X4EntryDelay:
-                case enuZoneType.Perimeter:
-                    ctx.OutgoingResponse.Headers.Add("type", "contact");
-                    break;
-                case enuZoneType.AwayInt:
-                    ctx.OutgoingResponse.Headers.Add("type", "motion");
-                    break;
-                case enuZoneType.Water:
-                    ctx.OutgoingResponse.Headers.Add("type", "water");
-                    break;
-                case enuZoneType.Fire:
-                    ctx.OutgoingResponse.Headers.Add("type", "smoke");
-                    break;
-                case enuZoneType.Gas:
-                    ctx.OutgoingResponse.Headers.Add("type", "co");
-                    break;
-                default:
-                    ctx.OutgoingResponse.Headers.Add("type", "unknown");
-                    break;
+                ctx.OutgoingResponse.Headers.Add("type", "temp");
+            }
+            else
+            {
+                switch (WebService.HAC.Zones[id].ZoneType)
+                {
+                    case enuZoneType.EntryExit:
+                    case enuZoneType.X2EntryDelay:
+                    case enuZoneType.X4EntryDelay:
+                    case enuZoneType.Perimeter:
+                        ctx.OutgoingResponse.Headers.Add("type", "contact");
+                        break;
+                    case enuZoneType.AwayInt:
+                        ctx.OutgoingResponse.Headers.Add("type", "motion");
+                        break;
+                    case enuZoneType.Water:
+                        ctx.OutgoingResponse.Headers.Add("type", "water");
+                        break;
+                    case enuZoneType.Fire:
+                        ctx.OutgoingResponse.Headers.Add("type", "smoke");
+                        break;
+                    case enuZoneType.Gas:
+                        ctx.OutgoingResponse.Headers.Add("type", "co");
+                        break;
+                    default:
+                        ctx.OutgoingResponse.Headers.Add("type", "unknown");
+                        break;
+                }
             }
 
             clsZone unit = WebService.HAC.Zones[id];
@@ -249,6 +271,12 @@ namespace HAILogger
         {
             Event.WriteVerbose("WebService", "SetThermostatFanMode: " + unit.id + " to " + unit.value);
             WebService.HAC.SendCommand(enuUnitCommand.Fan, BitConverter.GetBytes(unit.value)[0], unit.id);
+        }
+
+        public void SetThermostatHold(CommandContract unit)
+        {
+            Event.WriteVerbose("WebService", "SetThermostatHold: " + unit.id + " to " + unit.value);
+            WebService.HAC.SendCommand(enuUnitCommand.Hold, BitConverter.GetBytes(unit.value)[0], unit.id);
         }
 
         public List<NameContract> ListButtons()

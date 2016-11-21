@@ -29,5 +29,11 @@ namespace HAILogger
 
         [DataMember]
         public enuThermostatFanMode fanmode { get; set; }
+
+        [DataMember]
+        public enuThermostatHoldMode hold { get; set; }
+
+        [DataMember]
+        public string status { get; set; }
     }
 }

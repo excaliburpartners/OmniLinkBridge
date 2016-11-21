@@ -21,9 +21,7 @@ namespace HAILogger
 
             string mode = area.ModeText();
 
-            if (mode.Contains("OFF"))
-                ret.mode = "OFF";
-            else if (mode.Contains("DAY"))
+            if (mode.Contains("DAY"))
                 ret.mode = "DAY";
             else if (mode.Contains("NIGHT"))
                 ret.mode = "NIGHT";
@@ -31,6 +29,8 @@ namespace HAILogger
                 ret.mode = "AWAY";
             else if (mode.Contains("VACATION"))
                 ret.mode = "VACATION";
+            else
+                ret.mode = "OFF";
 
             return ret;
         }
@@ -40,8 +40,10 @@ namespace HAILogger
             ZoneContract ret = new ZoneContract();
 
             ret.id = id;
+            ret.zonetype = zone.ZoneType;
             ret.name = zone.Name;
             ret.status = zone.StatusText();
+            ret.temp = zone.TempText();
 
             return ret;
         }
@@ -82,7 +84,17 @@ namespace HAILogger
             ret.heatsetpoint = heat;
             ret.coolsetpoint = cool;
             ret.mode = unit.Mode;
-            ret.fanmode = unit.FanMode;        
+            ret.fanmode = unit.FanMode;
+            ret.hold = unit.HoldStatus;
+
+            string status = unit.HorC_StatusText();
+
+            if (status.Contains("COOLING"))
+                ret.status = "COOLING";
+            else if (status.Contains("HEATING"))
+                ret.status = "HEATING";
+            else
+                ret.status = "OFF";
 
             return ret;
         }

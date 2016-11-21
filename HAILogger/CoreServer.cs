@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.Odbc;
 using System.IO;
+using System.Reflection;
 using System.Text;
 using System.Threading;
 
@@ -47,11 +48,12 @@ namespace HAILogger
             Global.event_source = "HAI Logger";
 
             if (string.IsNullOrEmpty(Global.dir_config))
-                Global.dir_config = Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location);
+                Global.dir_config = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
 
             Settings.LoadSettings();
 
-            Event.WriteInfo("CoreServer", "Starting up server");
+            Event.WriteInfo("CoreServer", "Starting up server " +
+                Assembly.GetExecutingAssembly().GetName().Version.ToString());
 
             tstat_timer.Elapsed += tstat_timer_Elapsed;
             tstat_timer.AutoReset = false;
@@ -74,7 +76,7 @@ namespace HAILogger
 
             WebService web = new WebService(HAC);
 
-            if (Global.webapi_enabled)  
+            if (Global.webapi_enabled)
                 web.Start();
 
             Connect();
@@ -157,7 +159,7 @@ namespace HAILogger
             Disconnect();
             HAC = null;
 
-            if(Global.mysql_logging)
+            if (Global.mysql_logging)
                 DBClose();
 
             terminate = true;
@@ -270,7 +272,7 @@ namespace HAILogger
                     Event.WriteInfo("CoreServer", "CONNECTION STATUS: Disconnected");
                     break;
                 case enuOmniLinkCommStatus.InterruptedFunctionCall:
-                    if(!quitting)
+                    if (!quitting)
                         Event.WriteError("CoreServer", "CONNECTION STATUS: Interrupted Function Call");
                     break;
                 case enuOmniLinkCommStatus.PermissionDenied:
@@ -478,7 +480,7 @@ namespace HAILogger
                 switch ((enuOmniLink2MessageType)B[2])
                 {
                     case enuOmniLink2MessageType.EOD:
-                        
+
                         break;
                     case enuOmniLink2MessageType.Properties:
 
@@ -488,9 +490,13 @@ namespace HAILogger
                         {
                             case enuObjectType.Area:
                                 HAC.Areas.CopyProperties(MSG);
-                                break;                            
+                                break;
                             case enuObjectType.Zone:
                                 HAC.Zones.CopyProperties(MSG);
+
+                                if (HAC.Zones[MSG.ObjectNumber].IsTemperatureZone())
+                                    HAC.Connection.Send(new clsOL2MsgRequestExtendedStatus(HAC.Connection, enuObjectType.Auxillary, MSG.ObjectNumber, MSG.ObjectNumber), HandleRequestAuxillaryStatus);
+
                                 break;
                             case enuObjectType.Thermostat:
                                 HAC.Thermostats.CopyProperties(MSG);
@@ -606,7 +612,7 @@ namespace HAILogger
                         break;
                 }
 
-                if(Global.verbose_unhandled && !handled)
+                if (Global.verbose_unhandled && !handled)
                     Event.WriteVerbose("CoreServer", "Unhandled notification: " + ((enuOmniLink2MessageType)B[2]).ToString());
             }
 
@@ -625,7 +631,7 @@ namespace HAILogger
             {
                 type = enuEventType.USER_MACRO_BUTTON;
                 value = ((int)MSG.SystemEvent).ToString() + " " + HAC.Buttons[MSG.SystemEvent].Name;
-                
+
                 LogEventStatus(type, value, alert);
             }
             else if (MSG.SystemEvent >= 768 && MSG.SystemEvent <= 771)
@@ -753,6 +759,19 @@ namespace HAILogger
                             MSG.ObjectNumber(i), HAC.Areas[MSG.ObjectNumber(i)])));
                     }
                     break;
+                case enuObjectType.Auxillary:
+                    for (byte i = 0; i < MSG.AuxStatusCount(); i++)
+                    {
+                        HAC.Zones[MSG.ObjectNumber(i)].CopyAuxExtendedStatus(MSG, i);
+                        LogZoneStatus(MSG.ObjectNumber(i));
+
+                        if (HAC.Zones[MSG.ObjectNumber(i)].IsTemperatureZone())
+                        {
+                            WebNotification.Send("temp", Helper.Serialize<ZoneContract>(Helper.ConvertZone(
+                                MSG.ObjectNumber(i), HAC.Zones[MSG.ObjectNumber(i)])));
+                        }
+                    }
+                    break;
                 case enuObjectType.Zone:
                     for (byte i = 0; i < MSG.ZoneStatusCount(); i++)
                     {
@@ -837,6 +856,19 @@ namespace HAILogger
         }
         #endregion
 
+        private void HandleRequestAuxillaryStatus(clsOmniLinkMessageQueueItem M, byte[] B, bool Timeout)
+        {
+            if (Timeout)
+                return;
+
+            clsOL2MsgExtendedStatus MSG = new clsOL2MsgExtendedStatus(HAC.Connection, B);
+
+            for (byte i = 0; i < MSG.AuxStatusCount(); i++)
+            {
+                HAC.Zones[MSG.ObjectNumber(i)].CopyAuxExtendedStatus(MSG, i);
+            }
+        }
+
         #region Thermostats
         static double ThermostatTimerInterval()
         {
@@ -860,12 +892,12 @@ namespace HAILogger
                     {
                         HAC.Connection.Send(new clsOL2MsgRequestExtendedStatus(HAC.Connection, enuObjectType.Thermostat, tstat.Key, tstat.Key), HandleRequestThermostatStatus);
 
-                        if(Global.verbose_thermostat_timer)
+                        if (Global.verbose_thermostat_timer)
                             Event.WriteVerbose("ThermostatTimer", "Polling status for " + HAC.Thermostats[tstat.Key].Name);
                     }
 
                     // Log every minute if update within 5 minutes and connected
-                    if (RoundToMinute(tstat.Value).AddMinutes(5) > RoundToMinute(DateTime.Now) && 
+                    if (RoundToMinute(tstat.Value).AddMinutes(5) > RoundToMinute(DateTime.Now) &&
                         (HAC.Connection.ConnectionState == enuOmniLinkConnectionState.Online ||
                         HAC.Connection.ConnectionState == enuOmniLinkConnectionState.OnlineSecure))
                     {
@@ -918,7 +950,7 @@ namespace HAILogger
         private void tsync_timer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
         {
             if (tsync_check.AddMinutes(Global.hai_time_interval) < DateTime.Now)
-                HAC.Connection.Send(new clsOL2MsgRequestSystemStatus(HAC.Connection), HandleRequestSystemStatus);      
+                HAC.Connection.Send(new clsOL2MsgRequestSystemStatus(HAC.Connection), HandleRequestSystemStatus);
 
             tsync_timer.Interval = TimeTimerInterval();
             tsync_timer.Start();
@@ -951,7 +983,7 @@ namespace HAILogger
                     (byte)now.Hour, (byte)now.Minute, (byte)(now.IsDaylightSavingTime() ? 1 : 0)), HandleSetTime);
 
                 return;
-            }    
+            }
 
             double adj = (DateTime.Now - time).Duration().TotalSeconds;
 
@@ -960,7 +992,7 @@ namespace HAILogger
                 Event.WriteWarn("TimeSyncTimer", "Controller time " + time.ToString("MM/dd/yyyy HH:mm:ss") + " out of sync by " + adj + " seconds", true);
 
                 DateTime now = DateTime.Now;
-                HAC.Connection.Send(new clsOL2MsgSetTime(HAC.Connection, (byte)(now.Year % 100), (byte)now.Month, (byte)now.Day, (byte)now.DayOfWeek, 
+                HAC.Connection.Send(new clsOL2MsgSetTime(HAC.Connection, (byte)(now.Year % 100), (byte)now.Month, (byte)now.Day, (byte)now.DayOfWeek,
                     (byte)now.Hour, (byte)now.Minute, (byte)(now.IsDaylightSavingTime() ? 1 : 0)), HandleSetTime);
             }
         }
@@ -1001,10 +1033,10 @@ namespace HAILogger
                 Event.WriteAlarm("AreaStatus", "FIRE " + unit.Name + " " + unit.AreaFireAlarmText);
                 Prowl.Notify("ALARM", "FIRE " + unit.Name + " " + unit.AreaFireAlarmText, ProwlPriority.Emergency);
 
-                if(!alarms.Contains("FIRE" + id))
+                if (!alarms.Contains("FIRE" + id))
                     alarms.Add("FIRE" + id);
             }
-            else if(alarms.Contains("FIRE" + id))
+            else if (alarms.Contains("FIRE" + id))
             {
                 Event.WriteAlarm("AreaStatus", "CLEARED - FIRE " + unit.Name + " " + unit.AreaFireAlarmText);
                 Prowl.Notify("ALARM CLEARED", "FIRE " + unit.Name + " " + unit.AreaFireAlarmText, ProwlPriority.High);
@@ -1076,10 +1108,10 @@ namespace HAILogger
                     unit.AreaFireAlarmText + "','" + unit.AreaBurglaryAlarmText + "','" + unit.AreaAuxAlarmText + "','" +
                     unit.AreaDuressAlarmText + "','" + status + "')");
 
-            if(Global.verbose_area)
+            if (Global.verbose_area)
                 Event.WriteVerbose("AreaStatus", id + " " + unit.Name + ", Status: " + status);
 
-            if(unit.LastMode != unit.AreaMode)
+            if (unit.LastMode != unit.AreaMode)
                 Prowl.Notify("Security", unit.Name + " " + unit.ModeText());
         }
 
@@ -1090,9 +1122,14 @@ namespace HAILogger
             DBQueue(@"
                 INSERT INTO log_zones (timestamp, id, name, status)
                 VALUES ('" + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + "','" + id.ToString() + "','" + unit.Name + "','" + unit.StatusText() + "')");
-            
-            if(Global.verbose_zone)
-                Event.WriteVerbose("ZoneStatus", id + " " + unit.Name + ", Status: " + unit.StatusText());
+
+            if (Global.verbose_zone)
+            {
+                if (unit.IsTemperatureZone())
+                    Event.WriteVerbose("ZoneStatus", id + " " + unit.Name + ", Temp: " + unit.TempText());
+                else
+                    Event.WriteVerbose("ZoneStatus", id + " " + unit.Name + ", Status: " + unit.StatusText());
+            }
         }
 
         private void LogThermostatStatus(ushort id)
@@ -1118,13 +1155,13 @@ namespace HAILogger
                     humidity + "','" + humidify + "','" + dehumidify + "','" +
                     unit.ModeText() + "','" + unit.FanModeText() + "','" + unit.HoldStatusText() + "')");
 
-            if(Global.verbose_thermostat)
+            if (Global.verbose_thermostat)
                 Event.WriteVerbose("ThermostatStatus", id + " " + unit.Name +
-                    ", Status: " + unit.TempText() + " " + unit.HorC_StatusText() + 
+                    ", Status: " + unit.TempText() + " " + unit.HorC_StatusText() +
                     ", Heat: " + unit.HeatSetpointText() +
-                    ", Cool: " + unit.CoolSetpointText() + 
-                    ", Mode: " + unit.ModeText() + 
-                    ", Fan: " + unit.FanModeText() + 
+                    ", Cool: " + unit.CoolSetpointText() +
+                    ", Mode: " + unit.ModeText() +
+                    ", Fan: " + unit.FanModeText() +
                     ", Hold: " + unit.HoldStatusText());
         }
 
@@ -1145,8 +1182,8 @@ namespace HAILogger
                 VALUES ('" + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + "','" + id.ToString() + "','" + unit.Name + "','" +
                     status + "','" + unit.Status + "','" + unit.StatusTime + "')");
 
-            if(Global.verbose_unit)
-                Event.WriteVerbose("UnitStatus", id + " " + unit.Name + ", Status: " +  status);
+            if (Global.verbose_unit)
+                Event.WriteVerbose("UnitStatus", id + " " + unit.Name + ", Status: " + status);
         }
 
         private void LogMessageStatus(ushort id)
@@ -1157,10 +1194,10 @@ namespace HAILogger
                 INSERT INTO log_messages (timestamp, id, name, status)
                 VALUES ('" + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + "','" + id.ToString() + "','" + unit.Name + "','" + unit.StatusText() + "')");
 
-            if(Global.verbose_message)
+            if (Global.verbose_message)
                 Event.WriteVerbose("MessageStatus", unit.Name + ", " + unit.StatusText());
 
-            if(Global.prowl_messages)
+            if (Global.prowl_messages)
                 Prowl.Notify("Message", id + " " + unit.Name + ", " + unit.StatusText());
         }
 
@@ -1188,7 +1225,7 @@ namespace HAILogger
 
         public void DBClose()
         {
-            if(mysql_conn.State != ConnectionState.Closed)
+            if (mysql_conn.State != ConnectionState.Closed)
                 mysql_conn.Close();
         }
 
@@ -1197,7 +1234,7 @@ namespace HAILogger
             if (!Global.mysql_logging)
                 return;
 
-            lock(mysql_lock)
+            lock (mysql_lock)
                 mysql_queue.Enqueue(query);
         }
 

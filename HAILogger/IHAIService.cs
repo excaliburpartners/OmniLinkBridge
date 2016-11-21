@@ -41,6 +41,10 @@ namespace HAILogger
 
         [OperationContract]
         [WebGet(ResponseFormat = WebMessageFormat.Json)]
+        List<NameContract> ListZonesTemp();
+
+        [OperationContract]
+        [WebGet(ResponseFormat = WebMessageFormat.Json)]
         ZoneContract GetZone(ushort id);
 
         [OperationContract]
@@ -82,6 +86,10 @@ namespace HAILogger
         [OperationContract]
         [WebInvoke(Method = "POST", RequestFormat = WebMessageFormat.Json, ResponseFormat = WebMessageFormat.Json)]
         void SetThermostatFanMode(CommandContract unit);
+
+        [OperationContract]
+        [WebInvoke(Method = "POST", RequestFormat = WebMessageFormat.Json, ResponseFormat = WebMessageFormat.Json)]
+        void SetThermostatHold(CommandContract unit);
 
         [OperationContract]
         [WebGet(ResponseFormat = WebMessageFormat.Json)]
