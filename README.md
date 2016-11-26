@@ -2,7 +2,7 @@
 Provides logging and web service API for HAI/Leviton OmniPro II controllers
 
 ##Download
-You can download the [binary here](http://www.excalibur-partners.com/downloads/HAILogger_1_0_6.zip)
+You can download the [binary here](http://www.excalibur-partners.com/downloads/HAILogger_1_0_7.zip)
 
 ##Requirements
 - .NET Framework 4.0
@@ -58,6 +58,10 @@ To test the API you can use your browser to view a page or PowerShell (see below
 - Invoke-WebRequest  -Uri "http://localhost:8000/SetUnit" -Method POST -ContentType "application/json" -Body (convertto-json -InputObject @{"id"=1;"value"=100}) -UseBasicParsing
 
 ##Change Log
+Version 1.0.7 - 2016-11-25
+- Use previous area state when area is arming for web service API
+- Add interactive command line option and use path separator for Mono compatibility
+
 Version 1.0.6 - 2016-11-20
 - Added thermostat status and auxiliary temp to web service API
 

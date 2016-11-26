@@ -10,7 +10,7 @@ namespace HAILogger
     {
         public static void LoadSettings()
         {
-            NameValueCollection settings = LoadCollection(Global.dir_config + "\\HAILogger.ini");
+            NameValueCollection settings = LoadCollection(Global.dir_config + Path.DirectorySeparatorChar + "HAILogger.ini");
 
             // HAI Controller
             Global.hai_address = settings["hai_address"];

@@ -8,6 +8,8 @@ namespace HAILogger
 {
     static class Helper
     {
+        private static string lastmode = "OFF";
+
         public static AreaContract ConvertArea(ushort id, clsArea area)
         {
             AreaContract ret = new AreaContract();
@@ -19,18 +21,15 @@ namespace HAILogger
             ret.fire = area.AreaFireAlarmText;
             ret.water = area.AreaWaterAlarmText;
 
-            string mode = area.ModeText();
-
-            if (mode.Contains("DAY"))
-                ret.mode = "DAY";
-            else if (mode.Contains("NIGHT"))
-                ret.mode = "NIGHT";
-            else if (mode.Contains("AWAY"))
-                ret.mode = "AWAY";
-            else if (mode.Contains("VACATION"))
-                ret.mode = "VACATION";
+            if (area.ExitTimer > 0)
+            {
+                ret.mode = lastmode;
+            }
             else
-                ret.mode = "OFF";
+            {
+                ret.mode = area.ModeText();
+                lastmode = ret.mode;
+            }
 
             return ret;
         }

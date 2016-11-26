@@ -10,17 +10,27 @@ namespace HAILogger
 
         static void Main(string[] args)
         {
+            bool interactive = false;
+
             for (int i = 0; i < args.Length; i++)
             {
                 switch (args[i])
                 {
+                    case "/?":
+                    case "-h":
+                    case "-help":
+                        ShowHelp();
+                        return;
                     case "-c":
                         Global.dir_config = args[++i];
+                        break;
+                    case "-i":
+                        interactive = true;
                         break;
                 }
             }
 
-            if (Environment.UserInteractive)
+            if (Environment.UserInteractive || interactive)
             {
                 Console.TreatControlCAsInput = false;
                 Console.CancelKeyPress += new ConsoleCancelEventHandler(myHandler);
@@ -49,6 +59,14 @@ namespace HAILogger
         {
             server.Shutdown();
             args.Cancel = true;
+        }
+
+        static void ShowHelp()
+        {
+            Console.WriteLine(
+                AppDomain.CurrentDomain.FriendlyName + " [-c config_file] [-i]\n" +
+                "\t-c Specifies the name of the config file. Default is HAILogger.ini.\n" +
+                "\t-i Run in interactive mode.");
         }
     }
 }
