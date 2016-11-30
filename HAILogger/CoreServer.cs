@@ -3,7 +3,6 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Odbc;
-using System.IO;
 using System.Reflection;
 using System.Text;
 using System.Threading;
@@ -44,14 +43,6 @@ namespace HAILogger
 
         private void Server()
         {
-            Global.event_log = "EventLog.txt";
-            Global.event_source = "HAI Logger";
-
-            if (string.IsNullOrEmpty(Global.dir_config))
-                Global.dir_config = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
-
-            Settings.LoadSettings();
-
             Event.WriteInfo("CoreServer", "Starting up server " +
                 Assembly.GetExecutingAssembly().GetName().Version.ToString());
 
@@ -784,10 +775,13 @@ namespace HAILogger
                             case enuZoneType.X2EntryDelay:
                             case enuZoneType.X4EntryDelay:
                             case enuZoneType.Perimeter:
+                            case enuZoneType.Tamper:
+                            case enuZoneType.Auxiliary:
                                 WebNotification.Send("contact", Helper.Serialize<ZoneContract>(Helper.ConvertZone(
                                     MSG.ObjectNumber(i), HAC.Zones[MSG.ObjectNumber(i)])));
                                 break;
                             case enuZoneType.AwayInt:
+                            case enuZoneType.NightInt:
                                 WebNotification.Send("motion", Helper.Serialize<ZoneContract>(Helper.ConvertZone(
                                     MSG.ObjectNumber(i), HAC.Zones[MSG.ObjectNumber(i)])));
                                 break;

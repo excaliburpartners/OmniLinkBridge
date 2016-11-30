@@ -10,7 +10,7 @@ namespace HAILogger
     {
         public static void LoadSettings()
         {
-            NameValueCollection settings = LoadCollection(Global.dir_config + Path.DirectorySeparatorChar + "HAILogger.ini");
+            NameValueCollection settings = LoadCollection(Global.config_file);
 
             // HAI Controller
             Global.hai_address = settings["hai_address"];
@@ -62,10 +62,8 @@ namespace HAILogger
             catch
             {
                 Event.WriteError("Settings", "Invalid integer specified for " + section);
-                Environment.Exit(1);
+                throw;
             }
-
-            throw new Exception("ValidateInt shouldn't reach here");
         }
 
         private static int ValidatePort(NameValueCollection settings, string section)
@@ -82,10 +80,8 @@ namespace HAILogger
             catch
             {
                 Event.WriteError("Settings", "Invalid port specified for " + section);
-                Environment.Exit(1);
+                throw;
             }
-
-            throw new Exception("ValidatePort shouldn't reach here");
         }
 
         private static bool ValidateBool(NameValueCollection settings, string section)
@@ -97,10 +93,8 @@ namespace HAILogger
             catch
             {
                 Event.WriteError("Settings", "Invalid bool specified for " + section);
-                Environment.Exit(1);
+                throw;
             }
-
-            throw new Exception("ValidateBool shouldn't reach here");
         }
 
         private static IPAddress ValidateIP(NameValueCollection settings, string section)
@@ -118,10 +112,8 @@ namespace HAILogger
             catch
             {
                 Event.WriteError("Settings", "Invalid IP specified for " + section);
-                Environment.Exit(1);
+                throw;
             }
-
-            throw new Exception("ValidateIP shouldn't reach here");
         }
 
         private static string ValidateDirectory(NameValueCollection settings, string section)
@@ -136,10 +128,8 @@ namespace HAILogger
             catch
             {
                 Event.WriteError("Settings", "Invalid directory specified for " + section);
-                Environment.Exit(1);
+                throw;
             }
-
-            throw new Exception("ValidateDirectory shouldn't reach here");
         }
 
         private static MailAddress ValidateMailFrom(NameValueCollection settings, string section)
@@ -151,10 +141,8 @@ namespace HAILogger
             catch
             {
                 Event.WriteError("Settings", "Invalid email specified for " + section);
-                Environment.Exit(1);
+                throw;
             }
-
-            throw new Exception("ValidateMailFrom shouldn't reach here");
         }
 
         private static MailAddress[] ValidateMailTo(NameValueCollection settings, string section)
@@ -175,10 +163,8 @@ namespace HAILogger
             catch
             {
                 Event.WriteError("Settings", "Invalid email specified for " + section);
-                Environment.Exit(1);
+                throw;
             }
-
-            throw new Exception("ValidateMailTo shouldn't reach here");
         }
 
         private static string[] ValidateMultipleStrings(NameValueCollection settings, string section)
@@ -193,10 +179,8 @@ namespace HAILogger
             catch
             {
                 Event.WriteError("Settings", "Invalid string specified for " + section);
-                Environment.Exit(1);
+                throw;
             }
-
-            throw new Exception("ValidateMultipleStrings shouldn't reach here");
         }
 
         private static bool ValidateYesNo (NameValueCollection settings, string section)
@@ -210,10 +194,8 @@ namespace HAILogger
             else
             {
                 Event.WriteError("Settings", "Invalid yes/no specified for " + section);
-                Environment.Exit(1);
+                throw new Exception();
             }
-
-            throw new Exception("ValidateYesNo shouldn't reach here");
         }
 
         private static NameValueCollection LoadCollection(string sFile)
@@ -235,13 +217,15 @@ namespace HAILogger
                     if (line.StartsWith("#"))
                         continue;
 
-                    string[] split = line.Split('=');
+                    int pos = line.IndexOf('=', 0);
 
-                    for (int i = 0; i < split.Length; i++)
-                        split[i] = split[i].Trim();
+                    if (pos == -1)
+                        continue;
 
-                    if (split.Length == 2)
-                        settings.Add(split[0], split[1]);
+                    string key = line.Substring(0, pos).Trim();
+                    string value = line.Substring(pos + 1).Trim();
+
+                    settings.Add(key, value);
                 }
 
                 sr.Close();
@@ -250,7 +234,7 @@ namespace HAILogger
             catch (FileNotFoundException)
             {
                 Event.WriteError("Settings", "Unable to parse settings file " + sFile);
-                Environment.Exit(1);
+                throw;
             }
 
             return settings;

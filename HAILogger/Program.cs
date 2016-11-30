@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
+using System.IO;
+using System.Reflection;
 using System.ServiceProcess;
 
 namespace HAILogger
@@ -22,12 +24,35 @@ namespace HAILogger
                         ShowHelp();
                         return;
                     case "-c":
-                        Global.dir_config = args[++i];
+                        Global.config_file = args[++i];
+                        break;
+                    case "-l":
+                        Global.config_file = args[++i];
                         break;
                     case "-i":
                         interactive = true;
                         break;
                 }
+            }
+
+            if (string.IsNullOrEmpty(Global.log_file))
+                Global.log_file = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location) +
+                    Path.DirectorySeparatorChar + "EventLog.txt";
+
+            if (string.IsNullOrEmpty(Global.config_file))
+                Global.config_file = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location) +
+                    Path.DirectorySeparatorChar + "HAILogger.ini";
+
+            Global.event_source = "HAI Logger";
+
+            try
+            {
+                Settings.LoadSettings();
+            }
+            catch
+            {
+                // Errors are logged in LoadSettings();
+                Environment.Exit(1);
             }
 
             if (Environment.UserInteractive || interactive)
@@ -64,9 +89,10 @@ namespace HAILogger
         static void ShowHelp()
         {
             Console.WriteLine(
-                AppDomain.CurrentDomain.FriendlyName + " [-c config_file] [-i]\n" +
-                "\t-c Specifies the name of the config file. Default is HAILogger.ini.\n" +
-                "\t-i Run in interactive mode.");
+                AppDomain.CurrentDomain.FriendlyName + " [-c config_file] [-l log_file] [-i]\n" +
+                "\t-c Specifies the name of the config file. Default is HAILogger.ini\n" +
+                "\t-l Specifies the name of the log file. Default is EventLog.txt\n" +
+                "\t-i Run in interactive mode");
         }
     }
 }

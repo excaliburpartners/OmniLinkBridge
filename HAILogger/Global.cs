@@ -4,12 +4,12 @@ namespace HAILogger
 {
     public abstract class Global
     {
-        // Events Preset
-        public static string event_log;
+        // Events
         public static string event_source;
 
-        // Directories
-        public static string dir_config;
+        // Files
+        public static string config_file;
+        public static string log_file;
 
         // HAI Controller
         public static string hai_address;

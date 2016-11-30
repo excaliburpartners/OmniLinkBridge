@@ -2,7 +2,7 @@
 Provides logging and web service API for HAI/Leviton OmniPro II controllers
 
 ##Download
-You can download the [binary here](http://www.excalibur-partners.com/downloads/HAILogger_1_0_7.zip)
+You can download the [binary here](http://www.excalibur-partners.com/downloads/HAILogger_1_0_8.zip)
 
 ##Requirements
 - .NET Framework 4.0
@@ -20,12 +20,25 @@ You can download the [binary here](http://www.excalibur-partners.com/downloads/H
 - Emails are sent to mail_alarm_to when an area status changes
 - Prowl notifications are sent when an areas status changes
 
-##Installation
-1. Copy files to your desiered location like C:\HAILogger
-2. Create mySQL database and import HAILogger.sql
-3. Update HAILogger.ini with settings
-4. Run HAILogger.exe and verify everything is working
-5. For Windows Service run install.bat / uninstall.bat
+##Installation Windows
+1. Copy files to your desired location like C:\HAILogger
+2. Edit HAILogger.ini and define at a minimum the controller IP and encryptions keys
+3. Run HAILogger.exe to verify connectivity
+4. For Windows Service run install.bat / uninstall.bat
+5. Start service from Administrative Tools -> Services
+
+##Installation Linux
+1. Copy files to your desired location like /opt/HAILogger
+2. Configure at a minimum the controller IP and encryptions keys
+	- vim HAILogger.ini
+3. Run as interactive to verify connectivity
+	- ./HAILogger.exe -i
+4. Add systemd file and configure ExecStart path
+	- cp hailogger.service /etc/systemd/system/
+	- vim /etc/systemd/system/hailogger.service
+5. Enable at boot and start service
+	- systemctl enable hailogger.service
+	- systemctl start hailogger.service
 
 ##MySQL Setup
 You will want to install the MySQL Community Server, Workbench, and ODBC Connector. The Workbench software provides a graphical interface to administer the MySQL server. The HAI Logger uses ODBC to communicate with the database. The MySQL ODBC Connector library is needed for Windows ODBC to communicate with MySQL. Make sure you install version 5.1 of the MySQL ODBC Connector provided in the link below.
@@ -37,7 +50,9 @@ http://dev.mysql.com/downloads/connector/odbc/5.1.html
 After installing MySQL server it should have asked you to setup an instance. One of the steps of the instance wizard was to create a root password. Assuming you installed the HAI Logger on the same computer you will want to use the below settings in HAILogger.ini.
 
 mysql_server = localhost
+
 mysql_user = root
+
 mysql_password = password you set in the wizard
 
 At this point we need to open MySQL Workbench to create the database (called a schema in the Workbench GUI) for HAILogger to use.
@@ -58,6 +73,11 @@ To test the API you can use your browser to view a page or PowerShell (see below
 - Invoke-WebRequest  -Uri "http://localhost:8000/SetUnit" -Method POST -ContentType "application/json" -Body (convertto-json -InputObject @{"id"=1;"value"=100}) -UseBasicParsing
 
 ##Change Log
+Version 1.0.8 - 2016-11-28
+- Fixed web service threading when multiple subscriptions exist
+- Added additional zone types to contact and motion web service API
+- Split command line options for config and log files
+
 Version 1.0.7 - 2016-11-25
 - Use previous area state when area is arming for web service API
 - Add interactive command line option and use path separator for Mono compatibility

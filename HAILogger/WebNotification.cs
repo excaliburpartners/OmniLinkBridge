@@ -7,25 +7,33 @@ namespace HAILogger
     static class WebNotification
     {
         private static List<string> subscriptions = new List<string>();
+        private static object subscriptions_lock = new object();
 
         public static void AddSubscription(string callback)
         {
-            if (!subscriptions.Contains(callback))
+            lock (subscriptions_lock)
             {
-                Event.WriteVerbose("WebRequest", "Adding subscription to " + callback);
-                subscriptions.Add(callback);
+                if (!subscriptions.Contains(callback))
+                {
+                    Event.WriteVerbose("WebNotification", "Adding subscription to " + callback);
+                    subscriptions.Add(callback);
+                }
             }
         }
 
         public static void Send(string type, string body)
         {
-            WebClient client = new WebClient();
-            client.Headers.Add(HttpRequestHeader.ContentType, "application/json");
-            client.Headers.Add("type", type);
-            client.UploadStringCompleted += client_UploadStringCompleted;
+            string[] send;
+            lock (subscriptions_lock)
+                send = subscriptions.ToArray();
 
-            foreach (string subscription in subscriptions)
+            foreach (string subscription in send)
             {
+                WebClient client = new WebClient();
+                client.Headers.Add(HttpRequestHeader.ContentType, "application/json");
+                client.Headers.Add("type", type);
+                client.UploadStringCompleted += client_UploadStringCompleted;
+
                 try
                 {
                     client.UploadStringAsync(new Uri(subscription), "POST", body, subscription);
@@ -43,7 +51,9 @@ namespace HAILogger
             if (e.Error != null)
             {
                 Event.WriteError("WebNotification", "An error occurred sending notification to " + e.UserState.ToString() + "\r\n" + e.Error.Message);
-                subscriptions.Remove(e.UserState.ToString());
+
+                lock (subscriptions_lock)
+                    subscriptions.Remove(e.UserState.ToString());
             }
         }
     }

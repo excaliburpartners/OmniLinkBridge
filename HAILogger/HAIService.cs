@@ -53,7 +53,9 @@ namespace HAILogger
                 if ((zone.ZoneType == enuZoneType.EntryExit ||
                     zone.ZoneType == enuZoneType.X2EntryDelay ||
                     zone.ZoneType == enuZoneType.X4EntryDelay ||
-                    zone.ZoneType == enuZoneType.Perimeter) && zone.DefaultProperties == false)
+                    zone.ZoneType == enuZoneType.Perimeter ||
+                    zone.ZoneType == enuZoneType.Tamper ||
+                    zone.ZoneType == enuZoneType.Auxiliary) && zone.DefaultProperties == false)
                     names.Add(new NameContract() { id = i, name = zone.Name });
             }
             return names;
@@ -68,7 +70,8 @@ namespace HAILogger
             {
                 clsZone zone = WebService.HAC.Zones[i];
 
-                if (zone.ZoneType == enuZoneType.AwayInt && zone.DefaultProperties == false)
+                if ((zone.ZoneType == enuZoneType.AwayInt ||
+                    zone.ZoneType == enuZoneType.NightInt) && zone.DefaultProperties == false)
                     names.Add(new NameContract() { id = i, name = zone.Name });
             }
             return names;
@@ -152,9 +155,12 @@ namespace HAILogger
                     case enuZoneType.X2EntryDelay:
                     case enuZoneType.X4EntryDelay:
                     case enuZoneType.Perimeter:
+                    case enuZoneType.Tamper:
+                    case enuZoneType.Auxiliary:
                         ctx.OutgoingResponse.Headers.Add("type", "contact");
                         break;
                     case enuZoneType.AwayInt:
+                    case enuZoneType.NightInt:
                         ctx.OutgoingResponse.Headers.Add("type", "motion");
                         break;
                     case enuZoneType.Water:

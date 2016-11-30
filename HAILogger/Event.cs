@@ -148,7 +148,7 @@ namespace HAILogger
 
             try
             {
-                FileStream fs = new FileStream(Global.dir_config + "\\" + Global.event_log, FileMode.Append, FileAccess.Write);
+                FileStream fs = new FileStream(Global.log_file, FileMode.Append, FileAccess.Write);
                 StreamWriter sw = new StreamWriter(fs);
 
                 sw.WriteLine(DateTime.Now.ToString("MM/dd/yyyy HH:mm:ss ") + source + ": " + value);
