@@ -1,14 +1,13 @@
-# HAILogger
-Provides logging and web service API for HAI/Leviton OmniPro II controllers
+# OmniLink Bridge
+Provides time sync, logging, web service API, and MQTT bridge for HAI/Leviton OmniPro II controllers
 
-##Download
-You can download the [binary here](http://www.excalibur-partners.com/downloads/HAILogger_1_0_8.zip)
+## Download
+You can download the [binary here](http://www.excalibur-partners.com/downloads/OmniLinkBridge_1_1_0.zip)
 
-##Requirements
-- .NET Framework 4.0
-- mySQL 5.1 ODBC Connector
+## Requirements
+- .NET Framework 4.5.2
 
-##Operation
+## Operation
 - Area, Messages, Units, and Zones are logged to mySQL when status changes
 - Thermostats are logged to mySQL once per minute
 	- If no notifications are received within 4 minutes a request is issued
@@ -16,63 +15,124 @@ You can download the [binary here](http://www.excalibur-partners.com/downloads/H
 	- If the temp is 0 a warning will be logged and mySQL will not be updated
 - Controller time is checked and compared to the local computer time disregarding time zones
 
-##Notifications
-- Emails are sent to mail_alarm_to when an area status changes
-- Prowl notifications are sent when an areas status changes
+## Notifications
+- Supports email, prowl, and pushover
+- Always sent for area alarms and critical system events
+- Optionally enable for area status changes and console messages
 
-##Installation Windows
-1. Copy files to your desired location like C:\HAILogger
-2. Edit HAILogger.ini and define at a minimum the controller IP and encryptions keys
-3. Run HAILogger.exe to verify connectivity
-4. For Windows Service run install.bat / uninstall.bat
-5. Start service from Administrative Tools -> Services
+## Installation Windows
+1. Copy files to your desired location like C:\OmniLinkBridge
+2. Edit OmniLinkBridge.ini and define at a minimum the controller IP and encryptions keys
+3. Run OmniLinkBridge.exe to verify connectivity
+4. Add Windows service
+	- sc create OmniLinkBridge binpath=C:\OmniLinkBridge\OmniLinkBridge.exe
+5. Start service
+	- net start OmniLinkBridge
 
-##Installation Linux
-1. Copy files to your desired location like /opt/HAILogger
+## Installation Linux
+1. Copy files to your desired location like /opt/OmniLinkBridge
 2. Configure at a minimum the controller IP and encryptions keys
-	- vim HAILogger.ini
+	- vim OmniLinkBridge.ini
 3. Run as interactive to verify connectivity
-	- ./HAILogger.exe -i
-4. Add systemd file and configure ExecStart path
-	- cp hailogger.service /etc/systemd/system/
-	- vim /etc/systemd/system/hailogger.service
+	- mono OmniLinkBridge.exe -i
+4. Add systemd file and configure paths
+	- cp omnilinkbridge.service /etc/systemd/system/
+	- vim /etc/systemd/system/omnilinkbridge.service
+	- systemctl daemon-reload
 5. Enable at boot and start service
-	- systemctl enable hailogger.service
-	- systemctl start hailogger.service
+	- systemctl enable omnilinkbridge.service
+	- systemctl start omnilinkbridge.service
 
-##MySQL Setup
-You will want to install the MySQL Community Server, Workbench, and ODBC Connector. The Workbench software provides a graphical interface to administer the MySQL server. The HAI Logger uses ODBC to communicate with the database. The MySQL ODBC Connector library is needed for Windows ODBC to communicate with MySQL. Make sure you install version 5.1 of the MySQL ODBC Connector provided in the link below.
+## MySQL Setup
+You will want to install the MySQL Community Server, Workbench, and ODBC Connector. The Workbench software provides a graphical interface to administer the MySQL server. The OmniLink Bridge uses ODBC to communicate with the database. The MySQL ODBC Connector library is needed for Windows ODBC to communicate with MySQL. 
 
 http://dev.mysql.com/downloads/mysql/
 http://dev.mysql.com/downloads/tools/workbench/
-http://dev.mysql.com/downloads/connector/odbc/5.1.html
+http://dev.mysql.com/downloads/connector/odbc/
 
-After installing MySQL server it should have asked you to setup an instance. One of the steps of the instance wizard was to create a root password. Assuming you installed the HAI Logger on the same computer you will want to use the below settings in HAILogger.ini.
-
-mysql_server = localhost
-
-mysql_user = root
-
-mysql_password = password you set in the wizard
-
-At this point we need to open MySQL Workbench to create the database (called a schema in the Workbench GUI) for HAILogger to use.
+At this point we need to open MySQL Workbench to create the database (called a schema in the Workbench GUI) for OmniLinkBridge to use.
 
 1. After opening the program double-click on "Local instance MySQL" and enter the password you set in the wizard.
 2. On the toolbar click the "Create a new schema" button, provide a name, and click apply.
 3. On the left side right-click on the schema you created and click "Set as default schema".
-4. In the middle section under Query1 click the open file icon and select the HAILogger.sql file.
+4. In the middle section under Query1 click the open file icon and select the OmniLinkBridge.sql file.
 5. Click the Execute lighting bolt to run the query, which will create the tables.
 
-Lastly in HAILogger.ini set mysql_database to the name of the schema you created. This should get you up and running. The MySQL Workbench can also be used to view the data that HAILogger inserts into the tables.
+Lastly in OmniLinkBridge.ini set mysql_connection. This should get you up and running. The MySQL Workbench can also be used to view the data that OmniLink Bridge inserts into the tables.
 
-##Web Service API
+mysql_connection = DRIVER={MySQL ODBC 8.0 Driver};SERVER=localhost;DATABASE=OmniLinkBridge;USER=root;PASSWORD=myPassword;OPTION=3;
+
+## Web Service API
 To test the API you can use your browser to view a page or PowerShell (see below) to change a value.
 
 - http://localhost:8000/ListUnits
 - http://localhost:8000/GetUnit?id=1
 - Invoke-WebRequest  -Uri "http://localhost:8000/SetUnit" -Method POST -ContentType "application/json" -Body (convertto-json -InputObject @{"id"=1;"value"=100}) -UseBasicParsing
 
-##Change Log
+## MQTT
+This module will also publish discovery topics for Home Assistant to auto configure devices.
+
+SUB omnilink/areaX/state  
+string triggered, pending, armed_night, armed_home, armed_away, disarmed
+
+PUB omnilink/areaX/command  
+string ARM_HOME, ARM_AWAY, ARM_NIGHT, DISARM, ARM_HOME_INSTANT, ARM_NIGHT_DELAY, ARM_VACATION
+
+SUB omnilink/unitX/state  
+PUB omnilink/unitX/command  
+string OFF, ON
+
+SUB omnilink/unitX/brightness_state  
+PUB omnilink/unitX/brightness_command  
+int Level from 0 to 100 percent
+
+SUB omnilink/thermostatX/current_operation  
+string idle, cool, heat
+
+SUB omnilink/thermostatX/current_temperature  
+int Current temperature in degrees fahrenheit  
+
+SUB omnilink/thermostatX/current_humidity  
+int Current relative humidity
+
+SUB omnilink/thermostatX/temperature_heat_state  
+SUB omnilink/thermostatX/temperature_cool_state  
+PUB omnilink/thermostatX/temperature_heat_command  
+PUB omnilink/thermostatX/temperature_cool_command  
+int Setpoint in degrees fahrenheit
+
+SUB omnilink/thermostatX/humidify_state  
+SUB omnilink/thermostatX/dehumidify_state  
+PUB omnilink/thermostatX/humidify_command  
+PUB omnilink/thermostatX/dehumidify_command  
+int Setpoint in relative humidity
+
+SUB omnilink/thermostatX/mode_state  
+PUB omnilink/thermostatX/mode_command  
+string auto, off, cool, heat
+
+SUB omnilink/thermostatX/fan_mode_state  
+PUB omnilink/thermostatX/fan_mode_command  
+string auto, on, cycle
+
+SUB omnilink/thermostatX/hold_state  
+PUB omnilink/thermostatX/hold_command  
+string off, hold
+
+SUB omnilink/buttonX/state  
+string OFF
+
+PUB omnilink/buttonX/command  
+string ON
+
+## Change Log
+Version 1.1.0 - 2018-10-13
+- Renamed to OmniLinkBridge
+- Restructured code to be event based with modules
+- Added MQTT module for Home Assistant
+- Added pushover notifications
+- Added web service API subscriptions file to persist subscriptions
+
 Version 1.0.8 - 2016-11-28
 - Fixed web service threading when multiple subscriptions exist
 - Added additional zone types to contact and motion web service API

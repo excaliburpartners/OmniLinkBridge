@@ -1,0 +1,344 @@
+﻿using OmniLinkBridge.Notifications;
+using OmniLinkBridge.OmniLink;
+using log4net;
+using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Data.Odbc;
+using System.Reflection;
+using System.Threading;
+
+namespace OmniLinkBridge.Modules
+{
+    public class LoggerModule : IModule
+    {
+        private static ILog log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
+
+        private OmniLinkII omnilink;
+        private List<string> alarms = new List<string>();
+
+        // mySQL Database
+        private OdbcConnection mysql_conn = null;
+        private DateTime mysql_retry = DateTime.MinValue;
+        private OdbcCommand mysql_command = null;
+        private Queue<string> mysql_queue = new Queue<string>();
+        private object mysql_lock = new object();
+
+        private readonly AutoResetEvent trigger = new AutoResetEvent(false);
+
+        public LoggerModule(OmniLinkII omni)
+        {
+            omnilink = omni;
+            omnilink.OnAreaStatus += Omnilink_OnAreaStatus;
+            omnilink.OnZoneStatus += Omnilink_OnZoneStatus;
+            omnilink.OnThermostatStatus += Omnilink_OnThermostatStatus;
+            omnilink.OnUnitStatus += Omnilink_OnUnitStatus;
+            omnilink.OnMessageStatus += Omnilink_OnMessageStatus;
+            omnilink.OnSystemStatus += Omnilink_OnSystemStatus;
+        }
+
+        public void Startup()
+        {
+            if (Global.mysql_logging)
+            {
+                log.Info("Connecting to database");
+
+                mysql_conn = new OdbcConnection(Global.mysql_connection);
+
+                // Must make an initial connection
+                if (!DBOpen())
+                    Environment.Exit(1);
+            }
+
+            while (true)
+            {
+                // End gracefully when not logging or database queue empty
+                if (!Global.running && (!Global.mysql_logging || DBQueueCount() == 0))
+                    break;
+
+                // Make sure database connection is active
+                if (Global.mysql_logging && mysql_conn.State != ConnectionState.Open)
+                {
+                    // Nothing we can do if shutting down
+                    if (!Global.running)
+                        break;
+
+                    if (mysql_retry < DateTime.Now)
+                        DBOpen();
+
+                    if (mysql_conn.State != ConnectionState.Open)
+                    {
+                        // Loop to prevent database queries from executing
+                        trigger.WaitOne(new TimeSpan(0, 0, 1));
+                        continue;
+                    }
+                }
+
+                // Sleep when not logging or database queue empty
+                if (!Global.mysql_logging || DBQueueCount() == 0)
+                {
+                    trigger.WaitOne(new TimeSpan(0, 0, 1));
+                    continue;
+                }
+
+                // Grab a copy in case the database query fails
+                string query;
+                lock (mysql_lock)
+                    query = mysql_queue.Peek();
+
+                try
+                {
+                    // Execute the database query
+                    mysql_command = new OdbcCommand(query, mysql_conn);
+                    mysql_command.ExecuteNonQuery();
+
+                    // Successful remove query from queue
+                    lock (mysql_lock)
+                        mysql_queue.Dequeue();
+                }
+                catch (Exception ex)
+                {
+                    if (mysql_conn.State != ConnectionState.Open)
+                    {
+                        log.Warn("Lost connection to database");
+                    }
+                    else
+                    {
+                        log.Error("Error executing query\r\n" + query, ex);
+
+                        // Prevent an endless loop from failed query
+                        lock (mysql_lock)
+                            mysql_queue.Dequeue();
+                    }
+                }
+            }
+
+            if (Global.mysql_logging)
+                DBClose();
+        }
+
+        public void Shutdown()
+        {
+            trigger.Set();
+        }
+
+        private void Omnilink_OnAreaStatus(object sender, AreaStatusEventArgs e)
+        {
+            // Alarm notifcation
+            if (e.Area.AreaFireAlarmText != "OK")
+            {
+                Notification.Notify("ALARM", "FIRE " + e.Area.Name + " " + e.Area.AreaFireAlarmText, NotificationPriority.Emergency);
+
+                if (!alarms.Contains("FIRE" + e.ID))
+                    alarms.Add("FIRE" + e.ID);
+            }
+            else if (alarms.Contains("FIRE" + e.ID))
+            {
+                Notification.Notify("ALARM CLEARED", "FIRE " + e.Area.Name + " " + e.Area.AreaFireAlarmText, NotificationPriority.High);
+
+                alarms.Remove("FIRE" + e.ID);
+            }
+
+            if (e.Area.AreaBurglaryAlarmText != "OK")
+            {
+                Notification.Notify("ALARM", "BURGLARY " + e.Area.Name + " " + e.Area.AreaBurglaryAlarmText, NotificationPriority.Emergency);
+
+                if (!alarms.Contains("BURGLARY" + e.ID))
+                    alarms.Add("BURGLARY" + e.ID);
+            }
+            else if (alarms.Contains("BURGLARY" + e.ID))
+            {
+                Notification.Notify("ALARM CLEARED", "BURGLARY " + e.Area.Name + " " + e.Area.AreaBurglaryAlarmText, NotificationPriority.High);
+
+                alarms.Remove("BURGLARY" + e.ID);
+            }
+
+            if (e.Area.AreaAuxAlarmText != "OK")
+            {
+                Notification.Notify("ALARM", "AUX " + e.Area.Name + " " + e.Area.AreaAuxAlarmText, NotificationPriority.Emergency);
+
+                if (!alarms.Contains("AUX" + e.ID))
+                    alarms.Add("AUX" + e.ID);
+            }
+            else if (alarms.Contains("AUX" + e.ID))
+            {
+                Notification.Notify("ALARM CLEARED", "AUX " + e.Area.Name + " " + e.Area.AreaAuxAlarmText, NotificationPriority.High);
+
+                alarms.Remove("AUX" + e.ID);
+            }
+
+            if (e.Area.AreaDuressAlarmText != "OK")
+            {
+                Notification.Notify("ALARM", "DURESS " + e.Area.Name + " " + e.Area.AreaDuressAlarmText, NotificationPriority.Emergency);
+
+                if (!alarms.Contains("DURESS" + e.ID))
+                    alarms.Add("DURESS" + e.ID);
+            }
+            else if (alarms.Contains("DURESS" + e.ID))
+            {
+                Notification.Notify("ALARM CLEARED", "DURESS " + e.Area.Name + " " + e.Area.AreaDuressAlarmText, NotificationPriority.High);
+
+                alarms.Remove("DURESS" + e.ID);
+            }
+
+            string status = e.Area.ModeText();
+
+            if (e.Area.ExitTimer > 0)
+                status = "ARMING " + status;
+
+            if (e.Area.EntryTimer > 0)
+                status = "TRIPPED " + status;
+
+            DBQueue(@"
+            INSERT INTO log_areas (timestamp, e.AreaID, name, 
+                fire, police, auxiliary, 
+                duress, security)
+            VALUES ('" + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + "','" + e.ID.ToString() + "','" + e.Area.Name + "','" +
+                    e.Area.AreaFireAlarmText + "','" + e.Area.AreaBurglaryAlarmText + "','" + e.Area.AreaAuxAlarmText + "','" +
+                    e.Area.AreaDuressAlarmText + "','" + status + "')");
+
+            if (Global.verbose_area)
+                log.Debug("AreaStatus " + e.ID + " " + e.Area.Name + ", Status: " + status);
+
+            if (Global.notify_area && e.Area.LastMode != e.Area.AreaMode)
+                Notification.Notify("Security", e.Area.Name + " " + e.Area.ModeText());
+        }
+
+        private void Omnilink_OnZoneStatus(object sender, ZoneStatusEventArgs e)
+        {
+            DBQueue(@"
+                INSERT INTO log_zones (timestamp, id, name, status)
+                VALUES ('" + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + "','" + e.ID + "','" + e.Zone.Name + "','" + e.Zone.StatusText() + "')");
+
+            if (Global.verbose_zone)
+            {
+                if (e.Zone.IsTemperatureZone())
+                    log.Debug("ZoneStatus " + e.ID + " " + e.Zone.Name + ", Temp: " + e.Zone.TempText());
+                else
+                    log.Debug("ZoneStatus" + e.ID + " " + e.Zone.Name + ", Status: " + e.Zone.StatusText());
+            }
+        }
+
+        private void Omnilink_OnThermostatStatus(object sender, ThermostatStatusEventArgs e)
+        {
+            if (e.EventTimer)
+                return;
+
+            int temp, heat, cool, humidity, humidify, dehumidify;
+
+            Int32.TryParse(e.Thermostat.TempText(), out temp);
+            Int32.TryParse(e.Thermostat.HeatSetpointText(), out heat);
+            Int32.TryParse(e.Thermostat.CoolSetpointText(), out cool);
+            Int32.TryParse(e.Thermostat.HumidityText(), out humidity);
+            Int32.TryParse(e.Thermostat.HumidifySetpointText(), out humidify);
+            Int32.TryParse(e.Thermostat.DehumidifySetpointText(), out dehumidify);
+
+            DBQueue(@"
+                INSERT INTO log_thermostats (timestamp, id, name, 
+                    status, temp, heat, cool, 
+                    humidity, humidify, dehumidify,
+                    mode, fan, hold)
+                VALUES ('" + DateTime.Now.ToString("yyyy-MM-dd HH:mm") + "','" + e.ID + "','" + e.Thermostat.Name + "','" +
+                    e.Thermostat.HorC_StatusText() + "','" + temp.ToString() + "','" + heat + "','" + cool + "','" +
+                    humidity + "','" + humidify + "','" + dehumidify + "','" +
+                    e.Thermostat.ModeText() + "','" + e.Thermostat.FanModeText() + "','" + e.Thermostat.HoldStatusText() + "')");
+
+            if (Global.verbose_thermostat)
+                log.Debug("ThermostatStatus " + e.ID + " " + e.Thermostat.Name +
+                    ", Status: " + e.Thermostat.TempText() + " " + e.Thermostat.HorC_StatusText() +
+                    ", Heat: " + e.Thermostat.HeatSetpointText() +
+                    ", Cool: " + e.Thermostat.CoolSetpointText() +
+                    ", Mode: " + e.Thermostat.ModeText() +
+                    ", Fan: " + e.Thermostat.FanModeText() +
+                    ", Hold: " + e.Thermostat.HoldStatusText());
+        }
+
+        private void Omnilink_OnUnitStatus(object sender, UnitStatusEventArgs e)
+        {
+            string status = e.Unit.StatusText;
+
+            if (e.Unit.Status == 100 && e.Unit.StatusTime == 0)
+                status = "OFF";
+            else if (e.Unit.Status == 200 && e.Unit.StatusTime == 0)
+                status = "ON";
+
+            DBQueue(@"
+                INSERT INTO log_e.Units (timestamp, id, name, 
+                    status, statusvalue, statustime)
+                VALUES ('" + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + "','" + e.ID + "','" + e.Unit.Name + "','" +
+                    status + "','" + e.Unit.Status + "','" + e.Unit.StatusTime + "')");
+
+            if (Global.verbose_unit)
+                log.Debug("UnitStatus " + e.ID + " " + e.Unit.Name + ", Status: " + status);
+        }
+
+        private void Omnilink_OnMessageStatus(object sender, MessageStatusEventArgs e)
+        {
+            DBQueue(@"
+                INSERT INTO log_messages (timestamp, id, name, status)
+                VALUES ('" + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + "','" + e.ID + "','" + e.Message.Name + "','" + e.Message.StatusText() + "')");
+
+            if (Global.verbose_message)
+                log.Debug("MessageStatus " + e.Message.Name + ", " + e.Message.StatusText());
+
+            if (Global.notify_message)
+                Notification.Notify("Message", e.ID + " " + e.Message.Name + ", " + e.Message.StatusText());
+        }
+
+        private void Omnilink_OnSystemStatus(object sender, SystemStatusEventArgs e)
+        {
+            DBQueue(@"
+                INSERT INTO log_events (timestamp, name, status)
+                VALUES ('" + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + "','" + e.Type.ToString() + "','" + e.Value + "')");
+
+            if (Global.verbose_event)
+                log.Debug("SystemEvent " + e.Type.ToString() + " " + e.Value);
+
+            if (e.SendNotification)
+                Notification.Notify("SystemEvent", e.Type.ToString() + " " + e.Value);
+        }
+
+        public bool DBOpen()
+        {
+            try
+            {
+                if (mysql_conn.State != ConnectionState.Open)
+                    mysql_conn.Open();
+
+                mysql_retry = DateTime.MinValue;
+            }
+            catch (Exception ex)
+            {
+                log.Error("Failed to connect to database", ex);
+                mysql_retry = DateTime.Now.AddMinutes(1);
+                return false;
+            }
+
+            return true;
+        }
+
+        public void DBClose()
+        {
+            if (mysql_conn.State != ConnectionState.Closed)
+                mysql_conn.Close();
+        }
+
+        public void DBQueue(string query)
+        {
+            if (!Global.mysql_logging)
+                return;
+
+            lock (mysql_lock)
+                mysql_queue.Enqueue(query);
+        }
+
+        private int DBQueueCount()
+        {
+            int count;
+            lock (mysql_lock)
+                count = mysql_queue.Count;
+
+            return count;
+        }
+    }
+}
