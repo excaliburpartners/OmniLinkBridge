@@ -17,14 +17,20 @@ namespace OmniLinkBridge.WebAPI
 
         public static void AddSubscription(string callback)
         {
+            bool save = false;
+
             lock (subscriptions_lock)
             {
                 if (!subscriptions.Contains(callback))
                 {
                     log.Debug("Adding subscription to " + callback);
                     subscriptions.Add(callback);
+                    save = true;
                 }
             }
+
+            if (save)
+                SaveSubscriptions();
         }
 
         public static void Send(string type, string body)
@@ -48,6 +54,7 @@ namespace OmniLinkBridge.WebAPI
                 {
                     log.Error("An error occurred sending notification to " + subscription, ex);
                     subscriptions.Remove(subscription);
+                    SaveSubscriptions();
                 }
             }
         }
