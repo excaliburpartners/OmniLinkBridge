@@ -1,5 +1,5 @@
 # OmniLink Bridge
-Provides time sync, logging, web service API, and MQTT bridge for HAI/Leviton OmniPro II controllers
+Provides time sync, logging, web service API, and MQTT bridge for HAI/Leviton OmniPro II controllers. Provides integration with Samsung SmarthThings via Web Service API and Home Assistant via MQTT.
 
 ## Download
 You can download the [binary here](http://www.excalibur-partners.com/downloads/OmniLinkBridge_1_1_1.zip) or use docker to build an image from git.
@@ -53,7 +53,7 @@ You can download the [binary here](http://www.excalibur-partners.com/downloads/O
 	- cp OmniLinkBridge/OmniLinkBridge.ini /opt/omnilink-bridge
 	- vim /opt/omnilink-bridge/OmniLinkBridge.ini
 3. Start docker container
-	- docker run -d --name="omnilink-bridge" -v /opt/omnilink-bridge:/config --net=host --restart unless-stopped omnilink-bridge
+	- docker run -d --name="omnilink-bridge" -v /opt/omnilink-bridge:/config -v /etc/localtime:/etc/localtime:ro --net=host --restart unless-stopped omnilink-bridge
 4. Verify connectivity by looking at logs
 	- docker container logs omnilink-bridge
 	
