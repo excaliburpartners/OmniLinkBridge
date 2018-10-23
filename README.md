@@ -86,12 +86,38 @@ To test the API you can use your browser to view a page or PowerShell (see below
 ## MQTT
 This module will also publish discovery topics for Home Assistant to auto configure devices.
 
+### Areas
+```
 SUB omnilink/areaX/state  
+string triggered, pending, armed_night, armed_night_delay, armed_home, armed_home_instant, armed_away, armed_vacation, disarmed
+
+SUB omnilink/areaX/basic_state  
 string triggered, pending, armed_night, armed_home, armed_away, disarmed
 
 PUB omnilink/areaX/command  
-string ARM_HOME, ARM_AWAY, ARM_NIGHT, DISARM, ARM_HOME_INSTANT, ARM_NIGHT_DELAY, ARM_VACATION
+string(insensitive) arm_home, arm_away, arm_night, disarm, arm_home_instant, arm_night_delay, arm_vacation
+```
 
+### Zones
+```
+SUB omnilink/zoneX/state  
+string secure, not_ready, trouble, armed, tripped, bypassed
+
+SUB omnilink/zoneX/basic_state  
+string OFF, ON
+
+SUB omnilink/zoneX/current_temperature (optional)  
+int Current temperature in degrees fahrenheit  
+
+SUB omnilink/zoneX/current_humidity (optional)  
+int Current relative humidity
+
+PUB omnilink/zoneX/command  
+string(insensitive) bypass, restore
+```
+
+### Units
+```
 SUB omnilink/unitX/state  
 PUB omnilink/unitX/command  
 string OFF, ON
@@ -99,7 +125,10 @@ string OFF, ON
 SUB omnilink/unitX/brightness_state  
 PUB omnilink/unitX/brightness_command  
 int Level from 0 to 100 percent
+```
 
+### Thermostats
+```
 SUB omnilink/thermostatX/current_operation  
 string idle, cool, heat
 
@@ -132,12 +161,16 @@ string auto, on, cycle
 SUB omnilink/thermostatX/hold_state  
 PUB omnilink/thermostatX/hold_command  
 string off, hold
+```
 
+### Buttons
+```
 SUB omnilink/buttonX/state  
 string OFF
 
 PUB omnilink/buttonX/command  
 string ON
+```
 
 ## Change Log
 Version 1.1.1 - 2018-10-18

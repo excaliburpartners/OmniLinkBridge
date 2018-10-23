@@ -18,12 +18,39 @@ namespace OmniLinkBridge.MQTT
         {
             Alarm ret = new Alarm();
             ret.name = area.Name;
-            ret.state_topic = area.ToTopic(Topic.state);
+            ret.state_topic = area.ToTopic(Topic.basic_state);
             ret.command_topic = area.ToTopic(Topic.command);
             return ret;
         }
 
         public static string ToState(this clsArea area)
+        {
+            if (area.AreaBurglaryAlarmText != "OK")
+                return "triggered";
+            else if (area.ExitTimer > 0)
+                return "pending";
+
+            switch (area.AreaMode)
+            {
+                case enuSecurityMode.Night:
+                    return "armed_night";
+                case enuSecurityMode.NightDly:
+                    return "armed_night_delay";
+                case enuSecurityMode.Day:
+                    return "armed_home";
+                case enuSecurityMode.DayInst:
+                    return "armed_home_instant";
+                case enuSecurityMode.Away:
+                    return "armed_away";
+                case enuSecurityMode.Vacation:
+                    return "armed_vacation";
+                case enuSecurityMode.Off:
+                default:
+                    return "disarmed";
+            }
+        }
+
+        public static string ToBasicState(this clsArea area)
         {
             if (area.AreaBurglaryAlarmText != "OK")
                 return "triggered";
@@ -57,7 +84,7 @@ namespace OmniLinkBridge.MQTT
             Sensor ret = new Sensor();
             ret.name = zone.Name;
             ret.device_class = Sensor.DeviceClass.temperature;
-            ret.state_topic = zone.ToTopic(Topic.state);
+            ret.state_topic = zone.ToTopic(Topic.current_temperature);
             ret.unit_of_measurement = "°F";
             return ret;
         }
@@ -67,7 +94,7 @@ namespace OmniLinkBridge.MQTT
             Sensor ret = new Sensor();
             ret.name = zone.Name;
             ret.device_class = Sensor.DeviceClass.humidity;
-            ret.state_topic = zone.ToTopic(Topic.state);
+            ret.state_topic = zone.ToTopic(Topic.current_humidity);
             ret.unit_of_measurement = "%";
             return ret;
         }
@@ -114,16 +141,29 @@ namespace OmniLinkBridge.MQTT
                 }
             }
 
-            ret.state_topic = zone.ToTopic(Topic.state);
+            ret.state_topic = zone.ToTopic(Topic.basic_state);
             return ret;
         }
 
         public static string ToState(this clsZone zone)
         {
-            if (zone.IsTemperatureZone() || zone.IsHumidityZone())
-                return zone.TempText();
+            if (zone.Status.IsBitSet(5))
+                return "bypassed";
+            else if (zone.Status.IsBitSet(2))
+                return "tripped";
+            else if (zone.Status.IsBitSet(4))
+                return "armed";
+            else if (zone.Status.IsBitSet(1))
+                return "trouble";
+            else if (zone.Status.IsBitSet(0))
+                return "not_ready";
             else
-                return zone.Status.IsBitSet(0) ? "ON" : "OFF";
+                return "secure";
+        }
+
+        public static string ToBasicState(this clsZone zone)
+        {
+            return zone.Status.IsBitSet(0) ? "ON" : "OFF";
         }
 
         public static string ToTopic(this clsUnit unit, Topic topic)

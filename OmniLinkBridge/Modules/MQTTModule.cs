@@ -90,6 +90,10 @@ namespace OmniLinkBridge.Modules
             {
                 ProcessAreaReceived(OmniLink.Controller.Areas[areaId], match.Groups[3].Value, payload);
             }
+            if (match.Groups[1].Value == "zone" && ushort.TryParse(match.Groups[2].Value, out ushort zoneId) && zoneId < OmniLink.Controller.Zones.Count)
+            {
+                ProcessZoneReceived(OmniLink.Controller.Zones[zoneId], match.Groups[3].Value, payload);
+            }
             else if (match.Groups[1].Value == "unit" && ushort.TryParse(match.Groups[2].Value, out ushort unitId) && unitId < OmniLink.Controller.Units.Count)
             {
                 ProcessUnitReceived(OmniLink.Controller.Units[unitId], match.Groups[3].Value, payload);
@@ -108,38 +112,58 @@ namespace OmniLinkBridge.Modules
         {
             if (string.Compare(command, Topic.command.ToString()) == 0)
             {
-                switch(payload)
+                if(string.Compare(payload, "arm_home", true) == 0)
                 {
-                    case "ARM_HOME":
-                        log.Debug("SetArea: " + area.Number + " to home");
-                        OmniLink.Controller.SendCommand(enuUnitCommand.SecurityDay, 0, (ushort)area.Number);
-                        break;
-                    case "ARM_AWAY":
-                        log.Debug("SetArea: " + area.Number + " to away");
-                        OmniLink.Controller.SendCommand(enuUnitCommand.SecurityAway, 0, (ushort)area.Number);
-                        break;
-                    case "ARM_NIGHT":
-                        log.Debug("SetArea: " + area.Number + " to night");
-                        OmniLink.Controller.SendCommand(enuUnitCommand.SecurityNight, 0, (ushort)area.Number);
-                        break;
-                    case "DISARM":
-                        log.Debug("SetArea: " + area.Number + " to disarm");
-                        OmniLink.Controller.SendCommand(enuUnitCommand.SecurityOff, 0, (ushort)area.Number);
-                        break;
+                    log.Debug("SetArea: " + area.Number + " to home");
+                    OmniLink.Controller.SendCommand(enuUnitCommand.SecurityDay, 0, (ushort)area.Number);
+                }
+                else if (string.Compare(payload, "arm_away", true) == 0)
+                {
+                    log.Debug("SetArea: " + area.Number + " to away");
+                    OmniLink.Controller.SendCommand(enuUnitCommand.SecurityAway, 0, (ushort)area.Number);
+                }
+                else if (string.Compare(payload, "arm_night", true) == 0)
+                {
+                    log.Debug("SetArea: " + area.Number + " to night");
+                    OmniLink.Controller.SendCommand(enuUnitCommand.SecurityNight, 0, (ushort)area.Number);
+                }
+                else if (string.Compare(payload, "disarm", true) == 0)
+                {
+                    log.Debug("SetArea: " + area.Number + " to disarm");
+                    OmniLink.Controller.SendCommand(enuUnitCommand.SecurityOff, 0, (ushort)area.Number);
+                }
+                // The below aren't supported by Home Assistant
+                else if (string.Compare(payload, "arm_home_instant", true) == 0)
+                {
+                    log.Debug("SetArea: " + area.Number + " to home instant");
+                    OmniLink.Controller.SendCommand(enuUnitCommand.SecurityDyi, 0, (ushort)area.Number);
+                }
+                else if (string.Compare(payload, "arm_night_delay", true) == 0)
+                {
+                    log.Debug("SetArea: " + area.Number + " to night delay");
+                    OmniLink.Controller.SendCommand(enuUnitCommand.SecurityNtd, 0, (ushort)area.Number);
+                }
+                else if (string.Compare(payload, "arm_vacation", true) == 0)
+                {
+                    log.Debug("SetArea: " + area.Number + " to vacation");
+                    OmniLink.Controller.SendCommand(enuUnitCommand.SecurityVac, 0, (ushort)area.Number);
+                }
+            }
+        }
 
-                    // The below aren't supported by Home Assistant
-                    case "ARM_HOME_INSTANT":
-                        log.Debug("SetArea: " + area.Number + " to home instant");
-                        OmniLink.Controller.SendCommand(enuUnitCommand.SecurityDyi, 0, (ushort)area.Number);
-                        break;
-                    case "ARM_NIGHT_DELAY":
-                        log.Debug("SetArea: " + area.Number + " to night delay");
-                        OmniLink.Controller.SendCommand(enuUnitCommand.SecurityNtd, 0, (ushort)area.Number);
-                        break;
-                    case "ARM_VACATION":
-                        log.Debug("SetArea: " + area.Number + " to vacation");
-                        OmniLink.Controller.SendCommand(enuUnitCommand.SecurityVac, 0, (ushort)area.Number);
-                        break;
+        private void ProcessZoneReceived(clsZone zone, string command, string payload)
+        {
+            if (string.Compare(command, Topic.command.ToString()) == 0)
+            {
+                if (string.Compare(payload, "bypass", true) == 0)
+                {
+                    log.Debug("SetZone: " + zone.Number + " to " + payload);
+                    OmniLink.Controller.SendCommand(enuUnitCommand.Bypass, 0, (ushort)zone.Number);
+                }
+                else if (string.Compare(payload, "restore", true) == 0)
+                {
+                    log.Debug("SetZone: " + zone.Number + " to " + payload);
+                    OmniLink.Controller.SendCommand(enuUnitCommand.Restore, 0, (ushort)zone.Number);
                 }
             }
         }
@@ -282,21 +306,15 @@ namespace OmniLinkBridge.Modules
 
                 PublishZoneState(zone);
 
+                MqttClient.PublishAsync($"{Global.mqtt_discovery_prefix}/binary_sensor/omnilink/zone{i.ToString()}/config",
+                    JsonConvert.SerializeObject(zone.ToConfig()), MqttQualityOfServiceLevel.AtMostOnce, true);
+
                 if (zone.IsTemperatureZone())
-                {
                     MqttClient.PublishAsync($"{Global.mqtt_discovery_prefix}/sensor/omnilink/zone{i.ToString()}/config",
                         JsonConvert.SerializeObject(zone.ToConfigTemp()), MqttQualityOfServiceLevel.AtMostOnce, true);
-                }
                 else if (zone.IsHumidityZone())
-                {
                     MqttClient.PublishAsync($"{Global.mqtt_discovery_prefix}/sensor/omnilink/zone{i.ToString()}/config",
                         JsonConvert.SerializeObject(zone.ToConfigHumidity()), MqttQualityOfServiceLevel.AtMostOnce, true);
-                }
-                else
-                {
-                    MqttClient.PublishAsync($"{Global.mqtt_discovery_prefix}/binary_sensor/omnilink/zone{i.ToString()}/config",
-                        JsonConvert.SerializeObject(zone.ToConfig()), MqttQualityOfServiceLevel.AtMostOnce, true);
-                }
             }
         }
 
@@ -390,11 +408,18 @@ namespace OmniLinkBridge.Modules
         private void PublishAreaState(clsArea area)
         {
             MqttClient.PublishAsync(area.ToTopic(Topic.state), area.ToState(), MqttQualityOfServiceLevel.AtMostOnce, true);
+            MqttClient.PublishAsync(area.ToTopic(Topic.basic_state), area.ToBasicState(), MqttQualityOfServiceLevel.AtMostOnce, true);
         }
 
         private void PublishZoneState(clsZone zone)
         {
             MqttClient.PublishAsync(zone.ToTopic(Topic.state), zone.ToState(), MqttQualityOfServiceLevel.AtMostOnce, true);
+            MqttClient.PublishAsync(zone.ToTopic(Topic.basic_state), zone.ToBasicState(), MqttQualityOfServiceLevel.AtMostOnce, true);
+
+            if(zone.IsTemperatureZone())
+                MqttClient.PublishAsync(zone.ToTopic(Topic.current_temperature), zone.TempText(), MqttQualityOfServiceLevel.AtMostOnce, true);
+            else if (zone.IsHumidityZone())
+                MqttClient.PublishAsync(zone.ToTopic(Topic.current_humidity), zone.TempText(), MqttQualityOfServiceLevel.AtMostOnce, true);
         }
 
         private void PublishUnitState(clsUnit unit)
