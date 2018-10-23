@@ -55,7 +55,8 @@ namespace OmniLinkBridge
             Global.mqtt_port = ValidatePort(settings, "mqtt_port");
             Global.mqtt_username = settings["mqtt_username"];
             Global.mqtt_password = settings["mqtt_password"];
-            Global.mqtt_discovery_prefix = settings["mqtt_discovery_prefix"];
+            Global.mqtt_prefix = settings["mqtt_prefix"] ?? "omnilink";
+            Global.mqtt_discovery_prefix = settings["mqtt_discovery_prefix"] ?? "homeassistant";
             Global.mqtt_discovery_ignore_zones = ValidateRange(settings, "mqtt_discovery_ignore_zones");
             Global.mqtt_discovery_ignore_units = ValidateRange(settings, "mqtt_discovery_ignore_units");
             Global.mqtt_discovery_override_zone = LoadOverrideZone(settings, "mqtt_discovery_override_zone");

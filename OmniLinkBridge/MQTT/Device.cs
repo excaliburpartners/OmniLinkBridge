@@ -12,6 +12,6 @@ namespace OmniLinkBridge.MQTT
 
         public string state_topic { get; set; }
 
-        public string availability_topic { get; set; } = "omnilink/status";
+        public string availability_topic { get; set; } = $"{Global.mqtt_prefix}/status";
     }
 }

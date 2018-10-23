@@ -23,7 +23,7 @@ namespace OmniLinkBridge.Modules
         private OmniLinkII OmniLink { get; set; }
         private IManagedMqttClient MqttClient { get; set; }
 
-        private Regex regexTopic = new Regex("omnilink/([A-Za-z]+)([0-9]+)/(.*)", RegexOptions.Compiled);
+        private Regex regexTopic = new Regex(Global.mqtt_prefix + "/([A-Za-z]+)([0-9]+)/(.*)", RegexOptions.Compiled);
 
         private readonly AutoResetEvent trigger = new AutoResetEvent(false);
 
@@ -59,20 +59,20 @@ namespace OmniLinkBridge.Modules
 
             MqttClient.ApplicationMessageReceived += MqttClient_ApplicationMessageReceived;
 
-            MqttClient.SubscribeAsync(new TopicFilterBuilder().WithTopic("omnilink/+/" + Topic.command).Build());
-            MqttClient.SubscribeAsync(new TopicFilterBuilder().WithTopic("omnilink/+/" + Topic.brightness_command).Build());
-            MqttClient.SubscribeAsync(new TopicFilterBuilder().WithTopic("omnilink/+/" + Topic.temperature_heat_command).Build());
-            MqttClient.SubscribeAsync(new TopicFilterBuilder().WithTopic("omnilink/+/" + Topic.temperature_cool_command).Build());
-            MqttClient.SubscribeAsync(new TopicFilterBuilder().WithTopic("omnilink/+/" + Topic.humidify_command).Build());
-            MqttClient.SubscribeAsync(new TopicFilterBuilder().WithTopic("omnilink/+/" + Topic.dehumidify_command).Build());
-            MqttClient.SubscribeAsync(new TopicFilterBuilder().WithTopic("omnilink/+/" + Topic.mode_command).Build());
-            MqttClient.SubscribeAsync(new TopicFilterBuilder().WithTopic("omnilink/+/" + Topic.fan_mode_command).Build());
-            MqttClient.SubscribeAsync(new TopicFilterBuilder().WithTopic("omnilink/+/" + Topic.hold_command).Build());
+            MqttClient.SubscribeAsync(new TopicFilterBuilder().WithTopic($"{Global.mqtt_prefix}/+/{Topic.command}").Build());
+            MqttClient.SubscribeAsync(new TopicFilterBuilder().WithTopic($"{Global.mqtt_prefix}/+/{Topic.brightness_command}").Build());
+            MqttClient.SubscribeAsync(new TopicFilterBuilder().WithTopic($"{Global.mqtt_prefix}/+/{Topic.temperature_heat_command}").Build());
+            MqttClient.SubscribeAsync(new TopicFilterBuilder().WithTopic($"{Global.mqtt_prefix}/+/{Topic.temperature_cool_command}").Build());
+            MqttClient.SubscribeAsync(new TopicFilterBuilder().WithTopic($"{Global.mqtt_prefix}/+/{Topic.humidify_command}").Build());
+            MqttClient.SubscribeAsync(new TopicFilterBuilder().WithTopic($"{Global.mqtt_prefix}/+/{Topic.dehumidify_command}").Build());
+            MqttClient.SubscribeAsync(new TopicFilterBuilder().WithTopic($"{Global.mqtt_prefix}/+/{Topic.mode_command}").Build());
+            MqttClient.SubscribeAsync(new TopicFilterBuilder().WithTopic($"{Global.mqtt_prefix}/+/{Topic.fan_mode_command}").Build());
+            MqttClient.SubscribeAsync(new TopicFilterBuilder().WithTopic($"{Global.mqtt_prefix}/+/{Topic.hold_command}").Build());
 
             // Wait until shutdown
             trigger.WaitOne();
 
-            MqttClient.PublishAsync("omnilink/status", "offline", MqttQualityOfServiceLevel.AtMostOnce, true);
+            MqttClient.PublishAsync($"{Global.mqtt_prefix}/status", "offline", MqttQualityOfServiceLevel.AtMostOnce, true);
         }
 
         private void MqttClient_ApplicationMessageReceived(object sender, MqttApplicationMessageReceivedEventArgs e)
@@ -256,7 +256,7 @@ namespace OmniLinkBridge.Modules
         {
             PublishConfig();
 
-            MqttClient.PublishAsync("omnilink/status", "online", MqttQualityOfServiceLevel.AtMostOnce, true);
+            MqttClient.PublishAsync($"{Global.mqtt_prefix}/status", "online", MqttQualityOfServiceLevel.AtMostOnce, true);
         }
 
         private void PublishConfig()
@@ -278,13 +278,13 @@ namespace OmniLinkBridge.Modules
 
                 if (area.DefaultProperties == true)
                 {
-                    MqttClient.PublishAsync($"{Global.mqtt_discovery_prefix}/alarm_control_panel/omnilink/area{i.ToString()}/config", null, MqttQualityOfServiceLevel.AtMostOnce, true);
+                    MqttClient.PublishAsync($"{Global.mqtt_discovery_prefix}/alarm_control_panel/{Global.mqtt_prefix}/area{i.ToString()}/config", null, MqttQualityOfServiceLevel.AtMostOnce, true);
                     continue;
                 }
 
                 PublishAreaState(area);
 
-                MqttClient.PublishAsync($"{Global.mqtt_discovery_prefix}/alarm_control_panel/omnilink/area{i.ToString()}/config",
+                MqttClient.PublishAsync($"{Global.mqtt_discovery_prefix}/alarm_control_panel/{Global.mqtt_prefix}/area{i.ToString()}/config",
                     JsonConvert.SerializeObject(area.ToConfig()), MqttQualityOfServiceLevel.AtMostOnce, true);
             }
         }
@@ -299,21 +299,21 @@ namespace OmniLinkBridge.Modules
 
                 if (zone.DefaultProperties == true || Global.mqtt_discovery_ignore_zones.Contains(zone.Number))
                 {
-                    MqttClient.PublishAsync($"{Global.mqtt_discovery_prefix}/sensor/omnilink/zone{i.ToString()}/config", null, MqttQualityOfServiceLevel.AtMostOnce, true);
-                    MqttClient.PublishAsync($"{Global.mqtt_discovery_prefix}/binary_sensor/omnilink/zone{i.ToString()}/config", null, MqttQualityOfServiceLevel.AtMostOnce, true);
+                    MqttClient.PublishAsync($"{Global.mqtt_discovery_prefix}/sensor/{Global.mqtt_prefix}/zone{i.ToString()}/config", null, MqttQualityOfServiceLevel.AtMostOnce, true);
+                    MqttClient.PublishAsync($"{Global.mqtt_discovery_prefix}/binary_sensor/{Global.mqtt_prefix}/zone{i.ToString()}/config", null, MqttQualityOfServiceLevel.AtMostOnce, true);
                     continue;
                 }
 
                 PublishZoneState(zone);
 
-                MqttClient.PublishAsync($"{Global.mqtt_discovery_prefix}/binary_sensor/omnilink/zone{i.ToString()}/config",
+                MqttClient.PublishAsync($"{Global.mqtt_discovery_prefix}/binary_sensor/{Global.mqtt_prefix}/zone{i.ToString()}/config",
                     JsonConvert.SerializeObject(zone.ToConfig()), MqttQualityOfServiceLevel.AtMostOnce, true);
 
                 if (zone.IsTemperatureZone())
-                    MqttClient.PublishAsync($"{Global.mqtt_discovery_prefix}/sensor/omnilink/zone{i.ToString()}/config",
+                    MqttClient.PublishAsync($"{Global.mqtt_discovery_prefix}/sensor/{Global.mqtt_prefix}/zone{i.ToString()}/config",
                         JsonConvert.SerializeObject(zone.ToConfigTemp()), MqttQualityOfServiceLevel.AtMostOnce, true);
                 else if (zone.IsHumidityZone())
-                    MqttClient.PublishAsync($"{Global.mqtt_discovery_prefix}/sensor/omnilink/zone{i.ToString()}/config",
+                    MqttClient.PublishAsync($"{Global.mqtt_discovery_prefix}/sensor/{Global.mqtt_prefix}/zone{i.ToString()}/config",
                         JsonConvert.SerializeObject(zone.ToConfigHumidity()), MqttQualityOfServiceLevel.AtMostOnce, true);
             }
         }
@@ -330,13 +330,13 @@ namespace OmniLinkBridge.Modules
                 
                 if (unit.DefaultProperties == true || Global.mqtt_discovery_ignore_units.Contains(unit.Number))
                 {
-                    MqttClient.PublishAsync($"{Global.mqtt_discovery_prefix}/{type}/omnilink/unit{i.ToString()}/config", null, MqttQualityOfServiceLevel.AtMostOnce, true);
+                    MqttClient.PublishAsync($"{Global.mqtt_discovery_prefix}/{type}/{Global.mqtt_prefix}/unit{i.ToString()}/config", null, MqttQualityOfServiceLevel.AtMostOnce, true);
                     continue;
                 }
 
                 PublishUnitState(unit);
 
-                MqttClient.PublishAsync($"{Global.mqtt_discovery_prefix}/{type}/omnilink/unit{i.ToString()}/config",
+                MqttClient.PublishAsync($"{Global.mqtt_discovery_prefix}/{type}/{Global.mqtt_prefix}/unit{i.ToString()}/config",
                     JsonConvert.SerializeObject(unit.ToConfig()), MqttQualityOfServiceLevel.AtMostOnce, true);
             }
         }
@@ -351,13 +351,13 @@ namespace OmniLinkBridge.Modules
 
                 if (thermostat.DefaultProperties == true)
                 {
-                    MqttClient.PublishAsync($"{Global.mqtt_discovery_prefix}/climate/omnilink/thermostat{i.ToString()}/config", null, MqttQualityOfServiceLevel.AtMostOnce, true);
+                    MqttClient.PublishAsync($"{Global.mqtt_discovery_prefix}/climate/{Global.mqtt_prefix}/thermostat{i.ToString()}/config", null, MqttQualityOfServiceLevel.AtMostOnce, true);
                     continue;
                 }
 
                 PublishThermostatState(thermostat);
 
-                MqttClient.PublishAsync($"{Global.mqtt_discovery_prefix}/climate/omnilink/thermostat{i.ToString()}/config",
+                MqttClient.PublishAsync($"{Global.mqtt_discovery_prefix}/climate/{Global.mqtt_prefix}/thermostat{i.ToString()}/config",
                     JsonConvert.SerializeObject(thermostat.ToConfig()), MqttQualityOfServiceLevel.AtMostOnce, true);
             }
         }
@@ -372,14 +372,14 @@ namespace OmniLinkBridge.Modules
 
                 if (button.DefaultProperties == true)
                 {
-                    MqttClient.PublishAsync($"{Global.mqtt_discovery_prefix}/switch/omnilink/button{i.ToString()}/config", null, MqttQualityOfServiceLevel.AtMostOnce, true);
+                    MqttClient.PublishAsync($"{Global.mqtt_discovery_prefix}/switch/{Global.mqtt_prefix}/button{i.ToString()}/config", null, MqttQualityOfServiceLevel.AtMostOnce, true);
                     continue;
                 }
 
                 // Buttons are always off
                 MqttClient.PublishAsync(button.ToTopic(Topic.state), "OFF", MqttQualityOfServiceLevel.AtMostOnce, true);
 
-                MqttClient.PublishAsync($"{Global.mqtt_discovery_prefix}/switch/omnilink/button{i.ToString()}/config",
+                MqttClient.PublishAsync($"{Global.mqtt_discovery_prefix}/switch/{Global.mqtt_prefix}/button{i.ToString()}/config",
                     JsonConvert.SerializeObject(button.ToConfig()), MqttQualityOfServiceLevel.AtMostOnce, true);
             }
         }

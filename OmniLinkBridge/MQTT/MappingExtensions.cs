@@ -11,7 +11,7 @@ namespace OmniLinkBridge.MQTT
     {
         public static string ToTopic(this clsArea area, Topic topic)
         {
-            return $"omnilink/area{area.Number.ToString()}/{topic.ToString()}";
+            return $"{Global.mqtt_prefix}/area{area.Number.ToString()}/{topic.ToString()}";
         }
 
         public static Alarm ToConfig(this clsArea area)
@@ -76,7 +76,7 @@ namespace OmniLinkBridge.MQTT
 
         public static string ToTopic(this clsZone zone, Topic topic)
         {
-            return $"omnilink/zone{zone.Number.ToString()}/{topic.ToString()}";
+            return $"{Global.mqtt_prefix}/zone{zone.Number.ToString()}/{topic.ToString()}";
         }
 
         public static Sensor ToConfigTemp(this clsZone zone)
@@ -168,7 +168,7 @@ namespace OmniLinkBridge.MQTT
 
         public static string ToTopic(this clsUnit unit, Topic topic)
         {
-            return $"omnilink/unit{unit.Number.ToString()}/{topic.ToString()}";
+            return $"{Global.mqtt_prefix}/unit{unit.Number.ToString()}/{topic.ToString()}";
         }
 
         public static Light ToConfig(this clsUnit unit)
@@ -208,7 +208,7 @@ namespace OmniLinkBridge.MQTT
 
         public static string ToTopic(this clsThermostat thermostat, Topic topic)
         {
-            return $"omnilink/thermostat{thermostat.Number.ToString()}/{topic.ToString()}";
+            return $"{Global.mqtt_prefix}/thermostat{thermostat.Number.ToString()}/{topic.ToString()}";
         }
 
         public static Climate ToConfig(this clsThermostat thermostat)
@@ -248,7 +248,7 @@ namespace OmniLinkBridge.MQTT
 
         public static string ToTopic(this clsButton button, Topic topic)
         {
-            return $"omnilink/button{button.Number.ToString()}/{topic.ToString()}";
+            return $"{Global.mqtt_prefix}/button{button.Number.ToString()}/{topic.ToString()}";
         }
 
         public static Switch ToConfig(this clsButton button)
