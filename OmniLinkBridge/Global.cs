@@ -50,6 +50,7 @@ namespace OmniLinkBridge
         public static string mqtt_password;
         public static string mqtt_prefix;
         public static string mqtt_discovery_prefix;
+        public static string mqtt_discovery_name_prefix;
         public static HashSet<int> mqtt_discovery_ignore_zones;
         public static HashSet<int> mqtt_discovery_ignore_units;
         public static ConcurrentDictionary<int, OverrideZone> mqtt_discovery_override_zone;

@@ -17,7 +17,7 @@ namespace OmniLinkBridge.MQTT
         public static Alarm ToConfig(this clsArea area)
         {
             Alarm ret = new Alarm();
-            ret.name = area.Name;
+            ret.name = Global.mqtt_discovery_name_prefix + area.Name;
             ret.state_topic = area.ToTopic(Topic.basic_state);
             ret.command_topic = area.ToTopic(Topic.command);
             return ret;
@@ -82,7 +82,7 @@ namespace OmniLinkBridge.MQTT
         public static Sensor ToConfigTemp(this clsZone zone)
         {
             Sensor ret = new Sensor();
-            ret.name = zone.Name;
+            ret.name = $"{Global.mqtt_discovery_name_prefix}{zone.Name} Temp";
             ret.device_class = Sensor.DeviceClass.temperature;
             ret.state_topic = zone.ToTopic(Topic.current_temperature);
             ret.unit_of_measurement = "°F";
@@ -92,7 +92,7 @@ namespace OmniLinkBridge.MQTT
         public static Sensor ToConfigHumidity(this clsZone zone)
         {
             Sensor ret = new Sensor();
-            ret.name = zone.Name;
+            ret.name = $"{Global.mqtt_discovery_name_prefix}{zone.Name} Humidity";
             ret.device_class = Sensor.DeviceClass.humidity;
             ret.state_topic = zone.ToTopic(Topic.current_humidity);
             ret.unit_of_measurement = "%";
@@ -102,7 +102,7 @@ namespace OmniLinkBridge.MQTT
         public static Sensor ToConfigSensor(this clsZone zone)
         {
             Sensor ret = new Sensor();
-            ret.name = zone.Name;
+            ret.name = Global.mqtt_discovery_name_prefix + zone.Name;
 
             switch (zone.ZoneType)
             {
@@ -141,7 +141,7 @@ namespace OmniLinkBridge.MQTT
         public static BinarySensor ToConfig(this clsZone zone)
         {
             BinarySensor ret = new BinarySensor();
-            ret.name = zone.Name;
+            ret.name = Global.mqtt_discovery_name_prefix + zone.Name;
 
             Global.mqtt_discovery_override_zone.TryGetValue(zone.Number, out OverrideZone override_zone);
 
@@ -213,7 +213,7 @@ namespace OmniLinkBridge.MQTT
         public static Light ToConfig(this clsUnit unit)
         {
             Light ret = new Light();
-            ret.name = unit.Name;
+            ret.name = Global.mqtt_discovery_name_prefix + unit.Name;
             ret.state_topic = unit.ToTopic(Topic.state);
             ret.command_topic = unit.ToTopic(Topic.command);
             ret.brightness_state_topic = unit.ToTopic(Topic.brightness_state);
@@ -224,7 +224,7 @@ namespace OmniLinkBridge.MQTT
         public static Switch ToConfigSwitch(this clsUnit unit)
         {
             Switch ret = new Switch();
-            ret.name = unit.Name;
+            ret.name = Global.mqtt_discovery_name_prefix + unit.Name;
             ret.state_topic = unit.ToTopic(Topic.state);
             ret.command_topic = unit.ToTopic(Topic.command);
             return ret;
@@ -253,7 +253,7 @@ namespace OmniLinkBridge.MQTT
         public static Sensor ToConfigHumidity(this clsThermostat zone)
         {
             Sensor ret = new Sensor();
-            ret.name = zone.Name;
+            ret.name = Global.mqtt_discovery_name_prefix + zone.Name;
             ret.device_class = Sensor.DeviceClass.humidity;
             ret.state_topic = zone.ToTopic(Topic.current_humidity);
             ret.unit_of_measurement = "%";
@@ -263,7 +263,7 @@ namespace OmniLinkBridge.MQTT
         public static Climate ToConfig(this clsThermostat thermostat)
         {
             Climate ret = new Climate();
-            ret.name = thermostat.Name;
+            ret.name = Global.mqtt_discovery_name_prefix + thermostat.Name;
             ret.current_temperature_topic = thermostat.ToTopic(Topic.current_temperature);
 
             ret.temperature_low_state_topic = thermostat.ToTopic(Topic.temperature_heat_state);
@@ -303,7 +303,7 @@ namespace OmniLinkBridge.MQTT
         public static Switch ToConfig(this clsButton button)
         {
             Switch ret = new Switch();
-            ret.name = button.Name;
+            ret.name = Global.mqtt_discovery_name_prefix + button.Name;
             ret.state_topic = button.ToTopic(Topic.state);
             ret.command_topic = button.ToTopic(Topic.command);
             return ret;
