@@ -99,6 +99,45 @@ namespace OmniLinkBridge.MQTT
             return ret;
         }
 
+        public static Sensor ToConfigSensor(this clsZone zone)
+        {
+            Sensor ret = new Sensor();
+            ret.name = zone.Name;
+
+            switch (zone.ZoneType)
+            {
+                case enuZoneType.EntryExit:
+                case enuZoneType.X2EntryDelay:
+                case enuZoneType.X4EntryDelay:
+                    ret.icon = "mdi:door";
+                    break;
+                case enuZoneType.Perimeter:
+                    ret.icon = "mdi:window-closed";
+                    break;
+                case enuZoneType.Tamper:
+                    ret.icon = "mdi:shield";
+                    break;
+                case enuZoneType.AwayInt:
+                case enuZoneType.NightInt:
+                    ret.icon = "mdi:walk";
+                    break;
+                case enuZoneType.Water:
+                    ret.icon = "mdi:water";
+                    break;
+                case enuZoneType.Fire:
+                    ret.icon = "mdi:fire";
+                    break;
+                case enuZoneType.Gas:
+                    ret.icon = "mdi:gas-cylinder";
+                    break;
+            }
+
+            ret.value_template = @"{{ value|replace(""_"", "" "")|title }}";
+
+            ret.state_topic = zone.ToTopic(Topic.state);
+            return ret;
+        }
+
         public static BinarySensor ToConfig(this clsZone zone)
         {
             BinarySensor ret = new BinarySensor();
@@ -209,6 +248,16 @@ namespace OmniLinkBridge.MQTT
         public static string ToTopic(this clsThermostat thermostat, Topic topic)
         {
             return $"{Global.mqtt_prefix}/thermostat{thermostat.Number.ToString()}/{topic.ToString()}";
+        }
+
+        public static Sensor ToConfigHumidity(this clsThermostat zone)
+        {
+            Sensor ret = new Sensor();
+            ret.name = zone.Name;
+            ret.device_class = Sensor.DeviceClass.humidity;
+            ret.state_topic = zone.ToTopic(Topic.current_humidity);
+            ret.unit_of_measurement = "%";
+            return ret;
         }
 
         public static Climate ToConfig(this clsThermostat thermostat)

@@ -299,8 +299,10 @@ namespace OmniLinkBridge.Modules
 
                 if (zone.DefaultProperties == true || Global.mqtt_discovery_ignore_zones.Contains(zone.Number))
                 {
-                    MqttClient.PublishAsync($"{Global.mqtt_discovery_prefix}/sensor/{Global.mqtt_prefix}/zone{i.ToString()}/config", null, MqttQualityOfServiceLevel.AtMostOnce, true);
                     MqttClient.PublishAsync($"{Global.mqtt_discovery_prefix}/binary_sensor/{Global.mqtt_prefix}/zone{i.ToString()}/config", null, MqttQualityOfServiceLevel.AtMostOnce, true);
+                    MqttClient.PublishAsync($"{Global.mqtt_discovery_prefix}/sensor/{Global.mqtt_prefix}/zone{i.ToString()}/config", null, MqttQualityOfServiceLevel.AtMostOnce, true);
+                    MqttClient.PublishAsync($"{Global.mqtt_discovery_prefix}/sensor/{Global.mqtt_prefix}/zone{i.ToString()}temp/config", null, MqttQualityOfServiceLevel.AtMostOnce, true);
+                    MqttClient.PublishAsync($"{Global.mqtt_discovery_prefix}/sensor/{Global.mqtt_prefix}/zone{i.ToString()}humidity/config", null, MqttQualityOfServiceLevel.AtMostOnce, true);
                     continue;
                 }
 
@@ -308,12 +310,14 @@ namespace OmniLinkBridge.Modules
 
                 MqttClient.PublishAsync($"{Global.mqtt_discovery_prefix}/binary_sensor/{Global.mqtt_prefix}/zone{i.ToString()}/config",
                     JsonConvert.SerializeObject(zone.ToConfig()), MqttQualityOfServiceLevel.AtMostOnce, true);
+                MqttClient.PublishAsync($"{Global.mqtt_discovery_prefix}/sensor/{Global.mqtt_prefix}/zone{i.ToString()}/config",
+                    JsonConvert.SerializeObject(zone.ToConfigSensor()), MqttQualityOfServiceLevel.AtMostOnce, true);
 
                 if (zone.IsTemperatureZone())
-                    MqttClient.PublishAsync($"{Global.mqtt_discovery_prefix}/sensor/{Global.mqtt_prefix}/zone{i.ToString()}/config",
+                    MqttClient.PublishAsync($"{Global.mqtt_discovery_prefix}/sensor/{Global.mqtt_prefix}/zone{i.ToString()}temp/config",
                         JsonConvert.SerializeObject(zone.ToConfigTemp()), MqttQualityOfServiceLevel.AtMostOnce, true);
                 else if (zone.IsHumidityZone())
-                    MqttClient.PublishAsync($"{Global.mqtt_discovery_prefix}/sensor/{Global.mqtt_prefix}/zone{i.ToString()}/config",
+                    MqttClient.PublishAsync($"{Global.mqtt_discovery_prefix}/sensor/{Global.mqtt_prefix}/zone{i.ToString()}humidity/config",
                         JsonConvert.SerializeObject(zone.ToConfigHumidity()), MqttQualityOfServiceLevel.AtMostOnce, true);
             }
         }
@@ -352,6 +356,7 @@ namespace OmniLinkBridge.Modules
                 if (thermostat.DefaultProperties == true)
                 {
                     MqttClient.PublishAsync($"{Global.mqtt_discovery_prefix}/climate/{Global.mqtt_prefix}/thermostat{i.ToString()}/config", null, MqttQualityOfServiceLevel.AtMostOnce, true);
+                    MqttClient.PublishAsync($"{Global.mqtt_discovery_prefix}/sensor/{Global.mqtt_prefix}/thermostat{i.ToString()}humidity/config", null, MqttQualityOfServiceLevel.AtMostOnce, true);
                     continue;
                 }
 
@@ -359,6 +364,8 @@ namespace OmniLinkBridge.Modules
 
                 MqttClient.PublishAsync($"{Global.mqtt_discovery_prefix}/climate/{Global.mqtt_prefix}/thermostat{i.ToString()}/config",
                     JsonConvert.SerializeObject(thermostat.ToConfig()), MqttQualityOfServiceLevel.AtMostOnce, true);
+                MqttClient.PublishAsync($"{Global.mqtt_discovery_prefix}/sensor/{Global.mqtt_prefix}/thermostat{i.ToString()}humidity/config",
+                    JsonConvert.SerializeObject(thermostat.ToConfigHumidity()), MqttQualityOfServiceLevel.AtMostOnce, true);
             }
         }
 
