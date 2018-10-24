@@ -173,6 +173,15 @@ string ON
 ```
 
 ## Change Log
+Version 1.1.2 - 2018-10-23
+- Add min and max climate temperatures
+- Update docker run command to use local time zone
+- Improve area and zone MQTT support
+- Add option to change MQTT prefix to support multiple instances
+- Add detailed zone sensor and thermostat humidity sensor
+- Add prefix for MQTT discovery entity name
+- Request zone status update on area status change
+  
 Version 1.1.1 - 2018-10-18
 - Added docker support
 - Save subscriptions on change
