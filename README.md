@@ -1,8 +1,8 @@
 # OmniLink Bridge
-Provides time sync, logging, web service API, and MQTT bridge for HAI/Leviton OmniPro II controllers
+Provides time sync, logging, web service API, and MQTT bridge for HAI/Leviton OmniPro II controllers. Provides integration with Samsung SmarthThings via Web Service API and Home Assistant via MQTT.
 
 ## Download
-You can download the [binary here](http://www.excalibur-partners.com/downloads/OmniLinkBridge_1_1_1.zip) or use docker to build an image from git.
+You can download the [binary here](http://www.excalibur-partners.com/downloads/OmniLinkBridge_1_1_2.zip) or use docker to build an image from git.
 
 ## Requirements
 - .NET Framework 4.5.2 (or Mono equivalent)
@@ -53,7 +53,7 @@ You can download the [binary here](http://www.excalibur-partners.com/downloads/O
 	- cp OmniLinkBridge/OmniLinkBridge.ini /opt/omnilink-bridge
 	- vim /opt/omnilink-bridge/OmniLinkBridge.ini
 3. Start docker container
-	- docker run -d --name="omnilink-bridge" -v /opt/omnilink-bridge:/config --net=host --restart unless-stopped omnilink-bridge
+	- docker run -d --name="omnilink-bridge" -v /opt/omnilink-bridge:/config -v /etc/localtime:/etc/localtime:ro --net=host --restart unless-stopped omnilink-bridge
 4. Verify connectivity by looking at logs
 	- docker container logs omnilink-bridge
 	
@@ -86,12 +86,38 @@ To test the API you can use your browser to view a page or PowerShell (see below
 ## MQTT
 This module will also publish discovery topics for Home Assistant to auto configure devices.
 
+### Areas
+```
 SUB omnilink/areaX/state  
+string triggered, pending, armed_night, armed_night_delay, armed_home, armed_home_instant, armed_away, armed_vacation, disarmed
+
+SUB omnilink/areaX/basic_state  
 string triggered, pending, armed_night, armed_home, armed_away, disarmed
 
 PUB omnilink/areaX/command  
-string ARM_HOME, ARM_AWAY, ARM_NIGHT, DISARM, ARM_HOME_INSTANT, ARM_NIGHT_DELAY, ARM_VACATION
+string(insensitive) arm_home, arm_away, arm_night, disarm, arm_home_instant, arm_night_delay, arm_vacation
+```
 
+### Zones
+```
+SUB omnilink/zoneX/state  
+string secure, not_ready, trouble, armed, tripped, bypassed
+
+SUB omnilink/zoneX/basic_state  
+string OFF, ON
+
+SUB omnilink/zoneX/current_temperature (optional)  
+int Current temperature in degrees fahrenheit  
+
+SUB omnilink/zoneX/current_humidity (optional)  
+int Current relative humidity
+
+PUB omnilink/zoneX/command  
+string(insensitive) bypass, restore
+```
+
+### Units
+```
 SUB omnilink/unitX/state  
 PUB omnilink/unitX/command  
 string OFF, ON
@@ -99,7 +125,10 @@ string OFF, ON
 SUB omnilink/unitX/brightness_state  
 PUB omnilink/unitX/brightness_command  
 int Level from 0 to 100 percent
+```
 
+### Thermostats
+```
 SUB omnilink/thermostatX/current_operation  
 string idle, cool, heat
 
@@ -132,14 +161,27 @@ string auto, on, cycle
 SUB omnilink/thermostatX/hold_state  
 PUB omnilink/thermostatX/hold_command  
 string off, hold
+```
 
+### Buttons
+```
 SUB omnilink/buttonX/state  
 string OFF
 
 PUB omnilink/buttonX/command  
 string ON
+```
 
 ## Change Log
+Version 1.1.2 - 2018-10-23
+- Add min and max climate temperatures
+- Update docker run command to use local time zone
+- Improve area and zone MQTT support
+- Add option to change MQTT prefix to support multiple instances
+- Add detailed zone sensor and thermostat humidity sensor
+- Add prefix for MQTT discovery entity name
+- Request zone status update on area status change
+  
 Version 1.1.1 - 2018-10-18
 - Added docker support
 - Save subscriptions on change

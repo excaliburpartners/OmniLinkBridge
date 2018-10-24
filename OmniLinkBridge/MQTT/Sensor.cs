@@ -21,6 +21,12 @@ namespace OmniLinkBridge.MQTT
         public DeviceClass? device_class { get; set; }
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public string icon { get; set; }
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public string unit_of_measurement { get; set; }
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public string value_template { get; set; }
     }
 }

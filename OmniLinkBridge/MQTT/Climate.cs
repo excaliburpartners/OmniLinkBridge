@@ -16,6 +16,9 @@ namespace OmniLinkBridge.MQTT
         public string temperature_high_state_topic { get; set; }
         public string temperature_high_command_topic { get; set; }
 
+        public string min_temp { get; set; } = "45";
+        public string max_temp { get; set; } = "95";
+
         public string mode_state_topic { get; set; }
         public string mode_command_topic { get; set; }
         public List<string> modes { get; set; } = new List<string>(new string[] { "auto", "off", "cool", "heat" });
