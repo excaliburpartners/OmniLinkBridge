@@ -391,7 +391,7 @@ namespace OmniLinkBridge.Modules
                             case enuObjectType.Zone:
                                 Controller.Zones.CopyProperties(MSG);
 
-                                if (Controller.Zones[MSG.ObjectNumber].IsTemperatureZone())
+                                if (Controller.Zones[MSG.ObjectNumber].IsTemperatureZone() || Controller.Zones[MSG.ObjectNumber].IsHumidityZone())
                                     Controller.Connection.Send(new clsOL2MsgRequestExtendedStatus(Controller.Connection, enuObjectType.Auxillary, MSG.ObjectNumber, MSG.ObjectNumber), HandleRequestAuxillaryStatus);
 
                                 break;

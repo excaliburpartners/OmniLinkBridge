@@ -394,6 +394,31 @@ namespace OmniLinkBridge.Modules
         private void Omnilink_OnAreaStatus(object sender, AreaStatusEventArgs e)
         {
             PublishAreaState(e.Area);
+
+            // Since the controller doesn't fire zone status change on area status change
+            // request update so armed, tripped, and secure statuses are correct
+            for (ushort i = 1; i < OmniLink.Controller.Zones.Count; i++)
+            {
+                clsZone zone = OmniLink.Controller.Zones[i];
+
+                if (zone.DefaultProperties == false && zone.Area == e.Area.Number)
+                    OmniLink.Controller.Connection.Send(new clsOL2MsgRequestExtendedStatus(OmniLink.Controller.Connection, enuObjectType.Zone, i, i), HandleRequestZoneStatus);
+            }
+        }
+
+        private void HandleRequestZoneStatus(clsOmniLinkMessageQueueItem M, byte[] B, bool Timeout)
+        {
+            if (Timeout)
+                return;
+
+            clsOL2MsgExtendedStatus MSG = new clsOL2MsgExtendedStatus(OmniLink.Controller.Connection, B);
+
+            for (byte i = 0; i < MSG.ZoneStatusCount(); i++)
+            {
+                clsZone zone = OmniLink.Controller.Zones[MSG.ObjectNumber(i)];
+                zone.CopyExtendedStatus(MSG, i);
+                MqttClient.PublishAsync(zone.ToTopic(Topic.state), zone.ToState(), MqttQualityOfServiceLevel.AtMostOnce, true);
+            }
         }
 
         private void Omnilink_OnZoneStatus(object sender, ZoneStatusEventArgs e)
