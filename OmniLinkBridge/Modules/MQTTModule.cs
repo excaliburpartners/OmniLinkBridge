@@ -22,6 +22,7 @@ namespace OmniLinkBridge.Modules
 
         private OmniLinkII OmniLink { get; set; }
         private IManagedMqttClient MqttClient { get; set; }
+        private bool ControllerConnected { get; set; }
 
         private Regex regexTopic = new Regex(Global.mqtt_prefix + "/([A-Za-z]+)([0-9]+)/(.*)", RegexOptions.Compiled);
 
@@ -52,8 +53,16 @@ namespace OmniLinkBridge.Modules
                 .Build();
 
             MqttClient = new MqttFactory().CreateManagedMqttClient();
-            MqttClient.Connected += (sender, e) => { log.Debug("Connected"); };
-            MqttClient.ConnectingFailed += (sender, e) => { log.Debug("Error " + e.Exception.Message); };
+            MqttClient.Connected += (sender, e) =>
+            {
+                log.Debug("Connected");
+
+                // For the initial connection wait for the controller connected event to publish config
+                // For subsequent connections publish config immediately
+                if(ControllerConnected)
+                    PublishConfig();
+            };
+            MqttClient.ConnectingFailed += (sender, e) => { log.Debug("Error connecting " + e.Exception.Message); };
 
             MqttClient.StartAsync(manoptions);
 
@@ -256,7 +265,7 @@ namespace OmniLinkBridge.Modules
         {
             PublishConfig();
 
-            MqttClient.PublishAsync($"{Global.mqtt_prefix}/status", "online", MqttQualityOfServiceLevel.AtMostOnce, true);
+            ControllerConnected = true;
         }
 
         private void PublishConfig()
@@ -266,6 +275,8 @@ namespace OmniLinkBridge.Modules
             PublishUnits();
             PublishThermostats();
             PublishButtons();
+
+            MqttClient.PublishAsync($"{Global.mqtt_prefix}/status", "online", MqttQualityOfServiceLevel.AtMostOnce, true);
         }
 
         private void PublishAreas()

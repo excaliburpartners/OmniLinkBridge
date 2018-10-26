@@ -1,10 +1,15 @@
-﻿using System.Collections.Generic;
+﻿using log4net;
+using System;
+using System.Collections.Generic;
+using System.Reflection;
 using System.Threading.Tasks;
 
 namespace OmniLinkBridge.Notifications
 {
     public static class Notification
     {
+        private static ILog log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
+
         private static readonly List<INotification> providers = new List<INotification>()
         {
             new EmailNotification(),
@@ -16,7 +21,14 @@ namespace OmniLinkBridge.Notifications
         {
             Parallel.ForEach(providers, (provider) =>
             {
-                provider.Notify(source, description, priority);
+                try
+                {
+                    provider.Notify(source, description, priority);
+                }
+                catch (Exception ex)
+                {
+                    log.Error("Failed to send notification", ex);
+                }
             });
         }
     }
