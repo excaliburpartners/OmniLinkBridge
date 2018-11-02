@@ -1,10 +1,11 @@
 # OmniLink Bridge
-Provides time sync, logging, web service API, and MQTT bridge for HAI/Leviton OmniPro II controllers. Provides integration with Samsung SmarthThings via Web Service API and Home Assistant via MQTT.
+Provides MQTT bridge, web service API, time sync, and logging for [HAI/Leviton OmniPro II controllers](https://www.leviton.com/en/products/brands/omni-security-automation). Provides integration with [Samsung SmarthThings via web service API](https://github.com/excaliburpartners/SmartThings-OmniPro) and [Home Assistant via MQTT](https://www.home-assistant.io/components/mqtt/).
 
 ## Download
-You can download the [binary here](http://www.excalibur-partners.com/downloads/OmniLinkBridge_1_1_2.zip) or use docker to build an image from git.
+You can use docker to build an image from git or download the [binary here](http://www.excalibur-partners.com/downloads/OmniLinkBridge_1_1_2.zip).
 
 ## Requirements
+- [Docker](https://www.docker.com/)
 - .NET Framework 4.5.2 (or Mono equivalent)
 
 ## Operation
@@ -20,6 +21,20 @@ You can download the [binary here](http://www.excalibur-partners.com/downloads/O
 - Always sent for area alarms and critical system events
 - Optionally enable for area status changes and console messages
 
+## Docker (preferred)
+1. Clone git repo and build docker image
+	- git clone https://github.com/excaliburpartners/OmniLinkBridge.git
+	- cd OmniLinkBridge
+	- docker build --tag="omnilink-bridge" .
+2. Configure at a minimum the controller IP and encryptions keys. The web service port must be 8000 unless the Dockerfile is changed.
+	- mkdir /opt/omnilink-bridge
+	- cp OmniLinkBridge/OmniLinkBridge.ini /opt/omnilink-bridge
+	- vim /opt/omnilink-bridge/OmniLinkBridge.ini
+3. Start docker container
+	- docker run -d --name="omnilink-bridge" -v /opt/omnilink-bridge:/config -v /etc/localtime:/etc/localtime:ro --net=host --restart unless-stopped omnilink-bridge
+4. Verify connectivity by looking at logs
+	- docker container logs omnilink-bridge
+	
 ## Installation Windows
 1. Copy files to your desired location like C:\OmniLinkBridge
 2. Edit OmniLinkBridge.ini and define at a minimum the controller IP and encryptions keys
@@ -42,20 +57,6 @@ You can download the [binary here](http://www.excalibur-partners.com/downloads/O
 5. Enable at boot and start service
 	- systemctl enable omnilinkbridge.service
 	- systemctl start omnilinkbridge.service
-
-## Docker
-1. Clone git repo and build docker image
-	- git clone https://github.com/excaliburpartners/OmniLinkBridge.git
-	- cd OmniLinkBridge
-	- docker build --tag="omnilink-bridge" .
-2. Configure at a minimum the controller IP and encryptions keys. The web service port must be 8000 unless the Dockerfile is changed.
-	- mkdir /opt/omnilink-bridge
-	- cp OmniLinkBridge/OmniLinkBridge.ini /opt/omnilink-bridge
-	- vim /opt/omnilink-bridge/OmniLinkBridge.ini
-3. Start docker container
-	- docker run -d --name="omnilink-bridge" -v /opt/omnilink-bridge:/config -v /etc/localtime:/etc/localtime:ro --net=host --restart unless-stopped omnilink-bridge
-4. Verify connectivity by looking at logs
-	- docker container logs omnilink-bridge
 	
 ## MySQL Setup
 You will want to install the MySQL Community Server, Workbench, and ODBC Connector. The Workbench software provides a graphical interface to administer the MySQL server. The OmniLink Bridge uses ODBC to communicate with the database. The MySQL ODBC Connector library is needed for Windows ODBC to communicate with MySQL. 
@@ -84,7 +85,17 @@ To test the API you can use your browser to view a page or PowerShell (see below
 - Invoke-WebRequest -Uri "http://localhost:8000/SetUnit" -Method POST -ContentType "application/json" -Body (convertto-json -InputObject @{"id"=1;"value"=100}) -UseBasicParsing
 
 ## MQTT
-This module will also publish discovery topics for Home Assistant to auto configure devices.
+This module will also publish discovery topics for Home Assistant to auto configure devices. As of writing you will need to add a custom_component override in your Home Assistant config directory for the following pull requests.
+- [Add target temperature low high to MQTT climate](https://github.com/home-assistant/home-assistant/pull/17391/)
+- [Add night arm mode to MQTT alarm control panel](https://github.com/home-assistant/home-assistant/pull/17390/)
+
+```
+mkdir -p custom_components/climate
+wget https://raw.githubusercontent.com/home-assistant/home-assistant/dcfcca77d72b0c35cda9950a69f621b4e8cff81b/homeassistant/components/climate/mqtt.py -O custom_components/climate/mqtt.py
+
+mkdir -p custom_components/alarm_control_panel
+wget https://raw.githubusercontent.com/home-assistant/home-assistant/fa2510f58b40cfea2974530658ee011d984db6c7/homeassistant/components/alarm_control_panel/mqtt.py -O custom_components/alarm_control_panel/mqtt.py
+```
 
 ### Areas
 ```
