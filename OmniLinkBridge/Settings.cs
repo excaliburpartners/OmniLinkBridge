@@ -1,5 +1,4 @@
 using log4net;
-using OmniLinkBridge.MQTT;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -48,6 +47,7 @@ namespace OmniLinkBridge
             // Web Service
             Global.webapi_enabled = ValidateYesNo(settings, "webapi_enabled");
             Global.webapi_port = ValidatePort(settings, "webapi_port");
+            Global.webapi_override_zone = LoadOverrideZone<WebAPI.OverrideZone>(settings, "webapi_override_zone");
 
             // MQTT
             Global.mqtt_enabled = ValidateYesNo(settings, "mqtt_enabled");
@@ -64,7 +64,7 @@ namespace OmniLinkBridge
 
             Global.mqtt_discovery_ignore_zones = ValidateRange(settings, "mqtt_discovery_ignore_zones");
             Global.mqtt_discovery_ignore_units = ValidateRange(settings, "mqtt_discovery_ignore_units");
-            Global.mqtt_discovery_override_zone = LoadOverrideZone(settings, "mqtt_discovery_override_zone");
+            Global.mqtt_discovery_override_zone = LoadOverrideZone<MQTT.OverrideZone>(settings, "mqtt_discovery_override_zone");
 
             // Notifications
             Global.notify_area = ValidateYesNo(settings, "notify_area");
@@ -86,11 +86,11 @@ namespace OmniLinkBridge
             Global.pushover_user = ValidateMultipleStrings(settings, "pushover_user");
         }
 
-        private static ConcurrentDictionary<int, OverrideZone> LoadOverrideZone(NameValueCollection settings, string section)
+        private static ConcurrentDictionary<int, T> LoadOverrideZone<T>(NameValueCollection settings, string section) where T : new()
         {
             try
             {
-                ConcurrentDictionary<int, OverrideZone> ret = new ConcurrentDictionary<int, OverrideZone>();
+                ConcurrentDictionary<int, T> ret = new ConcurrentDictionary<int, T>();
 
                 if (settings[section] == null)
                     return ret;
@@ -106,13 +106,24 @@ namespace OmniLinkBridge
                     if (!attributes.ContainsKey("id") || !Int32.TryParse(attributes["id"], out int attrib_id))
                         throw new Exception("Missing or invalid id attribute");
 
-                    if (!attributes.ContainsKey("device_class") || !Enum.TryParse(attributes["device_class"], out BinarySensor.DeviceClass attrib_device_class))
-                        throw new Exception("Missing or invalid device_class attribute");
+                    T override_zone = new T();
 
-                    ret.TryAdd(attrib_id, new OverrideZone()
+                    if (((object)override_zone) is WebAPI.OverrideZone webapi_zone)
                     {
-                        device_class = attrib_device_class,
-                    });
+                        if (!attributes.ContainsKey("device_type") || !Enum.TryParse(attributes["device_type"], out WebAPI.DeviceType attrib_device_type))
+                            throw new Exception("Missing or invalid device_type attribute");
+
+                        webapi_zone.device_type = attrib_device_type;
+                    }
+                    else if (((object)override_zone) is MQTT.OverrideZone mqtt_zone)
+                    {
+                        if (!attributes.ContainsKey("device_class") || !Enum.TryParse(attributes["device_class"], out MQTT.BinarySensor.DeviceClass attrib_device_class))
+                            throw new Exception("Missing or invalid device_class attribute");
+
+                        mqtt_zone.device_class = attrib_device_class;
+                    }
+
+                    ret.TryAdd(attrib_id, override_zone);
                 }
 
                 return ret;

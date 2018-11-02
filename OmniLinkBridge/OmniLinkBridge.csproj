@@ -123,6 +123,7 @@
     </Compile>
     <Compile Include="Settings.cs" />
     <Compile Include="WebService\MappingExtensions.cs" />
+    <Compile Include="WebService\OverrideZone.cs" />
     <Compile Include="WebService\SubscribeContract.cs" />
     <Compile Include="WebService\ThermostatContract.cs" />
     <Compile Include="WebService\NameContract.cs" />
@@ -131,6 +132,7 @@
     <Compile Include="WebService\UnitContract.cs" />
     <Compile Include="WebService\WebNotification.cs" />
     <Compile Include="Modules\WebServiceModule.cs" />
+    <Compile Include="WebService\DeviceType.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config">

@@ -79,30 +79,7 @@ namespace OmniLinkBridge
                 return;
             }
 
-            switch (e.Zone.ZoneType)
-            {
-                case enuZoneType.EntryExit:
-                case enuZoneType.X2EntryDelay:
-                case enuZoneType.X4EntryDelay:
-                case enuZoneType.Perimeter:
-                case enuZoneType.Tamper:
-                case enuZoneType.Auxiliary:
-                    WebNotification.Send("contact", JsonConvert.SerializeObject(e.Zone.ToContract()));
-                    break;
-                case enuZoneType.AwayInt:
-                case enuZoneType.NightInt:
-                    WebNotification.Send("motion", JsonConvert.SerializeObject(e.Zone.ToContract()));
-                    break;
-                case enuZoneType.Water:
-                    WebNotification.Send("water", JsonConvert.SerializeObject(e.Zone.ToContract()));
-                    break;
-                case enuZoneType.Fire:
-                    WebNotification.Send("smoke", JsonConvert.SerializeObject(e.Zone.ToContract()));
-                    break;
-                case enuZoneType.Gas:
-                    WebNotification.Send("co", JsonConvert.SerializeObject(e.Zone.ToContract()));
-                    break;
-            }
+            WebNotification.Send(Enum.GetName(typeof(DeviceType), e.Zone.ToDeviceType()), JsonConvert.SerializeObject(e.Zone.ToContract()));
         }
 
         private void Omnilink_OnUnitStatus(object sender, UnitStatusEventArgs e)

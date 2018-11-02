@@ -1,5 +1,6 @@
 ﻿using HAI_Shared;
 using log4net;
+using OmniLinkBridge.WebAPI;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
@@ -53,12 +54,7 @@ namespace OmniLinkBridge.WebAPI
             {
                 clsZone zone = WebServiceModule.OmniLink.Controller.Zones[i];
 
-                if ((zone.ZoneType == enuZoneType.EntryExit ||
-                    zone.ZoneType == enuZoneType.X2EntryDelay ||
-                    zone.ZoneType == enuZoneType.X4EntryDelay ||
-                    zone.ZoneType == enuZoneType.Perimeter ||
-                    zone.ZoneType == enuZoneType.Tamper ||
-                    zone.ZoneType == enuZoneType.Auxiliary) && zone.DefaultProperties == false)
+                if (zone.DefaultProperties == false && zone.ToDeviceType() == DeviceType.contact)
                     names.Add(new NameContract() { id = i, name = zone.Name });
             }
             return names;
@@ -73,8 +69,7 @@ namespace OmniLinkBridge.WebAPI
             {
                 clsZone zone = WebServiceModule.OmniLink.Controller.Zones[i];
 
-                if ((zone.ZoneType == enuZoneType.AwayInt ||
-                    zone.ZoneType == enuZoneType.NightInt) && zone.DefaultProperties == false)
+                if (zone.DefaultProperties == false && zone.ToDeviceType() == DeviceType.motion)
                     names.Add(new NameContract() { id = i, name = zone.Name });
             }
             return names;
@@ -89,7 +84,7 @@ namespace OmniLinkBridge.WebAPI
             {
                 clsZone zone = WebServiceModule.OmniLink.Controller.Zones[i];
 
-                if (zone.ZoneType == enuZoneType.Water && zone.DefaultProperties == false)
+                if (zone.DefaultProperties == false && zone.ToDeviceType() == DeviceType.water)
                     names.Add(new NameContract() { id = i, name = zone.Name });
             }
             return names;
@@ -104,7 +99,7 @@ namespace OmniLinkBridge.WebAPI
             {
                 clsZone zone = WebServiceModule.OmniLink.Controller.Zones[i];
 
-                if (zone.ZoneType == enuZoneType.Fire && zone.DefaultProperties == false)
+                if (zone.DefaultProperties == false && zone.ToDeviceType() == DeviceType.smoke)
                     names.Add(new NameContract() { id = i, name = zone.Name });
             }
             return names;
@@ -119,7 +114,7 @@ namespace OmniLinkBridge.WebAPI
             {
                 clsZone zone = WebServiceModule.OmniLink.Controller.Zones[i];
 
-                if (zone.ZoneType == enuZoneType.Gas && zone.DefaultProperties == false)
+                if (zone.DefaultProperties == false && zone.ToDeviceType() == DeviceType.co)
                     names.Add(new NameContract() { id = i, name = zone.Name });
             }
             return names;
@@ -134,7 +129,7 @@ namespace OmniLinkBridge.WebAPI
             {
                 clsZone zone = WebServiceModule.OmniLink.Controller.Zones[i];
 
-                if (zone.IsTemperatureZone() && zone.DefaultProperties == false)
+                if (zone.DefaultProperties == false && zone.IsTemperatureZone())
                     names.Add(new NameContract() { id = i, name = zone.Name });
             }
             return names;
@@ -152,33 +147,8 @@ namespace OmniLinkBridge.WebAPI
             }
             else
             {
-                switch (WebServiceModule.OmniLink.Controller.Zones[id].ZoneType)
-                {
-                    case enuZoneType.EntryExit:
-                    case enuZoneType.X2EntryDelay:
-                    case enuZoneType.X4EntryDelay:
-                    case enuZoneType.Perimeter:
-                    case enuZoneType.Tamper:
-                    case enuZoneType.Auxiliary:
-                        ctx.OutgoingResponse.Headers.Add("type", "contact");
-                        break;
-                    case enuZoneType.AwayInt:
-                    case enuZoneType.NightInt:
-                        ctx.OutgoingResponse.Headers.Add("type", "motion");
-                        break;
-                    case enuZoneType.Water:
-                        ctx.OutgoingResponse.Headers.Add("type", "water");
-                        break;
-                    case enuZoneType.Fire:
-                        ctx.OutgoingResponse.Headers.Add("type", "smoke");
-                        break;
-                    case enuZoneType.Gas:
-                        ctx.OutgoingResponse.Headers.Add("type", "co");
-                        break;
-                    default:
-                        ctx.OutgoingResponse.Headers.Add("type", "unknown");
-                        break;
-                }
+                ctx.OutgoingResponse.Headers.Add("type", Enum.GetName(typeof(DeviceType), 
+                    WebServiceModule.OmniLink.Controller.Zones[id].ToDeviceType()));
             }
 
             return WebServiceModule.OmniLink.Controller.Zones[id].ToContract();

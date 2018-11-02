@@ -98,5 +98,35 @@ namespace OmniLinkBridge.WebAPI
 
             return ret;
         }
+
+        public static DeviceType ToDeviceType(this clsZone zone)
+        {
+            Global.webapi_override_zone.TryGetValue(zone.Number, out OverrideZone override_zone);
+
+            if (override_zone != null)
+                return override_zone.device_type;
+
+            switch (zone.ZoneType)
+            {
+                case enuZoneType.EntryExit:
+                case enuZoneType.X2EntryDelay:
+                case enuZoneType.X4EntryDelay:
+                case enuZoneType.Perimeter:
+                case enuZoneType.Tamper:
+                case enuZoneType.Auxiliary:
+                    return DeviceType.contact;
+                case enuZoneType.AwayInt:
+                case enuZoneType.NightInt:
+                    return DeviceType.motion;
+                case enuZoneType.Water:
+                    return DeviceType.water;
+                case enuZoneType.Fire:
+                    return DeviceType.smoke;
+                case enuZoneType.Gas:
+                    return DeviceType.co;
+                default:
+                    return DeviceType.unknown;
+            }
+        }
     }
 }

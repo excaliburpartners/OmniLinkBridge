@@ -1,4 +1,3 @@
-using OmniLinkBridge.MQTT;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Net.Mail;
@@ -40,6 +39,7 @@ namespace OmniLinkBridge
         // Web Service
         public static bool webapi_enabled;
         public static int webapi_port;
+        public static ConcurrentDictionary<int, WebAPI.OverrideZone> webapi_override_zone;
         public static string webapi_subscriptions_file;
 
         // MQTT
@@ -53,7 +53,7 @@ namespace OmniLinkBridge
         public static string mqtt_discovery_name_prefix;
         public static HashSet<int> mqtt_discovery_ignore_zones;
         public static HashSet<int> mqtt_discovery_ignore_units;
-        public static ConcurrentDictionary<int, OverrideZone> mqtt_discovery_override_zone;
+        public static ConcurrentDictionary<int, MQTT.OverrideZone> mqtt_discovery_override_zone;
 
         // Notifications
         public static bool notify_area;
