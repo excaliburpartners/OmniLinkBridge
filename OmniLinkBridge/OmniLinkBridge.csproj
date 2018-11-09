@@ -77,6 +77,7 @@
     <Compile Include="CoreServer.cs" />
     <Compile Include="Modules\TimeSyncModule.cs" />
     <Compile Include="MQTT\Alarm.cs" />
+    <Compile Include="MQTT\AreaState.cs" />
     <Compile Include="MQTT\BinarySensor.cs" />
     <Compile Include="MQTT\Device.cs" />
     <Compile Include="MQTT\Climate.cs" />

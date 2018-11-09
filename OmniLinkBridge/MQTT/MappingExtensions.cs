@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using HAI_Shared;
+using Newtonsoft.Json;
 
 namespace OmniLinkBridge.MQTT
 {
@@ -25,7 +26,9 @@ namespace OmniLinkBridge.MQTT
 
         public static string ToState(this clsArea area)
         {
-            if (area.AreaBurglaryAlarmText != "OK")
+            if (area.AreaAlarms.IsBitSet(0) ||  // Burgulary
+                area.AreaAlarms.IsBitSet(3) ||  // Auxiliary
+                area.AreaAlarms.IsBitSet(6))    // Duress
                 return "triggered";
             else if (area.ExitTimer > 0)
                 return "pending";
@@ -52,7 +55,9 @@ namespace OmniLinkBridge.MQTT
 
         public static string ToBasicState(this clsArea area)
         {
-            if (area.AreaBurglaryAlarmText != "OK")
+            if (area.AreaAlarms.IsBitSet(0) ||  // Burgulary
+                area.AreaAlarms.IsBitSet(3) ||  // Auxiliary
+                area.AreaAlarms.IsBitSet(6))    // Duress
                 return "triggered";
             else if (area.ExitTimer > 0)
                 return "pending";
@@ -72,6 +77,130 @@ namespace OmniLinkBridge.MQTT
                 default:
                     return "disarmed";
             }
+        }
+
+        public static BinarySensor ToConfigBurglary(this clsArea area)
+        {
+            BinarySensor ret = new BinarySensor();
+            ret.name = $"{Global.mqtt_discovery_name_prefix}{area.Name} Burglary";
+            ret.device_class = BinarySensor.DeviceClass.safety;
+            ret.state_topic = area.ToTopic(Topic.json_state);
+            ret.value_template = "{% if value_json.burglary_alarm %} ON {%- else -%} OFF {%- endif %}";
+            return ret;
+        }
+
+        public static BinarySensor ToConfigFire(this clsArea area)
+        {
+            BinarySensor ret = new BinarySensor();
+            ret.name = $"{Global.mqtt_discovery_name_prefix}{area.Name} Fire";
+            ret.device_class = BinarySensor.DeviceClass.smoke;
+            ret.state_topic = area.ToTopic(Topic.json_state);
+            ret.value_template = "{% if value_json.fire_alarm %} ON {%- else -%} OFF {%- endif %}";
+            return ret;
+        }
+
+        public static BinarySensor ToConfigGas(this clsArea area)
+        {
+            BinarySensor ret = new BinarySensor();
+            ret.name = $"{Global.mqtt_discovery_name_prefix}{area.Name} Gas";
+            ret.device_class = BinarySensor.DeviceClass.gas;
+            ret.state_topic = area.ToTopic(Topic.json_state);
+            ret.value_template = "{% if value_json.gas_alarm %} ON {%- else -%} OFF {%- endif %}";
+            return ret;
+        }
+
+        public static BinarySensor ToConfigAux(this clsArea area)
+        {
+            BinarySensor ret = new BinarySensor();
+            ret.name = $"{Global.mqtt_discovery_name_prefix}{area.Name} Auxiliary";
+            ret.device_class = BinarySensor.DeviceClass.problem;
+            ret.state_topic = area.ToTopic(Topic.json_state);
+            ret.value_template = "{% if  value_json.burglary_alarm %} ON {%- else -%} OFF {%- endif %}";
+            return ret;
+        }
+
+        public static BinarySensor ToConfigFreeze(this clsArea area)
+        {
+            BinarySensor ret = new BinarySensor();
+            ret.name = $"{Global.mqtt_discovery_name_prefix}{area.Name} Freeze";
+            ret.device_class = BinarySensor.DeviceClass.cold;
+            ret.state_topic = area.ToTopic(Topic.json_state);
+            ret.value_template = "{% if value_json.freeze_alarm %} ON {%- else -%} OFF {%- endif %}";
+            return ret;
+        }
+
+        public static BinarySensor ToConfigWater(this clsArea area)
+        {
+            BinarySensor ret = new BinarySensor();
+            ret.name = $"{Global.mqtt_discovery_name_prefix}{area.Name} Water";
+            ret.device_class = BinarySensor.DeviceClass.moisture;
+            ret.state_topic = area.ToTopic(Topic.json_state);
+            ret.value_template = "{% if value_json.water_alarm %} ON {%- else -%} OFF {%- endif %}";
+            return ret;
+        }
+    
+        public static BinarySensor ToConfigDuress(this clsArea area)
+        {
+            BinarySensor ret = new BinarySensor();
+            ret.name = $"{Global.mqtt_discovery_name_prefix}{area.Name} Duress";
+            ret.device_class = BinarySensor.DeviceClass.safety;
+            ret.state_topic = area.ToTopic(Topic.json_state);
+            ret.value_template = "{% if value_json.duress_alarm %} ON {%- else -%} OFF {%- endif %}";
+            return ret;
+        }
+
+        public static BinarySensor ToConfigTemp(this clsArea area)
+        {
+            BinarySensor ret = new BinarySensor();
+            ret.name = $"{Global.mqtt_discovery_name_prefix}{area.Name} Temp";
+            ret.device_class = BinarySensor.DeviceClass.heat;
+            ret.state_topic = area.ToTopic(Topic.json_state);
+            ret.value_template = "{% if value_json.temperature_alarm %} ON {%- else -%} OFF {%- endif %}";
+            return ret;
+        }
+
+        public static string ToJsonState(this clsArea area)
+        {
+            AreaState state = new AreaState()
+            {
+                arming = area.ExitTimer > 0,
+                burglary_alarm = area.AreaAlarms.IsBitSet(0),
+                fire_alarm = area.AreaAlarms.IsBitSet(1),
+                gas_alarm = area.AreaAlarms.IsBitSet(2),
+                auxiliary_alarm = area.AreaAlarms.IsBitSet(3),
+                freeze_alarm = area.AreaAlarms.IsBitSet(4),
+                water_alarm = area.AreaAlarms.IsBitSet(5),
+                duress_alarm = area.AreaAlarms.IsBitSet(6),
+                temperature_alarm = area.AreaAlarms.IsBitSet(7)
+            };
+
+            switch (area.AreaMode)
+            {
+                case enuSecurityMode.Night:
+                    state.mode = "night";
+                    break;
+                case enuSecurityMode.NightDly:
+                    state.mode = "night_delay";
+                    break;
+                case enuSecurityMode.Day:
+                    state.mode = "home";
+                    break;
+                case enuSecurityMode.DayInst:
+                    state.mode = "home_instant";
+                    break;
+                case enuSecurityMode.Away:
+                    state.mode = "away";
+                    break;
+                case enuSecurityMode.Vacation:
+                    state.mode = "vacation";
+                    break;
+                case enuSecurityMode.Off:
+                default:
+                    state.mode = "off";
+                    break;
+            }
+
+            return JsonConvert.SerializeObject(state);
         }
 
         public static string ToTopic(this clsZone zone, Topic topic)
@@ -250,10 +379,20 @@ namespace OmniLinkBridge.MQTT
             return $"{Global.mqtt_prefix}/thermostat{thermostat.Number.ToString()}/{topic.ToString()}";
         }
 
+        public static Sensor ToConfigTemp(this clsThermostat zone)
+        {
+            Sensor ret = new Sensor();
+            ret.name = $"{Global.mqtt_discovery_name_prefix}{zone.Name} Temp";
+            ret.device_class = Sensor.DeviceClass.temperature;
+            ret.state_topic = zone.ToTopic(Topic.current_temperature);
+            ret.unit_of_measurement = "°F";
+            return ret;
+        }
+
         public static Sensor ToConfigHumidity(this clsThermostat zone)
         {
             Sensor ret = new Sensor();
-            ret.name = Global.mqtt_discovery_name_prefix + zone.Name;
+            ret.name = $"{Global.mqtt_discovery_name_prefix}{zone.Name} Humidity";
             ret.device_class = Sensor.DeviceClass.humidity;
             ret.state_topic = zone.ToTopic(Topic.current_humidity);
             ret.unit_of_measurement = "%";

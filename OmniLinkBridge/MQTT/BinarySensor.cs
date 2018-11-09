@@ -14,17 +14,23 @@ namespace OmniLinkBridge.MQTT
         public enum DeviceClass
         {
             battery,
+            cold,
             door,
             garage_door,
             gas,
+            heat,
             moisture,
             motion,
             problem,
+            safety,
             smoke,
             window
         }
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public DeviceClass? device_class { get; set; }
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public string value_template { get; set; }
     }
 }

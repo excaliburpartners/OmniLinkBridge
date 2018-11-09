@@ -290,6 +290,14 @@ namespace OmniLinkBridge.Modules
                 if (area.DefaultProperties == true)
                 {
                     MqttClient.PublishAsync($"{Global.mqtt_discovery_prefix}/alarm_control_panel/{Global.mqtt_prefix}/area{i.ToString()}/config", null, MqttQualityOfServiceLevel.AtMostOnce, true);
+                    MqttClient.PublishAsync($"{Global.mqtt_discovery_prefix}/binary_sensor/{Global.mqtt_prefix}/area{i.ToString()}burglary/config", null, MqttQualityOfServiceLevel.AtMostOnce, true);
+                    MqttClient.PublishAsync($"{Global.mqtt_discovery_prefix}/binary_sensor/{Global.mqtt_prefix}/area{i.ToString()}fire/config", null, MqttQualityOfServiceLevel.AtMostOnce, true);
+                    MqttClient.PublishAsync($"{Global.mqtt_discovery_prefix}/binary_sensor/{Global.mqtt_prefix}/area{i.ToString()}gas/config", null, MqttQualityOfServiceLevel.AtMostOnce, true);
+                    MqttClient.PublishAsync($"{Global.mqtt_discovery_prefix}/binary_sensor/{Global.mqtt_prefix}/area{i.ToString()}aux/config", null, MqttQualityOfServiceLevel.AtMostOnce, true);
+                    MqttClient.PublishAsync($"{Global.mqtt_discovery_prefix}/binary_sensor/{Global.mqtt_prefix}/area{i.ToString()}freeze/config", null, MqttQualityOfServiceLevel.AtMostOnce, true);
+                    MqttClient.PublishAsync($"{Global.mqtt_discovery_prefix}/binary_sensor/{Global.mqtt_prefix}/area{i.ToString()}water/config", null, MqttQualityOfServiceLevel.AtMostOnce, true);
+                    MqttClient.PublishAsync($"{Global.mqtt_discovery_prefix}/binary_sensor/{Global.mqtt_prefix}/area{i.ToString()}duress/config", null, MqttQualityOfServiceLevel.AtMostOnce, true);
+                    MqttClient.PublishAsync($"{Global.mqtt_discovery_prefix}/binary_sensor/{Global.mqtt_prefix}/area{i.ToString()}temp/config", null, MqttQualityOfServiceLevel.AtMostOnce, true);
                     continue;
                 }
 
@@ -297,6 +305,22 @@ namespace OmniLinkBridge.Modules
 
                 MqttClient.PublishAsync($"{Global.mqtt_discovery_prefix}/alarm_control_panel/{Global.mqtt_prefix}/area{i.ToString()}/config",
                     JsonConvert.SerializeObject(area.ToConfig()), MqttQualityOfServiceLevel.AtMostOnce, true);
+                MqttClient.PublishAsync($"{Global.mqtt_discovery_prefix}/binary_sensor/{Global.mqtt_prefix}/area{i.ToString()}burglary/config",
+                    JsonConvert.SerializeObject(area.ToConfigBurglary()), MqttQualityOfServiceLevel.AtMostOnce, true);
+                MqttClient.PublishAsync($"{Global.mqtt_discovery_prefix}/binary_sensor/{Global.mqtt_prefix}/area{i.ToString()}fire/config",
+                    JsonConvert.SerializeObject(area.ToConfigFire()), MqttQualityOfServiceLevel.AtMostOnce, true);
+                MqttClient.PublishAsync($"{Global.mqtt_discovery_prefix}/binary_sensor/{Global.mqtt_prefix}/area{i.ToString()}gas/config",
+                    JsonConvert.SerializeObject(area.ToConfigGas()), MqttQualityOfServiceLevel.AtMostOnce, true);
+                MqttClient.PublishAsync($"{Global.mqtt_discovery_prefix}/binary_sensor/{Global.mqtt_prefix}/area{i.ToString()}aux/config",
+                    JsonConvert.SerializeObject(area.ToConfigAux()), MqttQualityOfServiceLevel.AtMostOnce, true);
+                MqttClient.PublishAsync($"{Global.mqtt_discovery_prefix}/binary_sensor/{Global.mqtt_prefix}/area{i.ToString()}freeze/config",
+                    JsonConvert.SerializeObject(area.ToConfigFreeze()), MqttQualityOfServiceLevel.AtMostOnce, true);
+                MqttClient.PublishAsync($"{Global.mqtt_discovery_prefix}/binary_sensor/{Global.mqtt_prefix}/area{i.ToString()}water/config",
+                    JsonConvert.SerializeObject(area.ToConfigWater()), MqttQualityOfServiceLevel.AtMostOnce, true);
+                MqttClient.PublishAsync($"{Global.mqtt_discovery_prefix}/binary_sensor/{Global.mqtt_prefix}/area{i.ToString()}duress/config",
+                   JsonConvert.SerializeObject(area.ToConfigDuress()), MqttQualityOfServiceLevel.AtMostOnce, true);
+                MqttClient.PublishAsync($"{Global.mqtt_discovery_prefix}/binary_sensor/{Global.mqtt_prefix}/area{i.ToString()}temp/config",
+                   JsonConvert.SerializeObject(area.ToConfigTemp()), MqttQualityOfServiceLevel.AtMostOnce, true);
             }
         }
 
@@ -367,6 +391,7 @@ namespace OmniLinkBridge.Modules
                 if (thermostat.DefaultProperties == true)
                 {
                     MqttClient.PublishAsync($"{Global.mqtt_discovery_prefix}/climate/{Global.mqtt_prefix}/thermostat{i.ToString()}/config", null, MqttQualityOfServiceLevel.AtMostOnce, true);
+                    MqttClient.PublishAsync($"{Global.mqtt_discovery_prefix}/sensor/{Global.mqtt_prefix}/thermostat{i.ToString()}temp/config", null, MqttQualityOfServiceLevel.AtMostOnce, true);
                     MqttClient.PublishAsync($"{Global.mqtt_discovery_prefix}/sensor/{Global.mqtt_prefix}/thermostat{i.ToString()}humidity/config", null, MqttQualityOfServiceLevel.AtMostOnce, true);
                     continue;
                 }
@@ -375,6 +400,8 @@ namespace OmniLinkBridge.Modules
 
                 MqttClient.PublishAsync($"{Global.mqtt_discovery_prefix}/climate/{Global.mqtt_prefix}/thermostat{i.ToString()}/config",
                     JsonConvert.SerializeObject(thermostat.ToConfig()), MqttQualityOfServiceLevel.AtMostOnce, true);
+                MqttClient.PublishAsync($"{Global.mqtt_discovery_prefix}/sensor/{Global.mqtt_prefix}/thermostat{i.ToString()}temp/config",
+                    JsonConvert.SerializeObject(thermostat.ToConfigTemp()), MqttQualityOfServiceLevel.AtMostOnce, true);
                 MqttClient.PublishAsync($"{Global.mqtt_discovery_prefix}/sensor/{Global.mqtt_prefix}/thermostat{i.ToString()}humidity/config",
                     JsonConvert.SerializeObject(thermostat.ToConfigHumidity()), MqttQualityOfServiceLevel.AtMostOnce, true);
             }
@@ -452,6 +479,7 @@ namespace OmniLinkBridge.Modules
         {
             MqttClient.PublishAsync(area.ToTopic(Topic.state), area.ToState(), MqttQualityOfServiceLevel.AtMostOnce, true);
             MqttClient.PublishAsync(area.ToTopic(Topic.basic_state), area.ToBasicState(), MqttQualityOfServiceLevel.AtMostOnce, true);
+            MqttClient.PublishAsync(area.ToTopic(Topic.json_state), area.ToJsonState(), MqttQualityOfServiceLevel.AtMostOnce, true);
         }
 
         private void PublishZoneState(clsZone zone)

@@ -26,6 +26,7 @@ namespace OmniLinkBridge.MQTT
         public static Topic command { get { return new Topic("command"); } }
 
         public static Topic basic_state { get { return new Topic("basic_state"); } }
+        public static Topic json_state { get { return new Topic("json_state"); } }
 
         public static Topic brightness_state { get { return new Topic("brightness_state"); } }
         public static Topic brightness_command { get { return new Topic("brightness_command"); } }
