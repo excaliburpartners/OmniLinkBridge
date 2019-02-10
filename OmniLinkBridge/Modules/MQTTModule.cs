@@ -363,20 +363,23 @@ namespace OmniLinkBridge.Modules
 
             for (ushort i = 1; i < OmniLink.Controller.Units.Count; i++)
             {
-                string type = i < 385 ? "light" : "switch";
-
                 clsUnit unit = OmniLink.Controller.Units[i];
                 
                 if (unit.DefaultProperties == true || Global.mqtt_discovery_ignore_units.Contains(unit.Number))
                 {
+                    string type = i < 385 ? "light" : "switch";
                     MqttClient.PublishAsync($"{Global.mqtt_discovery_prefix}/{type}/{Global.mqtt_prefix}/unit{i.ToString()}/config", null, MqttQualityOfServiceLevel.AtMostOnce, true);
                     continue;
                 }
 
                 PublishUnitState(unit);
 
-                MqttClient.PublishAsync($"{Global.mqtt_discovery_prefix}/{type}/{Global.mqtt_prefix}/unit{i.ToString()}/config",
-                    JsonConvert.SerializeObject(unit.ToConfig()), MqttQualityOfServiceLevel.AtMostOnce, true);
+                if(i < 385)
+                    MqttClient.PublishAsync($"{Global.mqtt_discovery_prefix}/light/{Global.mqtt_prefix}/unit{i.ToString()}/config",
+                        JsonConvert.SerializeObject(unit.ToConfig()), MqttQualityOfServiceLevel.AtMostOnce, true);
+                else
+                    MqttClient.PublishAsync($"{Global.mqtt_discovery_prefix}/switch/{Global.mqtt_prefix}/unit{i.ToString()}/config",
+                        JsonConvert.SerializeObject(unit.ToConfigSwitch()), MqttQualityOfServiceLevel.AtMostOnce, true);
             }
         }
 
