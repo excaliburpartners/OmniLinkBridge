@@ -89,7 +89,9 @@ namespace OmniLinkBridge
 
         private void Omnilink_OnThermostatStatus(object sender, ThermostatStatusEventArgs e)
         {
-            if(!e.EventTimer)
+            // Ignore events fired by thermostat polling and when temperature is invalid
+            // An invalid temperature can occur when a Zigbee thermostat is unreachable
+            if (!e.EventTimer && e.Thermostat.Temp > 0)
                 WebNotification.Send("thermostat", JsonConvert.SerializeObject(e.Thermostat.ToContract()));
         }
     }

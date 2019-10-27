@@ -31,7 +31,7 @@ You can use docker to build an image from git or download the [binary here](http
 	- cp OmniLinkBridge/OmniLinkBridge.ini /opt/omnilink-bridge
 	- vim /opt/omnilink-bridge/OmniLinkBridge.ini
 3. Start docker container
-	- docker run -d --name="omnilink-bridge" -v /opt/omnilink-bridge:/config -v /etc/localtime:/etc/localtime:ro --net=host --restart unless-stopped omnilink-bridge
+	- docker run -d --name="omnilink-bridge" -v /opt/omnilink-bridge:/config -v /etc/localtime:/etc/localtime:ro --net=host --restart always omnilink-bridge
 4. Verify connectivity by looking at logs
 	- docker container logs omnilink-bridge
 	
@@ -90,11 +90,9 @@ This module will also publish discovery topics for Home Assistant to auto config
 - [Add night arm mode to MQTT alarm control panel](https://github.com/home-assistant/home-assistant/pull/17390/)
 
 ```
-mkdir -p custom_components/climate
-wget https://raw.githubusercontent.com/home-assistant/home-assistant/dcfcca77d72b0c35cda9950a69f621b4e8cff81b/homeassistant/components/climate/mqtt.py -O custom_components/climate/mqtt.py
-
-mkdir -p custom_components/alarm_control_panel
-wget https://raw.githubusercontent.com/home-assistant/home-assistant/fa2510f58b40cfea2974530658ee011d984db6c7/homeassistant/components/alarm_control_panel/mqtt.py -O custom_components/alarm_control_panel/mqtt.py
+mkdir -p custom_components/mqtt
+wget https://raw.githubusercontent.com/home-assistant/home-assistant/dcfcca77d72b0c35cda9950a69f621b4e8cff81b/homeassistant/components/climate/mqtt.py -O custom_components/mqtt/climate.py
+wget https://raw.githubusercontent.com/home-assistant/home-assistant/fa2510f58b40cfea2974530658ee011d984db6c7/homeassistant/components/alarm_control_panel/mqtt.py -O custom_components/mqtt/alarm_control_panel.py
 ```
 
 ### Areas
@@ -199,7 +197,7 @@ Version 1.1.2 - 2018-10-23
 - Add detailed zone sensor and thermostat humidity sensor
 - Add prefix for MQTT discovery entity name
 - Request zone status update on area status change
-  
+
 Version 1.1.1 - 2018-10-18
 - Added docker support
 - Save subscriptions on change
