@@ -2,7 +2,7 @@
 Provides MQTT bridge, web service API, time sync, and logging for [HAI/Leviton OmniPro II controllers](https://www.leviton.com/en/products/brands/omni-security-automation). Provides integration with [Samsung SmarthThings via web service API](https://github.com/excaliburpartners/SmartThings-OmniPro) and [Home Assistant via MQTT](https://www.home-assistant.io/components/mqtt/).
 
 ## Download
-You can use docker to build an image from git or download the [binary here](http://www.excalibur-partners.com/downloads/OmniLinkBridge_1_1_3.zip).
+You can use docker to build an image from git or download the [binary here](http://www.excalibur-partners.com/downloads/OmniLinkBridge_1_1_4.zip).
 
 ## Requirements
 - [Docker](https://www.docker.com/)
@@ -182,6 +182,12 @@ string ON
 ```
 
 ## Change Log
+Version 1.1.4 - 2019-10-27
+- Utilize controller temperature format
+- Ignore invalid temperature for thermostats
+- Fix MQTT id validation and add notice for areas
+- Fix compatibility with Home Assistant 0.95.4 MQTT extra keys
+
 Version 1.1.3 - 2019-02-10
 - Publish config when reconnecting to MQTT
 - Update readme documentation

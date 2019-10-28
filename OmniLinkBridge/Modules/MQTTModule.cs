@@ -95,23 +95,31 @@ namespace OmniLinkBridge.Modules
 
             log.Debug($"Received: Type: {match.Groups[1].Value}, Id: {match.Groups[2].Value}, Command: {match.Groups[3].Value}, Value: {payload}");
 
-            if (match.Groups[1].Value == "area" && ushort.TryParse(match.Groups[2].Value, out ushort areaId) && areaId < OmniLink.Controller.Areas.Count)
+            if (match.Groups[1].Value == "area" && ushort.TryParse(match.Groups[2].Value, out ushort areaId) && 
+                areaId <= OmniLink.Controller.Areas.Count)
             {
+                if(areaId == 0)
+                    log.Debug("SetArea: 0 implies all areas will be changed");
+
                 ProcessAreaReceived(OmniLink.Controller.Areas[areaId], match.Groups[3].Value, payload);
             }
-            if (match.Groups[1].Value == "zone" && ushort.TryParse(match.Groups[2].Value, out ushort zoneId) && zoneId < OmniLink.Controller.Zones.Count)
+            if (match.Groups[1].Value == "zone" && ushort.TryParse(match.Groups[2].Value, out ushort zoneId) && 
+                zoneId > 0 && zoneId <= OmniLink.Controller.Zones.Count)
             {
                 ProcessZoneReceived(OmniLink.Controller.Zones[zoneId], match.Groups[3].Value, payload);
             }
-            else if (match.Groups[1].Value == "unit" && ushort.TryParse(match.Groups[2].Value, out ushort unitId) && unitId < OmniLink.Controller.Units.Count)
+            else if (match.Groups[1].Value == "unit" && ushort.TryParse(match.Groups[2].Value, out ushort unitId) && 
+                unitId > 0 && unitId <= OmniLink.Controller.Units.Count)
             {
                 ProcessUnitReceived(OmniLink.Controller.Units[unitId], match.Groups[3].Value, payload);
             }
-            else if (match.Groups[1].Value == "thermostat" && ushort.TryParse(match.Groups[2].Value, out ushort thermostatId) && thermostatId < OmniLink.Controller.Thermostats.Count)
+            else if (match.Groups[1].Value == "thermostat" && ushort.TryParse(match.Groups[2].Value, out ushort thermostatId) && 
+                thermostatId > 0 && thermostatId <= OmniLink.Controller.Thermostats.Count)
             {
                 ProcessThermostatReceived(OmniLink.Controller.Thermostats[thermostatId], match.Groups[3].Value, payload);
             }
-            else if (match.Groups[1].Value == "button" && ushort.TryParse(match.Groups[2].Value, out ushort buttonId) && buttonId < OmniLink.Controller.Buttons.Count)
+            else if (match.Groups[1].Value == "button" && ushort.TryParse(match.Groups[2].Value, out ushort buttonId) && 
+                buttonId > 0 && buttonId <= OmniLink.Controller.Buttons.Count)
             {
                 ProcessButtonReceived(OmniLink.Controller.Buttons[buttonId], match.Groups[3].Value, payload);
             }
