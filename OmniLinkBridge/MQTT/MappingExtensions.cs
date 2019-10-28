@@ -208,13 +208,13 @@ namespace OmniLinkBridge.MQTT
             return $"{Global.mqtt_prefix}/zone{zone.Number.ToString()}/{topic.ToString()}";
         }
 
-        public static Sensor ToConfigTemp(this clsZone zone)
+        public static Sensor ToConfigTemp(this clsZone zone, enuTempFormat format)
         {
             Sensor ret = new Sensor();
             ret.name = $"{Global.mqtt_discovery_name_prefix}{zone.Name} Temp";
             ret.device_class = Sensor.DeviceClass.temperature;
             ret.state_topic = zone.ToTopic(Topic.current_temperature);
-            ret.unit_of_measurement = "°F";
+            ret.unit_of_measurement = (format == enuTempFormat.Fahrenheit ? "°F" : "°C");
             return ret;
         }
 
@@ -379,13 +379,13 @@ namespace OmniLinkBridge.MQTT
             return $"{Global.mqtt_prefix}/thermostat{thermostat.Number.ToString()}/{topic.ToString()}";
         }
 
-        public static Sensor ToConfigTemp(this clsThermostat zone)
+        public static Sensor ToConfigTemp(this clsThermostat zone, enuTempFormat format)
         {
             Sensor ret = new Sensor();
             ret.name = $"{Global.mqtt_discovery_name_prefix}{zone.Name} Temp";
             ret.device_class = Sensor.DeviceClass.temperature;
             ret.state_topic = zone.ToTopic(Topic.current_temperature);
-            ret.unit_of_measurement = "°F";
+            ret.unit_of_measurement = (format == enuTempFormat.Fahrenheit ? "°F" : "°C");
             return ret;
         }
 
@@ -399,9 +399,16 @@ namespace OmniLinkBridge.MQTT
             return ret;
         }
 
-        public static Climate ToConfig(this clsThermostat thermostat)
+        public static Climate ToConfig(this clsThermostat thermostat, enuTempFormat format)
         {
             Climate ret = new Climate();
+
+            if(format == enuTempFormat.Celsius)
+            {
+                ret.min_temp = "7";
+                ret.max_temp = "35";
+            }
+
             ret.name = Global.mqtt_discovery_name_prefix + thermostat.Name;
             ret.current_temperature_topic = thermostat.ToTopic(Topic.current_temperature);
 

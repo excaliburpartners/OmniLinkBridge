@@ -225,15 +225,31 @@ namespace OmniLinkBridge.WebAPI
 
         public void SetThermostatCoolSetpoint(CommandContract unit)
         {
-            int temp = ((double)unit.value).ToCelsius().ToOmniTemp();
-            log.Debug("SetThermostatCoolSetpoint: " + unit.id + " to " + unit.value + "F (" + temp + ")");
+            double tempHigh = unit.value;
+            string tempUnit = "C";
+            if (WebServiceModule.OmniLink.Controller.TempFormat == enuTempFormat.Fahrenheit)
+            {
+                tempHigh = tempHigh.ToCelsius();
+                tempUnit = "F";
+            }
+
+            int temp = tempHigh.ToOmniTemp();
+            log.Debug("SetThermostatCoolSetpoint: " + unit.id + " to " + unit.value + tempUnit + "(" + temp + ")");
             WebServiceModule.OmniLink.Controller.SendCommand(enuUnitCommand.SetHighSetPt, BitConverter.GetBytes(temp)[0], unit.id);
         }
 
         public void SetThermostatHeatSetpoint(CommandContract unit)
         {
-            int temp = ((double)unit.value).ToCelsius().ToOmniTemp();
-            log.Debug("SetThermostatCoolSetpoint: " + unit.id + " to " + unit.value + "F (" + temp + ")");
+            double tempLoad = unit.value;
+            string tempUnit = "C";
+            if (WebServiceModule.OmniLink.Controller.TempFormat == enuTempFormat.Fahrenheit)
+            {
+                tempLoad = tempLoad.ToCelsius();
+                tempUnit = "F";
+            }
+
+            int temp = tempLoad.ToOmniTemp();
+            log.Debug("SetThermostatHeatSetpoint: " + unit.id + " to " + unit.value + tempUnit + "(" + temp + ")");
             WebServiceModule.OmniLink.Controller.SendCommand(enuUnitCommand.SetLowSetPt, BitConverter.GetBytes(temp)[0], unit.id);
         }
 

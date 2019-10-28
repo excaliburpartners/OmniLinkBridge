@@ -43,7 +43,11 @@ namespace OmniLinkBridge.WebAPI
             ret.zonetype = zone.ZoneType;
             ret.name = zone.Name;
             ret.status = zone.StatusText();
-            ret.temp = zone.TempText();
+
+            if (zone.IsTemperatureZone())
+                ret.temp = zone.TempText();
+            else if(zone.IsHumidityZone())
+                ret.temp = zone.TempText();
 
             return ret;
         }

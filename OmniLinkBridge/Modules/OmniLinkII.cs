@@ -335,6 +335,7 @@ namespace OmniLinkBridge.Modules
         {
             log.Debug("Retrieving named units");
 
+            await GetSystemFormats();
             await GetNamed(enuObjectType.Area);
             await GetNamed(enuObjectType.Zone);
             await GetNamed(enuObjectType.Thermostat);
@@ -343,13 +344,27 @@ namespace OmniLinkBridge.Modules
             await GetNamed(enuObjectType.Button);
         }
 
+        private async Task GetSystemFormats()
+        {
+            log.Debug("Waiting for system formats");
+
+            clsOL2MsgRequestSystemFormats MSG = new clsOL2MsgRequestSystemFormats(Controller.Connection);
+            Controller.Connection.Send(MSG, HandleNamedPropertiesResponse);
+
+            await Task.Run(() =>
+            {
+                nameWait.WaitOne(new TimeSpan(0, 0, 10));
+            });
+        }
+
         private async Task GetNamed(enuObjectType type)
         {
+            log.Debug("Waiting for named units " + type.ToString());
+
             GetNextNamed(type, 0);
 
             await Task.Run(() =>
             {
-                log.Debug("Waiting for named units " + type.ToString());
                 nameWait.WaitOne(new TimeSpan(0, 0, 10));
             });
         }
@@ -379,8 +394,18 @@ namespace OmniLinkBridge.Modules
                     case enuOmniLink2MessageType.EOD:
                         nameWait.Set();
                         break;
-                    case enuOmniLink2MessageType.Properties:
+                    case enuOmniLink2MessageType.SystemFormats:
+                        clsOL2MsgSystemFormats MSG2 = new clsOL2MsgSystemFormats(Controller.Connection, B);
 
+                        Controller.DateFormat = MSG2.Date;
+                        Controller.TimeFormat = MSG2.Time;
+                        Controller.TempFormat = MSG2.Temp;
+
+                        log.Debug("Temperature format: " + (Controller.TempFormat == enuTempFormat.Fahrenheit ? "Fahrenheit" : "Celsius"));
+
+                        nameWait.Set();
+                        break;
+                    case enuOmniLink2MessageType.Properties:
                         clsOL2MsgProperties MSG = new clsOL2MsgProperties(Controller.Connection, B);
 
                         switch (MSG.ObjectType)

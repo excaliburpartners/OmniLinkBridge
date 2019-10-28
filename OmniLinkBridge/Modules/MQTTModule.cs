@@ -208,18 +208,33 @@ namespace OmniLinkBridge.Modules
         {
             if (string.Compare(command, Topic.temperature_heat_command.ToString()) == 0 && double.TryParse(payload, out double tempLow))
             {
-                int temp = tempLow.ToCelsius().ToOmniTemp();
-                log.Debug("SetThermostatHeatSetpoint: " + thermostat.Number + " to " + payload + "F (" + temp + ")");
+                string tempUnit = "C";
+                if (OmniLink.Controller.TempFormat == enuTempFormat.Fahrenheit)
+                {
+                    tempLow = tempLow.ToCelsius();
+                    tempUnit = "F";
+                }
+
+                int temp = tempLow.ToOmniTemp();
+                log.Debug("SetThermostatHeatSetpoint: " + thermostat.Number + " to " + payload + tempUnit + "(" + temp + ")");
                 OmniLink.Controller.SendCommand(enuUnitCommand.SetLowSetPt, BitConverter.GetBytes(temp)[0], (ushort)thermostat.Number);
             }
             else if (string.Compare(command, Topic.temperature_cool_command.ToString()) == 0 && double.TryParse(payload, out double tempHigh))
             {
-                int temp = tempHigh.ToCelsius().ToOmniTemp();
-                log.Debug("SetThermostatCoolSetpoint: " + thermostat.Number + " to " + payload + "F (" + temp + ")");
+                string tempUnit = "C";
+                if (OmniLink.Controller.TempFormat == enuTempFormat.Fahrenheit)
+                {
+                    tempHigh = tempHigh.ToCelsius();
+                    tempUnit = "F";
+                }
+
+                int temp = tempHigh.ToOmniTemp();
+                log.Debug("SetThermostatCoolSetpoint: " + thermostat.Number + " to " + payload + tempUnit + "(" + temp + ")");
                 OmniLink.Controller.SendCommand(enuUnitCommand.SetHighSetPt, BitConverter.GetBytes(temp)[0], (ushort)thermostat.Number);
             }
             else if (string.Compare(command, Topic.humidify_command.ToString()) == 0 && double.TryParse(payload, out double humidify))
             {
+                // Humidity is reported where Fahrenheit temperatures 0-100 correspond to 0-100% relative humidity
                 int level = humidify.ToCelsius().ToOmniTemp();
                 log.Debug("SetThermostatHumidifySetpoint: " + thermostat.Number + " to " + payload + "% (" + level + ")");
                 OmniLink.Controller.SendCommand(enuUnitCommand.SetHumidifySetPt, BitConverter.GetBytes(level)[0], (ushort)thermostat.Number);
@@ -350,7 +365,7 @@ namespace OmniLinkBridge.Modules
 
                 if (zone.IsTemperatureZone())
                     MqttClient.PublishAsync($"{Global.mqtt_discovery_prefix}/sensor/{Global.mqtt_prefix}/zone{i.ToString()}temp/config",
-                        JsonConvert.SerializeObject(zone.ToConfigTemp()), MqttQualityOfServiceLevel.AtMostOnce, true);
+                        JsonConvert.SerializeObject(zone.ToConfigTemp(OmniLink.Controller.TempFormat)), MqttQualityOfServiceLevel.AtMostOnce, true);
                 else if (zone.IsHumidityZone())
                     MqttClient.PublishAsync($"{Global.mqtt_discovery_prefix}/sensor/{Global.mqtt_prefix}/zone{i.ToString()}humidity/config",
                         JsonConvert.SerializeObject(zone.ToConfigHumidity()), MqttQualityOfServiceLevel.AtMostOnce, true);
@@ -402,9 +417,9 @@ namespace OmniLinkBridge.Modules
                 PublishThermostatState(thermostat);
 
                 MqttClient.PublishAsync($"{Global.mqtt_discovery_prefix}/climate/{Global.mqtt_prefix}/thermostat{i.ToString()}/config",
-                    JsonConvert.SerializeObject(thermostat.ToConfig()), MqttQualityOfServiceLevel.AtMostOnce, true);
+                    JsonConvert.SerializeObject(thermostat.ToConfig(OmniLink.Controller.TempFormat)), MqttQualityOfServiceLevel.AtMostOnce, true);
                 MqttClient.PublishAsync($"{Global.mqtt_discovery_prefix}/sensor/{Global.mqtt_prefix}/thermostat{i.ToString()}temp/config",
-                    JsonConvert.SerializeObject(thermostat.ToConfigTemp()), MqttQualityOfServiceLevel.AtMostOnce, true);
+                    JsonConvert.SerializeObject(thermostat.ToConfigTemp(OmniLink.Controller.TempFormat)), MqttQualityOfServiceLevel.AtMostOnce, true);
                 MqttClient.PublishAsync($"{Global.mqtt_discovery_prefix}/sensor/{Global.mqtt_prefix}/thermostat{i.ToString()}humidity/config",
                     JsonConvert.SerializeObject(thermostat.ToConfigHumidity()), MqttQualityOfServiceLevel.AtMostOnce, true);
             }
