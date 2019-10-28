@@ -310,7 +310,9 @@ namespace OmniLinkBridge.Modules
             {
                 clsArea area = OmniLink.Controller.Areas[i];
 
-                if (area.DefaultProperties == true)
+                // PC Access doesn't let you customize the area name for the Omni LTe or Omni IIe
+                // (configured for 1 area). To workaround ignore default properties for the first area.
+                if (i > 1 && area.DefaultProperties == true)
                 {
                     MqttClient.PublishAsync($"{Global.mqtt_discovery_prefix}/alarm_control_panel/{Global.mqtt_prefix}/area{i.ToString()}/config", null, MqttQualityOfServiceLevel.AtMostOnce, true);
                     MqttClient.PublishAsync($"{Global.mqtt_discovery_prefix}/binary_sensor/{Global.mqtt_prefix}/area{i.ToString()}burglary/config", null, MqttQualityOfServiceLevel.AtMostOnce, true);

@@ -29,7 +29,9 @@ namespace OmniLinkBridge.WebAPI
             {
                 clsArea area = WebServiceModule.OmniLink.Controller.Areas[i];
 
-                if (area.DefaultProperties == false)
+                // PC Access doesn't let you customize the area name for the Omni LTe or Omni IIe
+                // (configured for 1 area). To workaround ignore default properties for the first area.
+                if (i == 1 || area.DefaultProperties == false)
                     names.Add(new NameContract() { id = i, name = area.Name });
             }
             return names;

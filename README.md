@@ -182,9 +182,10 @@ string ON
 ```
 
 ## Change Log
-Version 1.1.4 - 2019-10-27
+Version 1.1.4 - 2019-10-28
 - Utilize controller temperature format
 - Ignore invalid temperature for thermostats
+- Always enable first area to fix Omni LTe and Omni IIe
 - Fix MQTT id validation and add notice for areas
 - Fix compatibility with Home Assistant 0.95.4 MQTT extra keys
 
