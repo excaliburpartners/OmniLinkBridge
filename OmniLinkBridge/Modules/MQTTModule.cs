@@ -306,7 +306,7 @@ namespace OmniLinkBridge.Modules
         {
             log.Debug("Publishing areas");
 
-            for (ushort i = 1; i < OmniLink.Controller.Areas.Count; i++)
+            for (ushort i = 1; i <= OmniLink.Controller.Areas.Count; i++)
             {
                 clsArea area = OmniLink.Controller.Areas[i];
 
@@ -353,7 +353,7 @@ namespace OmniLinkBridge.Modules
         {
             log.Debug("Publishing zones");
 
-            for (ushort i = 1; i < OmniLink.Controller.Zones.Count; i++)
+            for (ushort i = 1; i <= OmniLink.Controller.Zones.Count; i++)
             {
                 clsZone zone = OmniLink.Controller.Zones[i];
 
@@ -386,7 +386,7 @@ namespace OmniLinkBridge.Modules
         {
             log.Debug("Publishing units");
 
-            for (ushort i = 1; i < OmniLink.Controller.Units.Count; i++)
+            for (ushort i = 1; i <= OmniLink.Controller.Units.Count; i++)
             {
                 clsUnit unit = OmniLink.Controller.Units[i];
                 
@@ -412,7 +412,7 @@ namespace OmniLinkBridge.Modules
         {
             log.Debug("Publishing thermostats");
 
-            for (ushort i = 1; i < OmniLink.Controller.Thermostats.Count; i++)
+            for (ushort i = 1; i <= OmniLink.Controller.Thermostats.Count; i++)
             {
                 clsThermostat thermostat = OmniLink.Controller.Thermostats[i];
 
@@ -439,7 +439,7 @@ namespace OmniLinkBridge.Modules
         {
             log.Debug("Publishing buttons");
 
-            for (ushort i = 1; i < OmniLink.Controller.Buttons.Count; i++)
+            for (ushort i = 1; i <= OmniLink.Controller.Buttons.Count; i++)
             {
                 clsButton button = OmniLink.Controller.Buttons[i];
 
@@ -463,7 +463,7 @@ namespace OmniLinkBridge.Modules
 
             // Since the controller doesn't fire zone status change on area status change
             // request update so armed, tripped, and secure statuses are correct
-            for (ushort i = 1; i < OmniLink.Controller.Zones.Count; i++)
+            for (ushort i = 1; i <= OmniLink.Controller.Zones.Count; i++)
             {
                 clsZone zone = OmniLink.Controller.Zones[i];
 

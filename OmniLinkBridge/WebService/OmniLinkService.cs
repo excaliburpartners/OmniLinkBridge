@@ -25,7 +25,7 @@ namespace OmniLinkBridge.WebAPI
             log.Debug("ListAreas");
 
             List<NameContract> names = new List<NameContract>();
-            for (ushort i = 1; i < WebServiceModule.OmniLink.Controller.Areas.Count; i++)
+            for (ushort i = 1; i <= WebServiceModule.OmniLink.Controller.Areas.Count; i++)
             {
                 clsArea area = WebServiceModule.OmniLink.Controller.Areas[i];
 
@@ -52,7 +52,7 @@ namespace OmniLinkBridge.WebAPI
             log.Debug("ListZonesContact");
 
             List<NameContract> names = new List<NameContract>();
-            for (ushort i = 1; i < WebServiceModule.OmniLink.Controller.Zones.Count; i++)
+            for (ushort i = 1; i <= WebServiceModule.OmniLink.Controller.Zones.Count; i++)
             {
                 clsZone zone = WebServiceModule.OmniLink.Controller.Zones[i];
 
@@ -67,7 +67,7 @@ namespace OmniLinkBridge.WebAPI
             log.Debug("ListZonesMotion");
 
             List<NameContract> names = new List<NameContract>();
-            for (ushort i = 1; i < WebServiceModule.OmniLink.Controller.Zones.Count; i++)
+            for (ushort i = 1; i <= WebServiceModule.OmniLink.Controller.Zones.Count; i++)
             {
                 clsZone zone = WebServiceModule.OmniLink.Controller.Zones[i];
 
@@ -82,7 +82,7 @@ namespace OmniLinkBridge.WebAPI
             log.Debug("ListZonesWater");
 
             List<NameContract> names = new List<NameContract>();
-            for (ushort i = 1; i < WebServiceModule.OmniLink.Controller.Zones.Count; i++)
+            for (ushort i = 1; i <= WebServiceModule.OmniLink.Controller.Zones.Count; i++)
             {
                 clsZone zone = WebServiceModule.OmniLink.Controller.Zones[i];
 
@@ -97,7 +97,7 @@ namespace OmniLinkBridge.WebAPI
             log.Debug("ListZonesSmoke");
 
             List<NameContract> names = new List<NameContract>();
-            for (ushort i = 1; i < WebServiceModule.OmniLink.Controller.Zones.Count; i++)
+            for (ushort i = 1; i <= WebServiceModule.OmniLink.Controller.Zones.Count; i++)
             {
                 clsZone zone = WebServiceModule.OmniLink.Controller.Zones[i];
 
@@ -112,7 +112,7 @@ namespace OmniLinkBridge.WebAPI
             log.Debug("ListZonesCO");
 
             List<NameContract> names = new List<NameContract>();
-            for (ushort i = 1; i < WebServiceModule.OmniLink.Controller.Zones.Count; i++)
+            for (ushort i = 1; i <= WebServiceModule.OmniLink.Controller.Zones.Count; i++)
             {
                 clsZone zone = WebServiceModule.OmniLink.Controller.Zones[i];
 
@@ -127,7 +127,7 @@ namespace OmniLinkBridge.WebAPI
             log.Debug("ListZonesTemp");
 
             List<NameContract> names = new List<NameContract>();
-            for (ushort i = 1; i < WebServiceModule.OmniLink.Controller.Zones.Count; i++)
+            for (ushort i = 1; i <= WebServiceModule.OmniLink.Controller.Zones.Count; i++)
             {
                 clsZone zone = WebServiceModule.OmniLink.Controller.Zones[i];
 
@@ -161,7 +161,7 @@ namespace OmniLinkBridge.WebAPI
             log.Debug("ListUnits");
 
             List<NameContract> names = new List<NameContract>();
-            for (ushort i = 1; i < WebServiceModule.OmniLink.Controller.Units.Count; i++)
+            for (ushort i = 1; i <= WebServiceModule.OmniLink.Controller.Units.Count; i++)
             {
                 clsUnit unit = WebServiceModule.OmniLink.Controller.Units[i];
 
@@ -205,7 +205,7 @@ namespace OmniLinkBridge.WebAPI
             log.Debug("ListThermostats");
 
             List<NameContract> names = new List<NameContract>();
-            for (ushort i = 1; i < WebServiceModule.OmniLink.Controller.Thermostats.Count; i++)
+            for (ushort i = 1; i <= WebServiceModule.OmniLink.Controller.Thermostats.Count; i++)
             {
                 clsThermostat unit = WebServiceModule.OmniLink.Controller.Thermostats[i];
 
@@ -278,7 +278,7 @@ namespace OmniLinkBridge.WebAPI
             log.Debug("ListButtons");
 
             List<NameContract> names = new List<NameContract>();
-            for (ushort i = 1; i < WebServiceModule.OmniLink.Controller.Buttons.Count; i++)
+            for (ushort i = 1; i <= WebServiceModule.OmniLink.Controller.Buttons.Count; i++)
             {
                 clsButton unit = WebServiceModule.OmniLink.Controller.Buttons[i];
 
