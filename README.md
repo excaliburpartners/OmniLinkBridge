@@ -85,15 +85,7 @@ To test the API you can use your browser to view a page or PowerShell (see below
 - Invoke-WebRequest -Uri "http://localhost:8000/SetUnit" -Method POST -ContentType "application/json" -Body (convertto-json -InputObject @{"id"=1;"value"=100}) -UseBasicParsing
 
 ## MQTT
-This module will also publish discovery topics for Home Assistant to auto configure devices. As of writing you will need to add a custom_component override in your Home Assistant config directory for the following pull requests.
-- [Add target temperature low high to MQTT climate](https://github.com/home-assistant/home-assistant/pull/17391/)
-- [Add night arm mode to MQTT alarm control panel](https://github.com/home-assistant/home-assistant/pull/17390/)
-
-```
-mkdir -p custom_components/mqtt
-wget https://raw.githubusercontent.com/home-assistant/home-assistant/dcfcca77d72b0c35cda9950a69f621b4e8cff81b/homeassistant/components/climate/mqtt.py -O custom_components/mqtt/climate.py
-wget https://raw.githubusercontent.com/home-assistant/home-assistant/fa2510f58b40cfea2974530658ee011d984db6c7/homeassistant/components/alarm_control_panel/mqtt.py -O custom_components/mqtt/alarm_control_panel.py
-```
+This module will also publish discovery topics for Home Assistant to auto configure devices. 
 
 ### Areas
 ```
@@ -182,12 +174,14 @@ string ON
 ```
 
 ## Change Log
-Version 1.1.4 - 2019-10-28
+Version 1.1.4 - 2019-11-06
 - Utilize controller temperature format
-- Ignore invalid temperature for thermostats
-- Always enable first area to fix Omni LTe and Omni IIe
-- Fix MQTT id validation and add notice for areas
+- Don't publish invalid thermostat temperatures
+- Always enable first area to support Omni LTe and Omni IIe
+- Fix MQTT id validation and add notice for publishing to area 0
+- Fix missing last area, zone, unit, thermostat, and button
 - Fix compatibility with Home Assistant 0.95.4 MQTT extra keys
+- Add Home Assistant MQTT device registry support
 
 Version 1.1.3 - 2019-02-10
 - Publish config when reconnecting to MQTT

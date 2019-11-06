@@ -81,6 +81,7 @@
     <Compile Include="MQTT\BinarySensor.cs" />
     <Compile Include="MQTT\Device.cs" />
     <Compile Include="MQTT\Climate.cs" />
+    <Compile Include="MQTT\DeviceRegistry.cs" />
     <Compile Include="MQTT\OverrideZone.cs" />
     <Compile Include="MQTT\Switch.cs" />
     <Compile Include="MQTT\Light.cs" />

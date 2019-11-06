@@ -20,6 +20,8 @@ namespace OmniLinkBridge.Modules
     {
         private static ILog log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
 
+        public static DeviceRegistry MqttDeviceRegistry { get; set; }
+
         private OmniLinkII OmniLink { get; set; }
         private IManagedMqttClient MqttClient { get; set; }
         private bool ControllerConnected { get; set; }
@@ -56,6 +58,15 @@ namespace OmniLinkBridge.Modules
             MqttClient.Connected += (sender, e) =>
             {
                 log.Debug("Connected");
+
+                MqttDeviceRegistry = new DeviceRegistry()
+                {
+                    identifiers = Global.mqtt_prefix,
+                    name = Global.mqtt_prefix,
+                    sw_version = $"{OmniLink.Controller.GetVersionText()} - OmniLinkBridge {Assembly.GetExecutingAssembly().GetName().Version.ToString()}",
+                    model = OmniLink.Controller.GetModelText(),
+                    manufacturer = "Leviton"
+                };
 
                 // For the initial connection wait for the controller connected event to publish config
                 // For subsequent connections publish config immediately
