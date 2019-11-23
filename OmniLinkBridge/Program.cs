@@ -1,8 +1,10 @@
-﻿using System;
+﻿using Mono.Unix;
+using System;
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 using System.ServiceProcess;
+using System.Threading.Tasks;
 
 namespace OmniLinkBridge
 {
@@ -55,8 +57,26 @@ namespace OmniLinkBridge
                 Environment.Exit(1);
             }
 
+
             if (Environment.UserInteractive || interactive)
             {
+                if (IsRunningOnMono())
+                {
+                    UnixSignal[] signals = new UnixSignal[]{
+                        new UnixSignal(Mono.Unix.Native.Signum.SIGTERM),
+                        new UnixSignal(Mono.Unix.Native.Signum.SIGINT),
+                        new UnixSignal(Mono.Unix.Native.Signum.SIGUSR1)
+                    };
+
+                    Task.Factory.StartNew(() =>
+                    {
+                        // Blocking call to wait for any kill signal
+                        int index = UnixSignal.WaitAny(signals, -1);
+
+                        server.Shutdown();
+                    });
+                }
+
                 Console.TreatControlCAsInput = false;
                 Console.CancelKeyPress += new ConsoleCancelEventHandler(myHandler);
 
@@ -84,6 +104,11 @@ namespace OmniLinkBridge
         {
             server.Shutdown();
             args.Cancel = true;
+        }
+
+        static bool IsRunningOnMono()
+        {
+            return Type.GetType("Mono.Runtime") != null;
         }
 
         static void ShowHelp()

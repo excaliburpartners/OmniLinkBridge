@@ -224,6 +224,7 @@ Version 1.1.4 - 2019-11-22
 - Fix compatibility with Home Assistant 0.95.4 MQTT extra keys
 - Add Home Assistant MQTT device registry support
 - Add MQTT messages for controller disconnect and last will
+- Shutdown cleanly on linux or docker
 
 Version 1.1.3 - 2019-02-10
 - Publish config when reconnecting to MQTT

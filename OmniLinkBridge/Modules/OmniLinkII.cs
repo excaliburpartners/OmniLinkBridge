@@ -64,6 +64,8 @@ namespace OmniLinkBridge.Modules
 
                 trigger.WaitOne(new TimeSpan(0, 0, 5));
             }
+
+            Disconnect();
         }
 
         public void Shutdown()
@@ -84,6 +86,8 @@ namespace OmniLinkBridge.Modules
 
         private void Disconnect()
         {
+            log.Info("CONNECTION STATUS: Disconnecting");
+
             if (Controller.Connection.ConnectionState != enuOmniLinkConnectionState.Offline)
                 Controller.Connection.Disconnect();
         }

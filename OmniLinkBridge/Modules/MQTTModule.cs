@@ -83,6 +83,7 @@ namespace OmniLinkBridge.Modules
                     PublishConfig();
             };
             MqttClient.ConnectingFailed += (sender, e) => { log.Debug("Error connecting " + e.Exception.Message); };
+            MqttClient.Disconnected += (sender, e) => { log.Debug("Disconnected"); };
 
             MqttClient.StartAsync(manoptions);
 
@@ -103,6 +104,8 @@ namespace OmniLinkBridge.Modules
 
             log.Debug("Publishing controller offline");
             MqttClient.PublishAsync($"{Global.mqtt_prefix}/status", "offline", MqttQualityOfServiceLevel.AtMostOnce, true);
+
+            MqttClient.StopAsync();
         }
 
         private void MqttClient_ApplicationMessageReceived(object sender, MqttApplicationMessageReceivedEventArgs e)
@@ -307,7 +310,8 @@ namespace OmniLinkBridge.Modules
 
         private void OmniLink_OnConnect(object sender, EventArgs e)
         {
-            PublishConfig();
+            if(MqttClient.IsConnected)
+                PublishConfig();
 
             ControllerConnected = true;
         }
@@ -316,8 +320,11 @@ namespace OmniLinkBridge.Modules
         {
             ControllerConnected = false;
 
-            log.Debug("Publishing controller offline");
-            MqttClient.PublishAsync($"{Global.mqtt_prefix}/status", "offline", MqttQualityOfServiceLevel.AtMostOnce, true);
+            if (MqttClient.IsConnected)
+            {
+                log.Debug("Publishing controller offline");
+                MqttClient.PublishAsync($"{Global.mqtt_prefix}/status", "offline", MqttQualityOfServiceLevel.AtMostOnce, true);
+            }
         }
 
         private void PublishConfig()
@@ -489,6 +496,9 @@ namespace OmniLinkBridge.Modules
 
         private void Omnilink_OnAreaStatus(object sender, AreaStatusEventArgs e)
         {
+            if (!MqttClient.IsConnected)
+                return;
+
             PublishAreaState(e.Area);
 
             // Since the controller doesn't fire zone status change on area status change
@@ -519,19 +529,28 @@ namespace OmniLinkBridge.Modules
 
         private void Omnilink_OnZoneStatus(object sender, ZoneStatusEventArgs e)
         {
+            if (!MqttClient.IsConnected)
+                return;
+
             PublishZoneState(e.Zone);
         }
 
         private void Omnilink_OnUnitStatus(object sender, UnitStatusEventArgs e)
         {
+            if (!MqttClient.IsConnected)
+                return;
+
             PublishUnitState(e.Unit);
         }
 
         private void Omnilink_OnThermostatStatus(object sender, ThermostatStatusEventArgs e)
         {
+            if (!MqttClient.IsConnected)
+                return;
+
             // Ignore events fired by thermostat polling and when temperature is invalid
             // An invalid temperature can occur when a Zigbee thermostat is unreachable
-            if(!e.EventTimer && e.Thermostat.Temp > 0)
+            if (!e.EventTimer && e.Thermostat.Temp > 0)
                 PublishThermostatState(e.Thermostat);
         }
 
