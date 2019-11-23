@@ -1,5 +1,4 @@
 ﻿using HAI_Shared;
-using OmniLinkBridge.OmniLink;
 using log4net;
 using System;
 using System.Reflection;

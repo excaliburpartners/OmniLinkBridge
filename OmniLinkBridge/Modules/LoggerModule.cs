@@ -1,6 +1,6 @@
-﻿using OmniLinkBridge.Notifications;
+﻿using log4net;
+using OmniLinkBridge.Notifications;
 using OmniLinkBridge.OmniLink;
-using log4net;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -215,7 +215,7 @@ namespace OmniLinkBridge.Modules
                 if (e.Zone.IsTemperatureZone())
                     log.Debug("ZoneStatus " + e.ID + " " + e.Zone.Name + ", Temp: " + e.Zone.TempText());
                 else
-                    log.Debug("ZoneStatus" + e.ID + " " + e.Zone.Name + ", Status: " + e.Zone.StatusText());
+                    log.Debug("ZoneStatus " + e.ID + " " + e.Zone.Name + ", Status: " + e.Zone.StatusText());
             }
         }
 

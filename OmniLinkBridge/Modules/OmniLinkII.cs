@@ -25,6 +25,7 @@ namespace OmniLinkBridge.Modules
 
         // Events
         public event EventHandler<EventArgs> OnConnect;
+        public event EventHandler<EventArgs> OnDisconnect;
         public event EventHandler<AreaStatusEventArgs> OnAreaStatus;
         public event EventHandler<ZoneStatusEventArgs> OnZoneStatus;
         public event EventHandler<ThermostatStatusEventArgs> OnThermostatStatus;
@@ -138,6 +139,7 @@ namespace OmniLinkBridge.Modules
                     break;
                 case enuOmniLinkCommStatus.Disconnected:
                     log.Info("CONNECTION STATUS: Disconnected");
+                    OnDisconnect?.Invoke(this, new EventArgs());
                     break;
                 case enuOmniLinkCommStatus.InterruptedFunctionCall:
                     if (Global.running)

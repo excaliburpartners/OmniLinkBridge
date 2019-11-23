@@ -1,9 +1,8 @@
-﻿using HAI_Shared;
+﻿using log4net;
+using Newtonsoft.Json;
 using OmniLinkBridge.Modules;
 using OmniLinkBridge.OmniLink;
 using OmniLinkBridge.WebAPI;
-using log4net;
-using Newtonsoft.Json;
 using System;
 using System.Reflection;
 using System.ServiceModel;

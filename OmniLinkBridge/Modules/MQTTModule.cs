@@ -1,18 +1,17 @@
 ﻿using HAI_Shared;
-using OmniLinkBridge.OmniLink;
 using log4net;
 using MQTTnet;
 using MQTTnet.Client;
-using System;
-using System.Collections.Generic;
-using System.Reflection;
-using System.Threading;
-using Newtonsoft.Json;
 using MQTTnet.Extensions.ManagedClient;
-using OmniLinkBridge.MQTT;
 using MQTTnet.Protocol;
-using System.Text.RegularExpressions;
+using Newtonsoft.Json;
+using OmniLinkBridge.MQTT;
+using OmniLinkBridge.OmniLink;
+using System;
+using System.Reflection;
 using System.Text;
+using System.Text.RegularExpressions;
+using System.Threading;
 
 namespace OmniLinkBridge.Modules
 {
@@ -34,6 +33,7 @@ namespace OmniLinkBridge.Modules
         {
             OmniLink = omni;
             OmniLink.OnConnect += OmniLink_OnConnect;
+            OmniLink.OnDisconnect += OmniLink_OnDisconnect;
             OmniLink.OnAreaStatus += Omnilink_OnAreaStatus;
             OmniLink.OnZoneStatus += Omnilink_OnZoneStatus;
             OmniLink.OnUnitStatus += Omnilink_OnUnitStatus;
@@ -42,8 +42,17 @@ namespace OmniLinkBridge.Modules
 
         public void Startup()
         {
+            MqttApplicationMessage lastwill = new MqttApplicationMessage()
+            {
+                Topic = $"{Global.mqtt_prefix}/status",
+                Payload = Encoding.UTF8.GetBytes("offline"),
+                QualityOfServiceLevel = MqttQualityOfServiceLevel.AtMostOnce,
+                Retain = true
+            };
+
             MqttClientOptionsBuilder options = new MqttClientOptionsBuilder()
-                .WithTcpServer(Global.mqtt_server);
+                .WithTcpServer(Global.mqtt_server)
+                .WithWillMessage(lastwill);
 
             if (!string.IsNullOrEmpty(Global.mqtt_username))
                 options = options
@@ -92,6 +101,7 @@ namespace OmniLinkBridge.Modules
             // Wait until shutdown
             trigger.WaitOne();
 
+            log.Debug("Publishing controller offline");
             MqttClient.PublishAsync($"{Global.mqtt_prefix}/status", "offline", MqttQualityOfServiceLevel.AtMostOnce, true);
         }
 
@@ -302,6 +312,14 @@ namespace OmniLinkBridge.Modules
             ControllerConnected = true;
         }
 
+        private void OmniLink_OnDisconnect(object sender, EventArgs e)
+        {
+            ControllerConnected = false;
+
+            log.Debug("Publishing controller offline");
+            MqttClient.PublishAsync($"{Global.mqtt_prefix}/status", "offline", MqttQualityOfServiceLevel.AtMostOnce, true);
+        }
+
         private void PublishConfig()
         {
             PublishAreas();
@@ -310,6 +328,7 @@ namespace OmniLinkBridge.Modules
             PublishThermostats();
             PublishButtons();
 
+            log.Debug("Publishing controller online");
             MqttClient.PublishAsync($"{Global.mqtt_prefix}/status", "online", MqttQualityOfServiceLevel.AtMostOnce, true);
         }
 

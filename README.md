@@ -21,68 +21,78 @@ You can use docker to build an image from git or download the [binary here](http
 - Always sent for area alarms and critical system events
 - Optionally enable for area status changes and console messages
 
-## Docker (preferred)
+## Docker Hub (preferred)
+1. Configure at a minimum the controller IP and encryptions keys. The web service port must be 8000.
+```
+mkdir /opt/omnilink-bridge
+curl https://raw.githubusercontent.com/excaliburpartners/OmniLinkBridge/master/OmniLinkBridge/OmniLinkBridge.ini -o /opt/omnilink-bridge/OmniLinkBridge.ini 
+vim /opt/omnilink-bridge/OmniLinkBridge.ini
+```
+2. Start docker container
+```
+docker run -d --name="omnilink-bridge" -v /opt/omnilink-bridge:/config -v /etc/localtime:/etc/localtime:ro --net=host --restart always excaliburpartners/omnilink-bridge
+```
+3. Verify connectivity by looking at logs
+```
+docker logs omnilink-bridge
+```
+
+## Docker (for developers)
 1. Clone git repo and build docker image
-	- git clone https://github.com/excaliburpartners/OmniLinkBridge.git
-	- cd OmniLinkBridge
-	- docker build --tag="omnilink-bridge" .
+```
+git clone https://github.com/excaliburpartners/OmniLinkBridge.git
+cd OmniLinkBridge
+docker build --tag="omnilink-bridge" .
+```
 2. Configure at a minimum the controller IP and encryptions keys. The web service port must be 8000 unless the Dockerfile is changed.
-	- mkdir /opt/omnilink-bridge
-	- cp OmniLinkBridge/OmniLinkBridge.ini /opt/omnilink-bridge
-	- vim /opt/omnilink-bridge/OmniLinkBridge.ini
+```
+mkdir /opt/omnilink-bridge
+cp OmniLinkBridge/OmniLinkBridge.ini /opt/omnilink-bridge
+vim /opt/omnilink-bridge/OmniLinkBridge.ini
+```
 3. Start docker container
-	- docker run -d --name="omnilink-bridge" -v /opt/omnilink-bridge:/config -v /etc/localtime:/etc/localtime:ro --net=host --restart always omnilink-bridge
+```
+docker run -d --name="omnilink-bridge" -v /opt/omnilink-bridge:/config -v /etc/localtime:/etc/localtime:ro --net=host --restart always omnilink-bridge
+```
 4. Verify connectivity by looking at logs
-	- docker container logs omnilink-bridge
-	
+```
+docker logs omnilink-bridge
+```
+
 ## Installation Windows
 1. Copy files to your desired location like C:\OmniLinkBridge
 2. Edit OmniLinkBridge.ini and define at a minimum the controller IP and encryptions keys
 3. Run OmniLinkBridge.exe to verify connectivity
 4. Add Windows service
-	- sc create OmniLinkBridge binpath=C:\OmniLinkBridge\OmniLinkBridge.exe
+```
+sc create OmniLinkBridge binpath=C:\OmniLinkBridge\OmniLinkBridge.exe
+```
 5. Start service
-	- net start OmniLinkBridge
+```
+net start OmniLinkBridge
+```
 
 ## Installation Linux
 1. Copy files to your desired location like /opt/OmniLinkBridge
 2. Configure at a minimum the controller IP and encryptions keys
-	- vim OmniLinkBridge.ini
+```
+vim OmniLinkBridge.ini
+```
 3. Run as interactive to verify connectivity
-	- mono OmniLinkBridge.exe -i
+```
+mono OmniLinkBridge.exe -i
+```
 4. Add systemd file and configure paths
-	- cp omnilinkbridge.service /etc/systemd/system/
-	- vim /etc/systemd/system/omnilinkbridge.service
-	- systemctl daemon-reload
+```
+cp omnilinkbridge.service /etc/systemd/system/
+vim /etc/systemd/system/omnilinkbridge.service
+systemctl daemon-reload
+```
 5. Enable at boot and start service
-	- systemctl enable omnilinkbridge.service
-	- systemctl start omnilinkbridge.service
-	
-## MySQL Setup
-You will want to install the MySQL Community Server, Workbench, and ODBC Connector. The Workbench software provides a graphical interface to administer the MySQL server. The OmniLink Bridge uses ODBC to communicate with the database. The MySQL ODBC Connector library is needed for Windows ODBC to communicate with MySQL. 
-
-http://dev.mysql.com/downloads/mysql/
-http://dev.mysql.com/downloads/tools/workbench/
-http://dev.mysql.com/downloads/connector/odbc/
-
-At this point we need to open MySQL Workbench to create the database (called a schema in the Workbench GUI) for OmniLinkBridge to use.
-
-1. After opening the program double-click on "Local instance MySQL" and enter the password you set in the wizard.
-2. On the toolbar click the "Create a new schema" button, provide a name, and click apply.
-3. On the left side right-click on the schema you created and click "Set as default schema".
-4. In the middle section under Query1 click the open file icon and select the OmniLinkBridge.sql file.
-5. Click the Execute lighting bolt to run the query, which will create the tables.
-
-Lastly in OmniLinkBridge.ini set mysql_connection. This should get you up and running. The MySQL Workbench can also be used to view the data that OmniLink Bridge inserts into the tables.
-
-mysql_connection = DRIVER={MySQL ODBC 8.0 Driver};SERVER=localhost;DATABASE=OmniLinkBridge;USER=root;PASSWORD=myPassword;OPTION=3;
-
-## Web Service API
-To test the API you can use your browser to view a page or PowerShell (see below) to change a value.
-
-- http://localhost:8000/ListUnits
-- http://localhost:8000/GetUnit?id=1
-- Invoke-WebRequest -Uri "http://localhost:8000/SetUnit" -Method POST -ContentType "application/json" -Body (convertto-json -InputObject @{"id"=1;"value"=100}) -UseBasicParsing
+```
+systemctl enable omnilinkbridge.service
+systemctl start omnilinkbridge.service
+```
 
 ## MQTT
 This module will also publish discovery topics for Home Assistant to auto configure devices. 
@@ -173,8 +183,39 @@ PUB omnilink/buttonX/command
 string ON
 ```
 
+## Web Service API
+To test the API you can use your browser to view a page or PowerShell (see below) to change a value.
+
+- http://localhost:8000/ListUnits
+- http://localhost:8000/GetUnit?id=1
+
+```
+Invoke-WebRequest -Uri "http://localhost:8000/SetUnit" -Method POST -ContentType "application/json" -Body (convertto-json -InputObject @{"id"=1;"value"=100}) -UseBasicParsing
+```
+
+## MySQL Setup
+You will want to install the MySQL Community Server, Workbench, and ODBC Connector. The Workbench software provides a graphical interface to administer the MySQL server. The OmniLink Bridge uses ODBC to communicate with the database. The MySQL ODBC Connector library is needed for Windows ODBC to communicate with MySQL. 
+
+http://dev.mysql.com/downloads/mysql/
+http://dev.mysql.com/downloads/tools/workbench/
+http://dev.mysql.com/downloads/connector/odbc/
+
+At this point we need to open MySQL Workbench to create the database (called a schema in the Workbench GUI) for OmniLinkBridge to use.
+
+1. After opening the program double-click on "Local instance MySQL" and enter the password you set in the wizard.
+2. On the toolbar click the "Create a new schema" button, provide a name, and click apply.
+3. On the left side right-click on the schema you created and click "Set as default schema".
+4. In the middle section under Query1 click the open file icon and select the OmniLinkBridge.sql file.
+5. Click the Execute lighting bolt to run the query, which will create the tables.
+
+Lastly in OmniLinkBridge.ini set mysql_connection. This should get you up and running. The MySQL Workbench can also be used to view the data that OmniLink Bridge inserts into the tables.
+
+```
+mysql_connection = DRIVER={MySQL ODBC 8.0 Driver};SERVER=localhost;DATABASE=OmniLinkBridge;USER=root;PASSWORD=myPassword;OPTION=3;
+```
+
 ## Change Log
-Version 1.1.4 - 2019-11-06
+Version 1.1.4 - 2019-11-22
 - Utilize controller temperature format
 - Don't publish invalid thermostat temperatures
 - Always enable first area to support Omni LTe and Omni IIe
@@ -182,6 +223,7 @@ Version 1.1.4 - 2019-11-06
 - Fix missing last area, zone, unit, thermostat, and button
 - Fix compatibility with Home Assistant 0.95.4 MQTT extra keys
 - Add Home Assistant MQTT device registry support
+- Add MQTT messages for controller disconnect and last will
 
 Version 1.1.3 - 2019-02-10
 - Publish config when reconnecting to MQTT
