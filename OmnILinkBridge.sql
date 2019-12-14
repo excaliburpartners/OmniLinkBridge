@@ -37,10 +37,23 @@ CREATE TABLE IF NOT EXISTS `log_areas` (
   `duress` varchar(10) NOT NULL,
   `security` varchar(20) NOT NULL,
   PRIMARY KEY  (`log_area_id`)
-) ENGINE=MyISAM  DEFAULT CHARSET=latin1 AUTO_INCREMENT=287 ;
+) ENGINE=MyISAM  DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;
 
 -- --------------------------------------------------------
 
+--
+-- Table structure for table `log_events`
+--
+
+CREATE TABLE IF NOT EXISTS `log_events` (
+  `log_event_id` int(10) unsigned NOT NULL auto_increment,
+  `timestamp` datetime NOT NULL,
+  `name` varchar(12) NOT NULL,
+  `status` varchar(10) NOT NULL,
+  PRIMARY KEY  (`log_event_id`)
+) ENGINE=MyISAM  DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;
+
+-- --------------------------------------------------------
 --
 -- Table structure for table `log_messages`
 --
@@ -52,7 +65,7 @@ CREATE TABLE IF NOT EXISTS `log_messages` (
   `name` varchar(12) NOT NULL,
   `status` varchar(10) NOT NULL,
   PRIMARY KEY  (`log_message_id`)
-) ENGINE=MyISAM  DEFAULT CHARSET=latin1 AUTO_INCREMENT=139 ;
+) ENGINE=MyISAM  DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;
 
 -- --------------------------------------------------------
 
@@ -76,7 +89,7 @@ CREATE TABLE IF NOT EXISTS `log_thermostats` (
   `fan` varchar(5) NOT NULL,
   `hold` varchar(5) NOT NULL,
   PRIMARY KEY  (`log_tstat_id`)
-) ENGINE=MyISAM  DEFAULT CHARSET=latin1 AUTO_INCREMENT=67544 ;
+) ENGINE=MyISAM  DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;
 
 -- --------------------------------------------------------
 
@@ -93,7 +106,7 @@ CREATE TABLE IF NOT EXISTS `log_units` (
   `statusvalue` smallint(6) NOT NULL,
   `statustime` smallint(6) NOT NULL,
   PRIMARY KEY  (`log_unit_id`)
-) ENGINE=MyISAM  DEFAULT CHARSET=latin1 AUTO_INCREMENT=1245 ;
+) ENGINE=MyISAM  DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;
 
 -- --------------------------------------------------------
 
@@ -108,7 +121,7 @@ CREATE TABLE IF NOT EXISTS `log_zones` (
   `name` varchar(16) NOT NULL,
   `status` varchar(10) NOT NULL,
   PRIMARY KEY  (`log_zone_id`)
-) ENGINE=MyISAM  DEFAULT CHARSET=latin1 AUTO_INCREMENT=10298 ;
+) ENGINE=MyISAM  DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;

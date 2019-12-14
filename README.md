@@ -211,7 +211,7 @@ At this point we need to open MySQL Workbench to create the database (called a s
 Lastly in OmniLinkBridge.ini set mysql_connection. This should get you up and running. The MySQL Workbench can also be used to view the data that OmniLink Bridge inserts into the tables.
 
 ```
-mysql_connection = DRIVER={MySQL ODBC 8.0 Driver};SERVER=localhost;DATABASE=OmniLinkBridge;USER=root;PASSWORD=myPassword;OPTION=3;
+mysql_connection = DRIVER={MySQL};SERVER=localhost;DATABASE=OmniLinkBridge;USER=root;PASSWORD=myPassword;OPTION=3;
 ```
 
 ## Change Log

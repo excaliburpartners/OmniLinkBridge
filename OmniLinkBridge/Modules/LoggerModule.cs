@@ -190,7 +190,7 @@ namespace OmniLinkBridge.Modules
                 status = "TRIPPED " + status;
 
             DBQueue(@"
-            INSERT INTO log_areas (timestamp, e.AreaID, name, 
+            INSERT INTO log_areas (timestamp, id, name, 
                 fire, police, auxiliary, 
                 duress, security)
             VALUES ('" + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + "','" + e.ID.ToString() + "','" + e.Area.Name + "','" +
@@ -263,7 +263,7 @@ namespace OmniLinkBridge.Modules
                 status = "ON";
 
             DBQueue(@"
-                INSERT INTO log_e.Units (timestamp, id, name, 
+                INSERT INTO log_units (timestamp, id, name, 
                     status, statusvalue, statustime)
                 VALUES ('" + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + "','" + e.ID + "','" + e.Unit.Name + "','" +
                     status + "','" + e.Unit.Status + "','" + e.Unit.StatusTime + "')");
