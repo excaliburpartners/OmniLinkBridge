@@ -39,12 +39,19 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="HAI.Controller, Version=3.11.4.17, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\OmniLinkBridge\HAI.Controller.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AssemblyTestHarness.cs" />
     <Compile Include="ExtensionTest.cs" />
+    <Compile Include="Mock\MockOmniLinkII.cs" />
+    <Compile Include="Mock\SendCommandEventArgs.cs" />
+    <Compile Include="MQTTTest.cs" />
     <Compile Include="NotificationTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

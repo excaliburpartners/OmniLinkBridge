@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace OmniLinkBridge.Modules
 {
-    public class OmniLinkII : IModule
+    public class OmniLinkII : IModule, IOmniLinkII
     {
         private static ILog log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
 
@@ -39,7 +39,7 @@ namespace OmniLinkBridge.Modules
         public OmniLinkII(string address, int port, string key1, string key2)
         {
             Controller = new clsHAC();
-
+            
             Controller.Connection.NetworkAddress = address;
             Controller.Connection.NetworkPort = (ushort)port;
             Controller.Connection.ControllerKey = clsUtil.HexString2ByteArray(String.Concat(key1, key2));
@@ -71,6 +71,11 @@ namespace OmniLinkBridge.Modules
         public void Shutdown()
         {
             trigger.Set();
+        }
+
+        public bool SendCommand(enuUnitCommand Cmd, byte Par, ushort Pr2)
+        {
+            return Controller.SendCommand(Cmd, Par, Pr2);
         }
 
         #region Connection

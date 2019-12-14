@@ -1,0 +1,29 @@
+﻿namespace OmniLinkBridge.MQTT
+{
+    public enum Topic
+    {
+        state,
+        command,
+        basic_state,
+        json_state,
+        brightness_state,
+        brightness_command,
+        current_operation,
+        current_temperature,
+        current_humidity,
+        temperature_heat_state,
+        temperature_heat_command,
+        temperature_cool_state,
+        temperature_cool_command,
+        humidify_state,
+        humidify_command,
+        dehumidify_state,
+        dehumidify_command,
+        mode_state,
+        mode_command,
+        fan_mode_state,
+        fan_mode_command,
+        hold_state,
+        hold_command
+    }
+}

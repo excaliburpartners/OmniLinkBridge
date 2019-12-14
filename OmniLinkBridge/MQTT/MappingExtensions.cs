@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using HAI_Shared;
+﻿using HAI_Shared;
 using Newtonsoft.Json;
 
 namespace OmniLinkBridge.MQTT
@@ -376,7 +371,7 @@ namespace OmniLinkBridge.MQTT
 
         public static string ToState(this clsUnit unit)
         {
-            return unit.Status == 0 || unit.Status == 100 ? "OFF" : "ON";
+            return unit.Status == 0 || unit.Status == 100 ? UnitCommands.OFF.ToString() : UnitCommands.ON.ToString();
         }
 
         public static int ToBrightnessState(this clsUnit unit)
