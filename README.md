@@ -1,25 +1,59 @@
 # OmniLink Bridge
-Provides MQTT bridge, web service API, time sync, and logging for [HAI/Leviton OmniPro II controllers](https://www.leviton.com/en/products/brands/omni-security-automation). Provides integration with [Samsung SmarthThings via web service API](https://github.com/excaliburpartners/SmartThings-OmniPro) and [Home Assistant via MQTT](https://www.home-assistant.io/components/mqtt/).
+Provides MQTT bridge, web service API, time sync, and logging for [HAI/Leviton OmniPro II controllers](https://www.leviton.com/en/products/brands/omni-security-automation). Provides integration with [Samsung SmartThings via web service API](https://github.com/excaliburpartners/SmartThings-OmniPro) and [Home Assistant via MQTT](https://www.home-assistant.io/components/mqtt/).
 
 ## Download
-You can use docker to build an image from git or download the [binary here](http://www.excalibur-partners.com/downloads/OmniLinkBridge_1_1_4.zip).
+You can use docker to build an image from git or download the [binary here](https://github.com/excaliburpartners/OmniLinkBridge/releases/latest/download/OmniLinkBridge.zip).
 
 ## Requirements
 - [Docker](https://www.docker.com/)
 - .NET Framework 4.5.2 (or Mono equivalent)
 
 ## Operation
-- Area, Messages, Units, and Zones are logged to mySQL when status changes
-- Thermostats are logged to mySQL once per minute
-	- If no notifications are received within 4 minutes a request is issued
-	- After 5 minutes of no updates a warning will be logged and mySQL will not be updated
-	- If the temp is 0 a warning will be logged and mySQL will not be updated
-- Controller time is checked and compared to the local computer time disregarding time zones
+OmniLinkBridge is divided into the following modules
 
-## Notifications
-- Supports email, prowl, and pushover
-- Always sent for area alarms and critical system events
-- Optionally enable for area status changes and console messages
+- OmniLinkII
+    - Settings: controller_
+    - Maintains connection to the OmniLink controller
+    - Thermostats
+	    - If no status update has been received after 4 minutes a request is issued
+        - A status update containing a temperature of 0 is ignored
+            - This can occur when a ZigBee thermostat has lost communication
+- Logger
+    - Console output
+        - Settings: verbose_
+        - Thermostats (verbose_thermostat_timer)
+            - After 5 minutes of no status updates a warning will be logged
+	        - When a current temperature of 0 is received a warning will be logged
+    - MySQL logging
+        - Settings: mysql_
+        - Thermostats are logged every minute and when an event is received
+    - Push notifications
+        - Settings: notify_
+        - Always sent for area alarms and critical system events
+        - Optionally enable for area status changes and console messages
+        - Email
+            - Settings: mail_
+        - Prowl
+            - Settings: prowl_
+        - Pushover
+            - Settings: pushover_
+- Time Sync
+    - Settings: time_
+    - Controller time is checked and compared to the local computer time disregarding time zones
+- Web API
+    - Settings: webapi_
+    - Provides integration with [Samsung SmartThings](https://github.com/excaliburpartners/SmartThings-OmniPro)
+    - Allows an application to subscribe to receive POST notifications status updates are received from the OmniLinkII module
+        - On failure to POST to callback URL subscription is removed
+        - Recommended for application to send subscribe reqeusts every few minutes
+    - Requests to GET endpoints return status from the OmniLinkII module
+    - Requests to POST endpoints send commands to the OmniLinkII module
+- MQTT
+    - Settings: mqtt_
+    - Maintains connection to the MQTT broker
+    - Publishes discovery topics for [Home Assistant](https://www.home-assistant.io/components/mqtt/) to auto configure devices
+    - Publishes topics for status received from the OmniLinkII module
+    - Subscribes to command topics and sends commands to the OmniLinkII module
 
 ## Docker Hub (preferred)
 1. Configure at a minimum the controller IP and encryptions keys. The web service port must be 8000.
@@ -62,7 +96,7 @@ docker logs omnilink-bridge
 ## Installation Windows
 1. Copy files to your desired location like C:\OmniLinkBridge
 2. Edit OmniLinkBridge.ini and define at a minimum the controller IP and encryptions keys
-3. Run OmniLinkBridge.exe to verify connectivity
+3. Run OmniLinkBridge.exe from the command prompt to verify connectivity
 4. Add Windows service
 ```
 sc create OmniLinkBridge binpath=C:\OmniLinkBridge\OmniLinkBridge.exe
@@ -95,7 +129,6 @@ systemctl start omnilinkbridge.service
 ```
 
 ## MQTT
-This module will also publish discovery topics for Home Assistant to auto configure devices. 
 
 ### Areas
 ```
@@ -183,14 +216,67 @@ PUB omnilink/buttonX/command
 string ON
 ```
 
-## Web Service API
-To test the API you can use your browser to view a page or PowerShell (see below) to change a value.
-
-- http://localhost:8000/ListUnits
-- http://localhost:8000/GetUnit?id=1
+## Web API
+To test the web service API you can use your browser to view a page or PowerShell (see below) to change a value.
 
 ```
 Invoke-WebRequest -Uri "http://localhost:8000/SetUnit" -Method POST -ContentType "application/json" -Body (convertto-json -InputObject @{"id"=1;"value"=100}) -UseBasicParsing
+```
+
+### Subscription
+```
+POST /Subscribe
+{ "callback": url }
+Callback is a POST request with Type header added and json body identical to the related /Get
+Type: area, contact, motion, water, smoke, co, temp, unit, thermostat
+```
+
+### Areas
+```
+GET /ListAreas
+GET /GetArea?id=X
+```
+
+### Zones
+```
+GET /ListZonesContact
+GET /ListZonesMotion
+GET /ListZonesWater
+GET /ListZonesSmoke
+GET /ListZonesCO
+GET /ListZonesTemp
+GET /GetZone?id=X
+```
+
+### Units
+```
+GET /ListUnits
+GET /GetZone?id=X
+POST /SetUnit
+POST /SetUnitKeypadPress
+{ "id":X, "value":0-100 }
+```
+
+### Thermostats
+```
+GET /ListThermostats
+GET /GetThermostat?id=X
+POST /SetThermostatCoolSetpoint
+POST /SetThermostatHeatSetpoint
+POST /SetThermostatMode
+POST /SetThermostatFanMode
+POST /SetThermostatHold
+{ "id":X, "value": }
+int mode 0=off, 1=heat, 2=cool, 3=auto, 4=emergency heat
+int fanmode 0=auto, 1=on, 2=circulate
+int hold 0=off, 1=on
+```
+
+### Thermostats
+```
+GET /ListButtons
+POST /PushButton
+{ "id":X, "value":1 }
 ```
 
 ## MySQL Setup
@@ -215,6 +301,11 @@ mysql_connection = DRIVER={MySQL};SERVER=localhost;DATABASE=OmniLinkBridge;USER=
 ```
 
 ## Change Log
+Version 1.1.5 - 2019-12-14
+- Fix SQL logging for areas, units, and thermostats
+- Refactor MQTT parser and add unit tests
+- Update readme, fix thermostat logging interval, and cleanup code
+
 Version 1.1.4 - 2019-11-22
 - Utilize controller temperature format
 - Don't publish invalid thermostat temperatures

@@ -8,11 +8,11 @@ namespace OmniLinkBridge.Modules
 {
     public class TimeSyncModule : IModule
     {
-        private static ILog log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
+        private static readonly ILog log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
 
         private OmniLinkII OmniLink { get; set; }
 
-        private System.Timers.Timer tsync_timer = new System.Timers.Timer();
+        private readonly System.Timers.Timer tsync_timer = new System.Timers.Timer();
         private DateTime tsync_check = DateTime.MinValue;
 
         private readonly AutoResetEvent trigger = new AutoResetEvent(false);

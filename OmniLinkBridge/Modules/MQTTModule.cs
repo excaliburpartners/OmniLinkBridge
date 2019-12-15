@@ -18,14 +18,13 @@ namespace OmniLinkBridge.Modules
 {
     public class MQTTModule : IModule
     {
-        private static ILog log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
+        private static readonly ILog log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
 
         public static DeviceRegistry MqttDeviceRegistry { get; set; }
 
         private OmniLinkII OmniLink { get; set; }
         private IManagedMqttClient MqttClient { get; set; }
         private bool ControllerConnected { get; set; }
-
         private MessageProcessor MessageProcessor { get; set; }
 
         private readonly AutoResetEvent trigger = new AutoResetEvent(false);
@@ -371,9 +370,8 @@ namespace OmniLinkBridge.Modules
             if (!MqttClient.IsConnected)
                 return;
 
-            // Ignore events fired by thermostat polling and when temperature is invalid
-            // An invalid temperature can occur when a Zigbee thermostat is unreachable
-            if (!e.EventTimer && e.Thermostat.Temp > 0)
+            // Ignore events fired by thermostat polling
+            if (!e.EventTimer)
                 PublishThermostatState(e.Thermostat);
         }
 

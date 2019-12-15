@@ -14,7 +14,7 @@ namespace OmniLinkBridge
 {
     public class WebServiceModule : IModule
     {
-        private static ILog log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
+        private static readonly ILog log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
 
         public static OmniLinkII OmniLink { get; private set; }
 

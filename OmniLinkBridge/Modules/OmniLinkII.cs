@@ -12,16 +12,16 @@ namespace OmniLinkBridge.Modules
 {
     public class OmniLinkII : IModule, IOmniLinkII
     {
-        private static ILog log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
+        private static readonly ILog log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
 
         // OmniLink Controller
         public clsHAC Controller { get; private set; }
         private DateTime retry = DateTime.MinValue;
 
         // Thermostats
-        private Dictionary<ushort, DateTime> tstats = new Dictionary<ushort, DateTime>();
-        private System.Timers.Timer tstat_timer = new System.Timers.Timer();
-        private object tstat_lock = new object();
+        private readonly Dictionary<ushort, DateTime> tstats = new Dictionary<ushort, DateTime>();
+        private readonly System.Timers.Timer tstat_timer = new System.Timers.Timer();
+        private readonly object tstat_lock = new object();
 
         // Events
         public event EventHandler<EventArgs> OnConnect;
@@ -382,13 +382,15 @@ namespace OmniLinkBridge.Modules
 
         private void GetNextNamed(enuObjectType type, int ix)
         {
-            clsOL2MsgRequestProperties MSG = new clsOL2MsgRequestProperties(Controller.Connection);
-            MSG.ObjectType = type;
-            MSG.IndexNumber = (UInt16)ix;
-            MSG.RelativeDirection = 1;  // next object after IndexNumber
-            MSG.Filter1 = 1;  // (0=Named or Unnamed, 1=Named, 2=Unnamed).
-            MSG.Filter2 = 0;  // Any Area
-            MSG.Filter3 = 0;  // Any Room
+            clsOL2MsgRequestProperties MSG = new clsOL2MsgRequestProperties(Controller.Connection)
+            {
+                ObjectType = type,
+                IndexNumber = (UInt16)ix,
+                RelativeDirection = 1,  // next object after IndexNumber
+                Filter1 = 1,  // (0=Named or Unnamed, 1=Named, 2=Unnamed).
+                Filter2 = 0,  // Any Area
+                Filter3 = 0  // Any Room
+            };
             Controller.Connection.Send(MSG, HandleNamedPropertiesResponse);
         }
 
@@ -724,12 +726,19 @@ namespace OmniLinkBridge.Modules
                         lock (tstat_lock)
                         {
                             Controller.Thermostats[MSG.ObjectNumber(i)].CopyExtendedStatus(MSG, i);
-                            OnThermostatStatus?.Invoke(this, new ThermostatStatusEventArgs()
+
+                            // Don't fire event when invalid temperature of 0 is sometimes received
+                            if (Controller.Thermostats[MSG.ObjectNumber(i)].Temp > 0)
                             {
-                                ID = MSG.ObjectNumber(i),
-                                Thermostat = Controller.Thermostats[MSG.ObjectNumber(i)],
-                                EventTimer = false
-                            });
+                                OnThermostatStatus?.Invoke(this, new ThermostatStatusEventArgs()
+                                {
+                                    ID = MSG.ObjectNumber(i),
+                                    Thermostat = Controller.Thermostats[MSG.ObjectNumber(i)],
+                                    EventTimer = false
+                                });
+                            }
+                            else if (Global.verbose_thermostat_timer)
+                                log.Warn("Ignoring unsolicited unknown temp for Thermostat " + Controller.Thermostats[MSG.ObjectNumber(i)].Name);
 
                             if (!tstats.ContainsKey(MSG.ObjectNumber(i)))
                                 tstats.Add(MSG.ObjectNumber(i), DateTime.Now);
@@ -809,6 +818,7 @@ namespace OmniLinkBridge.Modules
                         (Controller.Connection.ConnectionState == enuOmniLinkConnectionState.Online ||
                         Controller.Connection.ConnectionState == enuOmniLinkConnectionState.OnlineSecure))
                     {
+                        // Don't fire event when invalid temperature of 0 is sometimes received
                         if (Controller.Thermostats[tstat.Key].Temp > 0)
                         {
                             OnThermostatStatus?.Invoke(this, new ThermostatStatusEventArgs()
@@ -819,7 +829,7 @@ namespace OmniLinkBridge.Modules
                             });
                         }
                         else if (Global.verbose_thermostat_timer)
-                            log.Warn("Not logging unknown temp for Thermostat " + Controller.Thermostats[tstat.Key].Name);
+                            log.Warn("Ignoring unknown temp for Thermostat " + Controller.Thermostats[tstat.Key].Name);
                     }
                     else if (Global.verbose_thermostat_timer)
                         log.Warn("Not logging out of date status for Thermostat " + Controller.Thermostats[tstat.Key].Name);

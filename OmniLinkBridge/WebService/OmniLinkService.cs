@@ -12,7 +12,7 @@ namespace OmniLinkBridge.WebAPI
     [ServiceBehavior(IncludeExceptionDetailInFaults = true)]
     public class OmniLinkService : IOmniLinkService
     {
-        private static ILog log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
+        private static readonly ILog log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
 
         public void Subscribe(SubscribeContract contract)
         {

@@ -10,10 +10,10 @@ namespace OmniLinkBridge.WebAPI
 {
     static class WebNotification
     {
-        private static ILog log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
+        private static readonly ILog log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
 
         private static List<string> subscriptions = new List<string>();
-        private static object subscriptions_lock = new object();
+        private static readonly object subscriptions_lock = new object();
 
         public static void AddSubscription(string callback)
         {

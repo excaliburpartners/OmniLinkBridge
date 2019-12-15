@@ -13,7 +13,7 @@ namespace OmniLinkBridge
 {
     public static class Settings
     {
-        private static ILog log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
+        private static readonly ILog log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
 
         public static void LoadSettings()
         {
@@ -60,7 +60,7 @@ namespace OmniLinkBridge
             Global.mqtt_discovery_name_prefix = settings["mqtt_discovery_name_prefix"] ?? string.Empty;
 
             if (!string.IsNullOrEmpty(Global.mqtt_discovery_name_prefix))
-                Global.mqtt_discovery_name_prefix = Global.mqtt_discovery_name_prefix + " ";
+                Global.mqtt_discovery_name_prefix += " ";
 
             Global.mqtt_discovery_ignore_zones = ValidateRange(settings, "mqtt_discovery_ignore_zones");
             Global.mqtt_discovery_ignore_units = ValidateRange(settings, "mqtt_discovery_ignore_units");
@@ -103,7 +103,7 @@ namespace OmniLinkBridge
                         .Select(s => s.Split('='))
                         .ToDictionary(a => a[0].Trim(), a => a[1].Trim(), StringComparer.InvariantCultureIgnoreCase);
 
-                    if (!attributes.ContainsKey("id") || !Int32.TryParse(attributes["id"], out int attrib_id))
+                    if (!attributes.ContainsKey("id") || !int.TryParse(attributes["id"], out int attrib_id))
                         throw new Exception("Missing or invalid id attribute");
 
                     T override_zone = new T();
@@ -139,7 +139,7 @@ namespace OmniLinkBridge
         {
             try
             {
-                return Int32.Parse(settings[section]);
+                return int.Parse(settings[section]);
             }
             catch
             {
@@ -165,7 +165,7 @@ namespace OmniLinkBridge
         {
             try
             {
-                int port = Int32.Parse(settings[section]);
+                int port = int.Parse(settings[section]);
 
                 if (port < 1 || port > 65534)
                     throw new Exception();
@@ -175,54 +175,6 @@ namespace OmniLinkBridge
             catch
             {
                 log.Error("Invalid port specified for " + section);
-                throw;
-            }
-        }
-
-        private static bool ValidateBool(NameValueCollection settings, string section)
-        {
-            try
-            {
-                return Boolean.Parse(settings[section]);
-            }
-            catch
-            {
-                log.Error("Invalid bool specified for " + section);
-                throw;
-            }
-        }
-
-        private static IPAddress ValidateIP(NameValueCollection settings, string section)
-        {
-            if (settings[section] == "*")
-                return IPAddress.Any;
-
-            if (settings[section] == "")
-                return IPAddress.None;
-
-            try
-            {
-                return IPAddress.Parse(section);
-            }
-            catch
-            {
-                log.Error("Invalid IP specified for " + section);
-                throw;
-            }
-        }
-
-        private static string ValidateDirectory(NameValueCollection settings, string section)
-        {
-            try
-            {
-                if (!Directory.Exists(settings[section]))
-                    Directory.CreateDirectory(settings[section]);
-
-                return settings[section];
-            }
-            catch
-            {
-                log.Error("Invalid directory specified for " + section);
                 throw;
             }
         }

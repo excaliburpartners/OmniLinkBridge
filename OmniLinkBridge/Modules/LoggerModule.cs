@@ -12,17 +12,17 @@ namespace OmniLinkBridge.Modules
 {
     public class LoggerModule : IModule
     {
-        private static ILog log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
+        private static readonly ILog log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
 
-        private OmniLinkII omnilink;
-        private List<string> alarms = new List<string>();
+        private readonly OmniLinkII omnilink;
+        private readonly List<string> alarms = new List<string>();
 
         // mySQL Database
         private OdbcConnection mysql_conn = null;
         private DateTime mysql_retry = DateTime.MinValue;
         private OdbcCommand mysql_command = null;
-        private Queue<string> mysql_queue = new Queue<string>();
-        private object mysql_lock = new object();
+        private readonly Queue<string> mysql_queue = new Queue<string>();
+        private readonly object mysql_lock = new object();
 
         private readonly AutoResetEvent trigger = new AutoResetEvent(false);
 
@@ -221,18 +221,14 @@ namespace OmniLinkBridge.Modules
 
         private void Omnilink_OnThermostatStatus(object sender, ThermostatStatusEventArgs e)
         {
-            if (e.EventTimer)
-                return;
+            int.TryParse(e.Thermostat.TempText(), out int temp);
+            int.TryParse(e.Thermostat.HeatSetpointText(), out int heat);
+            int.TryParse(e.Thermostat.CoolSetpointText(), out int cool);
+            int.TryParse(e.Thermostat.HumidityText(), out int humidity);
+            int.TryParse(e.Thermostat.HumidifySetpointText(), out int humidify);
+            int.TryParse(e.Thermostat.DehumidifySetpointText(), out int dehumidify);
 
-            int temp, heat, cool, humidity, humidify, dehumidify;
-
-            Int32.TryParse(e.Thermostat.TempText(), out temp);
-            Int32.TryParse(e.Thermostat.HeatSetpointText(), out heat);
-            Int32.TryParse(e.Thermostat.CoolSetpointText(), out cool);
-            Int32.TryParse(e.Thermostat.HumidityText(), out humidity);
-            Int32.TryParse(e.Thermostat.HumidifySetpointText(), out humidify);
-            Int32.TryParse(e.Thermostat.DehumidifySetpointText(), out dehumidify);
-
+            // Log all events including thermostat polling
             DBQueue(@"
                 INSERT INTO log_thermostats (timestamp, id, name, 
                     status, temp, heat, cool, 
@@ -243,7 +239,8 @@ namespace OmniLinkBridge.Modules
                     humidity + "','" + humidify + "','" + dehumidify + "','" +
                     e.Thermostat.ModeText() + "','" + e.Thermostat.FanModeText() + "','" + e.Thermostat.HoldStatusText() + "')");
 
-            if (Global.verbose_thermostat)
+            // Ignore events fired by thermostat polling
+            if (!e.EventTimer && Global.verbose_thermostat)
                 log.Debug("ThermostatStatus " + e.ID + " " + e.Thermostat.Name +
                     ", Status: " + e.Thermostat.TempText() + " " + e.Thermostat.HorC_StatusText() +
                     ", Heat: " + e.Thermostat.HeatSetpointText() +
