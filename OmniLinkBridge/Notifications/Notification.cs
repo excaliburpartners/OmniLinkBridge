@@ -8,7 +8,7 @@ namespace OmniLinkBridge.Notifications
 {
     public static class Notification
     {
-        private static ILog log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
+        private static readonly ILog log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
 
         private static readonly List<INotification> providers = new List<INotification>()
         {

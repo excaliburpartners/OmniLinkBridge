@@ -8,35 +8,36 @@ namespace OmniLinkBridge.Notifications
 {
     public class ProwlNotification : INotification
     {
-        private static ILog log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
+        private static readonly ILog log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
 
-        private static Uri URI = new Uri("https://api.prowlapp.com/publicapi/add");
+        private static readonly Uri URI = new Uri("https://api.prowlapp.com/publicapi/add");
 
         public void Notify(string source, string description, NotificationPriority priority)
         {
             foreach (string key in Global.prowl_key)
             {
-                List<string> parameters = new List<string>();
-
-                parameters.Add("apikey=" + key);
-                parameters.Add("priority= " + (int)priority);
-                parameters.Add("application=OmniLinkBridge");
-                parameters.Add("event=" + source);
-                parameters.Add("description=" + description);
+                List<string> parameters = new List<string>
+                {
+                    "apikey=" + key,
+                    "priority= " + (int)priority,
+                    "application=" + Global.controller_name,
+                    "event=" + source,
+                    "description=" + description
+                };
 
                 using (WebClient client = new WebClient())
                 {
                     client.Headers[HttpRequestHeader.ContentType] = "application/x-www-form-urlencoded";
                     client.UploadStringAsync(URI, string.Join("&", parameters.ToArray()));
-                    client.UploadStringCompleted += client_UploadStringCompleted;
+                    client.UploadStringCompleted += Client_UploadStringCompleted;
                 }
             }
         }
 
-        private void client_UploadStringCompleted(object sender, UploadStringCompletedEventArgs e)
+        private void Client_UploadStringCompleted(object sender, UploadStringCompletedEventArgs e)
         {
             if (e.Error != null)
-                log.Error("An error occurred sending notification", e.Error);
+                log.Error("An error occurred sending prowl notification", e.Error);
         }
     }
 }

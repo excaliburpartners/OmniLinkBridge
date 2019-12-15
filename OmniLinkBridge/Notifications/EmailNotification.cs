@@ -8,20 +8,23 @@ namespace OmniLinkBridge.Notifications
 {
     public class EmailNotification : INotification
     {
-        private static ILog log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
+        private static readonly ILog log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
 
         public void Notify(string source, string description, NotificationPriority priority)
         {
             foreach (MailAddress address in Global.mail_to)
             {
-                MailMessage mail = new MailMessage();
-                mail.From = Global.mail_from;
+                MailMessage mail = new MailMessage
+                {
+                    From = Global.mail_from,
+                    Subject = $"{Global.controller_name} - {source}",
+                    Body = $"{source}: {description}"
+                };
                 mail.To.Add(address);
-                mail.Subject = "OmniLinkBridge - " + source;
-                mail.Body = source + ": " + description;
 
                 using (SmtpClient smtp = new SmtpClient(Global.mail_server, Global.mail_port))
                 {
+                    smtp.EnableSsl = Global.mail_tls;
                     if (!string.IsNullOrEmpty(Global.mail_username))
                     {
                         smtp.UseDefaultCredentials = false;
@@ -34,7 +37,7 @@ namespace OmniLinkBridge.Notifications
                     }
                     catch (Exception ex)
                     {
-                        log.Error("An error occurred sending notification", ex);
+                        log.Error("An error occurred sending email notification", ex);
                     }
                 }
             }

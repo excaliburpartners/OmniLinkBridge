@@ -1,6 +1,5 @@
-﻿using OmniLinkBridge.Modules;
-using OmniLinkBridge.OmniLink;
-using log4net;
+﻿using log4net;
+using OmniLinkBridge.Modules;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Threading;
@@ -10,7 +9,7 @@ namespace OmniLinkBridge
 {
     public class CoreServer
     {
-        private static ILog log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
+        private static readonly ILog log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
 
         private OmniLinkII omnilink;
         private readonly List<IModule> modules = new List<IModule>();

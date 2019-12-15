@@ -16,6 +16,7 @@ namespace OmniLinkBridge
         public static int controller_port;
         public static string controller_key1;
         public static string controller_key2;
+        public static string controller_name;
 
         // Time Sync
         public static bool time_sync;
@@ -61,6 +62,7 @@ namespace OmniLinkBridge
 
         // Email Notifications
         public static string mail_server;
+        public static bool mail_tls;
         public static int mail_port;
         public static string mail_username;
         public static string mail_password;
