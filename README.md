@@ -132,6 +132,9 @@ systemctl start omnilinkbridge.service
 
 ### Areas
 ```
+SUB omnilink/areaX/name
+string Area name
+
 SUB omnilink/areaX/state  
 string triggered, pending, armed_night, armed_night_delay, armed_home, armed_home_instant, armed_away, armed_vacation, disarmed
 
@@ -144,6 +147,9 @@ string(insensitive) arm_home, arm_away, arm_night, disarm, arm_home_instant, arm
 
 ### Zones
 ```
+SUB omnilink/zoneX/name
+string Zone name
+
 SUB omnilink/zoneX/state  
 string secure, not_ready, trouble, armed, tripped, bypassed
 
@@ -162,6 +168,9 @@ string(insensitive) bypass, restore
 
 ### Units
 ```
+SUB omnilink/unitX/name
+string Unit name
+
 SUB omnilink/unitX/state  
 PUB omnilink/unitX/command  
 string OFF, ON
@@ -173,6 +182,9 @@ int Level from 0 to 100 percent
 
 ### Thermostats
 ```
+SUB omnilink/thermostatX/name
+string Thermostat name
+
 SUB omnilink/thermostatX/current_operation  
 string idle, cool, heat
 
@@ -209,12 +221,28 @@ string off, hold
 
 ### Buttons
 ```
+SUB omnilink/buttonX/name
+string Button name
+
 SUB omnilink/buttonX/state  
-string OFF
+string OFF, ON
 
 PUB omnilink/buttonX/command  
 string ON
 ```
+
+### Messages
+```
+SUB omnilink/messageX/name
+string Message name
+
+SUB omnilink/messageX/state
+string off, displayed, displayed_not_acknowledged
+
+PUB omnilink/messageX/command
+string show, show_no_beep, show_no_beep_or_led, clear
+```
+
 
 ## Web API
 To test the web service API you can use your browser to view a page or PowerShell (see below) to change a value.

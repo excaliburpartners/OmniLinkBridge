@@ -153,6 +153,31 @@ namespace OmniLinkBridgeTest
             check(1, "ON", enuUnitCommand.Button);
             check(1, "on", enuUnitCommand.Button);
         }
+
+        [TestMethod]
+        public void MessageCommand()
+        {
+            void check(ushort id, string payload, enuUnitCommand command, byte par)
+            {
+                SendCommandEventArgs actual = null;
+                omniLink.OnSendCommand += (sender, e) => { actual = e; };
+                messageProcessor.Process($"omnilink/message{id}/command", payload);
+                SendCommandEventArgs expected = new SendCommandEventArgs()
+                {
+                    Cmd = command,
+                    Par = par,
+                    Pr2 = id
+                };
+                Assert.AreEqual(expected, actual);
+            }
+
+            check(1, "show", enuUnitCommand.ShowMsgWBeep, 0);
+            check(1, "show_no_beep", enuUnitCommand.ShowMsgNoBeep, 1);
+            check(1, "show_no_beep_or_led", enuUnitCommand.ShowMsgNoBeep, 2);
+            check(1, "clear", enuUnitCommand.ClearMsg, 0);
+
+            check(2, "SHOW", enuUnitCommand.ShowMsgWBeep, 0);
+        }
     }
 }
 

@@ -276,7 +276,7 @@ namespace OmniLinkBridge.Modules
                 VALUES ('" + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + "','" + e.ID + "','" + e.Message.Name + "','" + e.Message.StatusText() + "')");
 
             if (Global.verbose_message)
-                log.Debug("MessageStatus " + e.Message.Name + ", " + e.Message.StatusText());
+                log.Debug("MessageStatus " + e.ID + " " + e.Message.Name + ", " + e.Message.StatusText());
 
             if (Global.notify_message)
                 Notification.Notify("Message", e.ID + " " + e.Message.Name + ", " + e.Message.StatusText());

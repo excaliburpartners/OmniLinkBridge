@@ -10,7 +10,7 @@ namespace OmniLinkBridge.MQTT
 {
     public class MessageProcessor
     {
-        private static ILog log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
+        private static readonly ILog log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
 
         private readonly Regex regexTopic = new Regex(Global.mqtt_prefix + "/([A-Za-z]+)([0-9]+)/(.*)", RegexOptions.Compiled);
 
@@ -45,9 +45,11 @@ namespace OmniLinkBridge.MQTT
                 ProcessThermostatReceived(OmniLink.Controller.Thermostats[id], topic, payload);
             else if (type == CommandTypes.button && id > 0 && id <= OmniLink.Controller.Buttons.Count)
                 ProcessButtonReceived(OmniLink.Controller.Buttons[id], topic, payload);
+            else if (type == CommandTypes.message && id > 0 && id <= OmniLink.Controller.Messages.Count)
+                ProcessMessageReceived(OmniLink.Controller.Messages[id], topic, payload);
         }
 
-        private IDictionary<AreaCommands, enuUnitCommand> AreaMapping = new Dictionary<AreaCommands, enuUnitCommand>
+        private static readonly IDictionary<AreaCommands, enuUnitCommand> AreaMapping = new Dictionary<AreaCommands, enuUnitCommand>
         {
             { AreaCommands.disarm, enuUnitCommand.SecurityOff },
             { AreaCommands.arm_home, enuUnitCommand.SecurityDay },
@@ -71,7 +73,7 @@ namespace OmniLinkBridge.MQTT
             }
         }
 
-        private IDictionary<ZoneCommands, enuUnitCommand> ZoneMapping = new Dictionary<ZoneCommands, enuUnitCommand>
+        private static readonly IDictionary<ZoneCommands, enuUnitCommand> ZoneMapping = new Dictionary<ZoneCommands, enuUnitCommand>
         {
             { ZoneCommands.restore, enuUnitCommand.Restore },
             { ZoneCommands.bypass, enuUnitCommand.Bypass },
@@ -86,7 +88,7 @@ namespace OmniLinkBridge.MQTT
             }
         }
 
-        private IDictionary<UnitCommands, enuUnitCommand> UnitMapping = new Dictionary<UnitCommands, enuUnitCommand>
+        private static readonly IDictionary<UnitCommands, enuUnitCommand> UnitMapping = new Dictionary<UnitCommands, enuUnitCommand>
         {
             { UnitCommands.OFF, enuUnitCommand.Off },
             { UnitCommands.ON, enuUnitCommand.On }
@@ -179,6 +181,30 @@ namespace OmniLinkBridge.MQTT
             {
                 log.Debug("PushButton: " + button.Number);
                 OmniLink.SendCommand(enuUnitCommand.Button, 0, (ushort)button.Number);
+            }
+        }
+
+        private static readonly IDictionary<MessageCommands, enuUnitCommand> MessageMapping = new Dictionary<MessageCommands, enuUnitCommand>
+        {
+            { MessageCommands.show, enuUnitCommand.ShowMsgWBeep },
+            { MessageCommands.show_no_beep, enuUnitCommand.ShowMsgNoBeep },
+            { MessageCommands.show_no_beep_or_led, enuUnitCommand.ShowMsgNoBeep },
+            { MessageCommands.clear, enuUnitCommand.ClearMsg },
+        };
+
+        private void ProcessMessageReceived(clsMessage message, Topic command, string payload)
+        {
+            if (command == Topic.command && Enum.TryParse(payload, true, out MessageCommands cmd))
+            {
+                log.Debug("SetMessage: " + message.Number + " to " + cmd.ToString().Replace("_", " "));
+
+                byte par = 0;
+                if (cmd == MessageCommands.show_no_beep)
+                    par = 1;
+                else if (cmd == MessageCommands.show_no_beep_or_led)
+                    par = 2;
+
+                OmniLink.SendCommand(MessageMapping[cmd], par, (ushort)message.Number);
             }
         }
     }

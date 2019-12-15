@@ -6,6 +6,7 @@
         zone,
         unit,
         thermostat,
-        button
+        button,
+        message
     }
 }

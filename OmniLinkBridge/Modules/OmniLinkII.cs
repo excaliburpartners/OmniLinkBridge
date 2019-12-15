@@ -30,6 +30,7 @@ namespace OmniLinkBridge.Modules
         public event EventHandler<ZoneStatusEventArgs> OnZoneStatus;
         public event EventHandler<ThermostatStatusEventArgs> OnThermostatStatus;
         public event EventHandler<UnitStatusEventArgs> OnUnitStatus;
+        public event EventHandler<ButtonStatusEventArgs> OnButtonStatus;
         public event EventHandler<MessageStatusEventArgs> OnMessageStatus;
         public event EventHandler<SystemStatusEventArgs> OnSystemStatus;
 
@@ -567,6 +568,12 @@ namespace OmniLinkBridge.Modules
                 eventargs.Value = ((int)MSG.SystemEvent).ToString() + " " + Controller.Buttons[MSG.SystemEvent].Name;
 
                 OnSystemStatus?.Invoke(this, eventargs);
+
+                OnButtonStatus?.Invoke(this, new ButtonStatusEventArgs()
+                {
+                    ID = MSG.SystemEvent,
+                    Button = Controller.Buttons[MSG.SystemEvent]
+                });
             }
             else if (MSG.SystemEvent >= 768 && MSG.SystemEvent <= 771)
             {

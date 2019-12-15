@@ -140,7 +140,7 @@ namespace OmniLinkBridge.MQTT
             ret.value_template = "{% if value_json.water_alarm %} ON {%- else -%} OFF {%- endif %}";
             return ret;
         }
-    
+
         public static BinarySensor ToConfigDuress(this clsArea area)
         {
             BinarySensor ret = new BinarySensor();
@@ -467,6 +467,21 @@ namespace OmniLinkBridge.MQTT
             ret.state_topic = button.ToTopic(Topic.state);
             ret.command_topic = button.ToTopic(Topic.command);
             return ret;
+        }
+
+        public static string ToTopic(this clsMessage message, Topic topic)
+        {
+            return $"{Global.mqtt_prefix}/message{message.Number.ToString()}/{topic.ToString()}";
+        }
+
+        public static string ToState(this clsMessage message)
+        {
+            if (message.Status == enuMessageStatus.Displayed)
+                return "displayed";
+            else if (message.Status == enuMessageStatus.NotAcked)
+                return "displayed_not_acknowledged";
+            else
+                return "off";
         }
     }
 }

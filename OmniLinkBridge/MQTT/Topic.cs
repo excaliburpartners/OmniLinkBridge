@@ -2,6 +2,7 @@
 {
     public enum Topic
     {
+        name,
         state,
         command,
         basic_state,
