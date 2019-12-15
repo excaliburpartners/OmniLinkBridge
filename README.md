@@ -9,51 +9,41 @@ You can use docker to build an image from git or download the [binary here](http
 - .NET Framework 4.5.2 (or Mono equivalent)
 
 ## Operation
-OmniLinkBridge is divided into the following modules
+OmniLinkBridge is divided into the following modules and configurable settings.
 
-- OmniLinkII
-    - Settings: controller_
+- OmniLinkII: controller_
     - Maintains connection to the OmniLink controller
     - Thermostats
 	    - If no status update has been received after 4 minutes a request is issued
         - A status update containing a temperature of 0 is ignored
             - This can occur when a ZigBee thermostat has lost communication
-- Logger
-    - Console output
-        - Settings: verbose_
-        - Thermostats (verbose_thermostat_timer)
-            - After 5 minutes of no status updates a warning will be logged
-	        - When a current temperature of 0 is received a warning will be logged
-    - MySQL logging
-        - Settings: mysql_
-        - Thermostats are logged every minute and when an event is received
-    - Push notifications
-        - Settings: notify_
-        - Always sent for area alarms and critical system events
-        - Optionally enable for area status changes and console messages
-        - Email
-            - Settings: mail_
-        - Prowl
-            - Settings: prowl_
-        - Pushover
-            - Settings: pushover_
-- Time Sync
-    - Settings: time_
+- Time Sync: time_
     - Controller time is checked and compared to the local computer time disregarding time zones
-- Web API
-    - Settings: webapi_
+- MQTT: mqtt_
+    - Maintains connection to the MQTT broker
+    - Publishes discovery topics for [Home Assistant](https://www.home-assistant.io/components/mqtt/) to auto configure devices
+    - Publishes topics for status received from the OmniLinkII module
+    - Subscribes to command topics and sends commands to the OmniLinkII module
+- Web API: webapi_
     - Provides integration with [Samsung SmartThings](https://github.com/excaliburpartners/SmartThings-OmniPro)
     - Allows an application to subscribe to receive POST notifications status updates are received from the OmniLinkII module
         - On failure to POST to callback URL subscription is removed
         - Recommended for application to send subscribe reqeusts every few minutes
     - Requests to GET endpoints return status from the OmniLinkII module
     - Requests to POST endpoints send commands to the OmniLinkII module
-- MQTT
-    - Settings: mqtt_
-    - Maintains connection to the MQTT broker
-    - Publishes discovery topics for [Home Assistant](https://www.home-assistant.io/components/mqtt/) to auto configure devices
-    - Publishes topics for status received from the OmniLinkII module
-    - Subscribes to command topics and sends commands to the OmniLinkII module
+- Logger
+    - Console output: verbose_
+        - Thermostats (verbose_thermostat_timer)
+            - After 5 minutes of no status updates a warning will be logged
+	        - When a current temperature of 0 is received a warning will be logged
+    - MySQL logging: mysql_
+        - Thermostats are logged every minute and when an event is received
+    - Push notifications: notify_
+        - Always sent for area alarms and critical system events
+        - Optionally enable for area status changes and console messages
+        - Email: mail_
+        - Prowl: prowl_
+        - Pushover: pushover_
 
 ## Docker Hub (preferred)
 1. Configure at a minimum the controller IP and encryptions keys. The web service port must be 8000.
@@ -142,7 +132,7 @@ SUB omnilink/areaX/basic_state
 string triggered, pending, armed_night, armed_home, armed_away, disarmed
 
 PUB omnilink/areaX/command  
-string(insensitive) arm_home, arm_away, arm_night, disarm, arm_home_instant, arm_night_delay, arm_vacation
+string arm_home, arm_away, arm_night, disarm, arm_home_instant, arm_night_delay, arm_vacation
 ```
 
 ### Zones
@@ -163,7 +153,7 @@ SUB omnilink/zoneX/current_humidity (optional)
 int Current relative humidity
 
 PUB omnilink/zoneX/command  
-string(insensitive) bypass, restore
+string bypass, restore
 ```
 
 ### Units
@@ -242,7 +232,6 @@ string off, displayed, displayed_not_acknowledged
 PUB omnilink/messageX/command
 string show, show_no_beep, show_no_beep_or_led, clear
 ```
-
 
 ## Web API
 To test the web service API you can use your browser to view a page or PowerShell (see below) to change a value.
