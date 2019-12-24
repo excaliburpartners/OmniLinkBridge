@@ -9,7 +9,7 @@ You can use docker to build an image from git or download the [binary here](http
 - .NET Framework 4.5.2 (or Mono equivalent)
 
 ## Operation
-OmniLinkBridge is divided into the following modules and configurable settings.
+OmniLinkBridge is divided into the following modules and configurable settings. Configuration settings can also be set as environment variables by using their name in uppercase. Refer to [OmniLinkBridge.ini](https://github.com/excaliburpartners/OmniLinkBridge/blob/master/OmniLinkBridge/OmniLinkBridge.ini) for specifics.
 
 - OmniLinkII: controller_
     - Maintains connection to the OmniLink controller
@@ -33,6 +33,7 @@ OmniLinkBridge is divided into the following modules and configurable settings.
     - Requests to POST endpoints send commands to the OmniLinkII module
 - Logger
     - Console output: verbose_
+        - Enabled by default
         - Thermostats (verbose_thermostat_timer)
             - After 5 minutes of no status updates a warning will be logged
 	        - When a current temperature of 0 is received a warning will be logged
@@ -45,8 +46,34 @@ OmniLinkBridge is divided into the following modules and configurable settings.
         - Prowl: prowl_
         - Pushover: pushover_
 
-## Docker Hub (preferred)
-1. Configure at a minimum the controller IP and encryptions keys. The web service port must be 8000.
+## Docker Hub Quickstart
+Quickly get started with console logging by specifying the controller address and encryption keys.
+```
+docker run --name="omnilink-bridge" \
+  -v /etc/localtime:/etc/localtime:ro \
+  -e CONTROLLER_ADDRESS='' \
+  -e CONTROLLER_KEY1='00-00-00-00-00-00-00-00' \
+  -e CONTROLLER_KEY2='00-00-00-00-00-00-00-00' \
+  --net=host excaliburpartners/omnilink-bridge
+```
+
+Or start in the background with time sync and MQTT modules enabled.
+```
+docker run -d --name="omnilink-bridge" --restart always \
+  -v /etc/localtime:/etc/localtime:ro \
+  -e CONTROLLER_ADDRESS='' \
+  -e CONTROLLER_KEY1='00-00-00-00-00-00-00-00' \
+  -e CONTROLLER_KEY2='00-00-00-00-00-00-00-00' \
+  -e TIME_SYNC='yes' \
+  -e MQTT_ENABLED='yes' \
+  -e MQTT_SERVER='' \
+  -e MQTT_USERNAME='' \
+  -e MQTT_PASSWORD='' \
+  --net=host excaliburpartners/omnilink-bridge
+```
+
+## Docker Hub with Configuration File
+1. Configure at a minimum the controller IP and encryptions keys.
 ```
 mkdir /opt/omnilink-bridge
 curl https://raw.githubusercontent.com/excaliburpartners/OmniLinkBridge/master/OmniLinkBridge/OmniLinkBridge.ini -o /opt/omnilink-bridge/OmniLinkBridge.ini 
@@ -61,7 +88,7 @@ docker run -d --name="omnilink-bridge" -v /opt/omnilink-bridge:/config -v /etc/l
 docker logs omnilink-bridge
 ```
 
-## Docker (for developers)
+## Docker for Developers
 1. Clone git repo and build docker image
 ```
 git clone https://github.com/excaliburpartners/OmniLinkBridge.git
@@ -296,107 +323,10 @@ POST /PushButton
 { "id":X, "value":1 }
 ```
 
-## MySQL Setup
-You will want to install the MySQL Community Server, Workbench, and ODBC Connector. The Workbench software provides a graphical interface to administer the MySQL server. The OmniLink Bridge uses ODBC to communicate with the database. The MySQL ODBC Connector library is needed for Windows ODBC to communicate with MySQL. 
+## MySQL
+The [MySQL ODBC Connector](http://dev.mysql.com/downloads/connector/odbc/) is required for MySQL logging. The docker image comes with the MySQL ODBC connector installed. For Windows and Linux you will need to download and install it.
 
-http://dev.mysql.com/downloads/mysql/
-http://dev.mysql.com/downloads/tools/workbench/
-http://dev.mysql.com/downloads/connector/odbc/
-
-At this point we need to open MySQL Workbench to create the database (called a schema in the Workbench GUI) for OmniLinkBridge to use.
-
-1. After opening the program double-click on "Local instance MySQL" and enter the password you set in the wizard.
-2. On the toolbar click the "Create a new schema" button, provide a name, and click apply.
-3. On the left side right-click on the schema you created and click "Set as default schema".
-4. In the middle section under Query1 click the open file icon and select the OmniLinkBridge.sql file.
-5. Click the Execute lighting bolt to run the query, which will create the tables.
-
-Lastly in OmniLinkBridge.ini set mysql_connection. This should get you up and running. The MySQL Workbench can also be used to view the data that OmniLink Bridge inserts into the tables.
-
+Configure mysql_connection in OmniLinkBridge.ini. For Windows change DRIVER={MySQL} to name of the driver shown in the ODBC Data Source Administrator.
 ```
 mysql_connection = DRIVER={MySQL};SERVER=localhost;DATABASE=OmniLinkBridge;USER=root;PASSWORD=myPassword;OPTION=3;
 ```
-
-## Change Log
-Version 1.1.5 - 2019-12-14
-- Fix SQL logging for areas, units, and thermostats
-- Refactor MQTT parser and add unit tests
-- Update readme, fix thermostat logging interval, and cleanup code
-
-Version 1.1.4 - 2019-11-22
-- Utilize controller temperature format
-- Don't publish invalid thermostat temperatures
-- Always enable first area to support Omni LTe and Omni IIe
-- Fix MQTT id validation and add notice for publishing to area 0
-- Fix missing last area, zone, unit, thermostat, and button
-- Fix compatibility with Home Assistant 0.95.4 MQTT extra keys
-- Add Home Assistant MQTT device registry support
-- Add MQTT messages for controller disconnect and last will
-- Shutdown cleanly on linux or docker
-
-Version 1.1.3 - 2019-02-10
-- Publish config when reconnecting to MQTT
-- Update readme documentation
-- Add override zone type for web service
-- Add area json status and climate temp sensor
-- Fix compatibility with Home Assistant 0.87 MQTT strict config
-
-Version 1.1.2 - 2018-10-23
-- Add min and max climate temperatures
-- Update docker run command to use local time zone
-- Improve area and zone MQTT support
-- Add option to change MQTT prefix to support multiple instances
-- Add detailed zone sensor and thermostat humidity sensor
-- Add prefix for MQTT discovery entity name
-- Request zone status update on area status change
-
-Version 1.1.1 - 2018-10-18
-- Added docker support
-- Save subscriptions on change
-
-Version 1.1.0 - 2018-10-13
-- Renamed to OmniLinkBridge
-- Restructured code to be event based with modules
-- Added MQTT module for Home Assistant
-- Added pushover notifications
-- Added web service API subscriptions file to persist subscriptions
-
-Version 1.0.8 - 2016-11-28
-- Fixed web service threading when multiple subscriptions exist
-- Added additional zone types to contact and motion web service API
-- Split command line options for config and log files
-
-Version 1.0.7 - 2016-11-25
-- Use previous area state when area is arming for web service API
-- Add interactive command line option and use path separator for Mono compatibility
-
-Version 1.0.6 - 2016-11-20
-- Added thermostat status and auxiliary temp to web service API
-
-Version 1.0.5 - 2016-11-15
-- Added web service API for Samsung SmartThings integration
-
-Version 1.0.4 - 2014-05-08
-- Merged HAILogger.exe and HAILoggerService.exe
-- Added immediate time sync after controller reconnect
-
-Version 1.0.3 - 2013-01-06
-- Added setting for prowl console message notification
-- Added settings for verbose output control
-- Added setting to enable mySQL logging
-- Added queue to mySQL logging
-- Changed mySQL log time from mySQL NOW() to computer time
-- Changed prowl notifications to be asynchronous
-- Fixed crash when prowl api down
-- Fixed setting yes/no parsing so no setting works
-- Fixed incorrect thermostat out of date status warning
-
-Version 1.0.2 - 2012-12-30
-- Fixed thermostat invalid mySQL logging error
-
-Version 1.0.1 - 2012-12-30
-- Added setting to adjust time sync interval
-- Fixed crash when controller time not initially set
-
-Version 1.0.0 - 2012-12-29
-- Initial release

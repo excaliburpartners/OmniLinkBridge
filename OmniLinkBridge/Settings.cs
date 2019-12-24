@@ -19,11 +19,11 @@ namespace OmniLinkBridge
             NameValueCollection settings = LoadCollection(Global.config_file);
 
             // HAI / Leviton Omni Controller
-            Global.controller_address = settings["controller_address"];
+            Global.controller_address = settings.CheckEnv("controller_address");
             Global.controller_port = ValidatePort(settings, "controller_port");
-            Global.controller_key1 = settings["controller_key1"];
-            Global.controller_key2 = settings["controller_key2"];
-            Global.controller_name = settings["controller_name"] ?? "OmniLinkBridge";
+            Global.controller_key1 = settings.CheckEnv("controller_key1");
+            Global.controller_key2 = settings.CheckEnv("controller_key2");
+            Global.controller_name = settings.CheckEnv("controller_name") ?? "OmniLinkBridge";
 
             // Controller Time Sync
             Global.time_sync = ValidateYesNo(settings, "time_sync");
@@ -42,7 +42,7 @@ namespace OmniLinkBridge
 
             // mySQL Logging
             Global.mysql_logging = ValidateYesNo(settings, "mysql_logging");
-            Global.mysql_connection = settings["mysql_connection"];
+            Global.mysql_connection = settings.CheckEnv("mysql_connection");
 
             // Web Service
             Global.webapi_enabled = ValidateYesNo(settings, "webapi_enabled");
@@ -51,13 +51,13 @@ namespace OmniLinkBridge
 
             // MQTT
             Global.mqtt_enabled = ValidateYesNo(settings, "mqtt_enabled");
-            Global.mqtt_server = settings["mqtt_server"];
+            Global.mqtt_server = settings.CheckEnv("mqtt_server");
             Global.mqtt_port = ValidatePort(settings, "mqtt_port");
-            Global.mqtt_username = settings["mqtt_username"];
-            Global.mqtt_password = settings["mqtt_password"];
-            Global.mqtt_prefix = settings["mqtt_prefix"] ?? "omnilink";
-            Global.mqtt_discovery_prefix = settings["mqtt_discovery_prefix"] ?? "homeassistant";
-            Global.mqtt_discovery_name_prefix = settings["mqtt_discovery_name_prefix"] ?? string.Empty;
+            Global.mqtt_username = settings.CheckEnv("mqtt_username");
+            Global.mqtt_password = settings.CheckEnv("mqtt_password");
+            Global.mqtt_prefix = settings.CheckEnv("mqtt_prefix") ?? "omnilink";
+            Global.mqtt_discovery_prefix = settings.CheckEnv("mqtt_discovery_prefix") ?? "homeassistant";
+            Global.mqtt_discovery_name_prefix = settings.CheckEnv("mqtt_discovery_name_prefix") ?? string.Empty;
 
             if (!string.IsNullOrEmpty(Global.mqtt_discovery_name_prefix))
                 Global.mqtt_discovery_name_prefix += " ";
@@ -71,11 +71,11 @@ namespace OmniLinkBridge
             Global.notify_message = ValidateYesNo(settings, "notify_message");
 
             // Email Notifications
-            Global.mail_server = settings["mail_server"];
+            Global.mail_server = settings.CheckEnv("mail_server");
             Global.mail_tls = ValidateYesNo(settings, "mail_tls");
             Global.mail_port = ValidatePort(settings, "mail_port");
-            Global.mail_username = settings["mail_username"];
-            Global.mail_password = settings["mail_password"];
+            Global.mail_username = settings.CheckEnv("mail_username");
+            Global.mail_password = settings.CheckEnv("mail_password");
             Global.mail_from = ValidateMailFrom(settings, "mail_from");
             Global.mail_to = ValidateMailTo(settings, "mail_to");
 
@@ -83,8 +83,14 @@ namespace OmniLinkBridge
             Global.prowl_key = ValidateMultipleStrings(settings, "prowl_key");
 
             // Pushover Notifications
-            Global.pushover_token = settings["pushover_token"];
+            Global.pushover_token = settings.CheckEnv("pushover_token");
             Global.pushover_user = ValidateMultipleStrings(settings, "pushover_user");
+        }
+
+        private static string CheckEnv(this NameValueCollection settings, string name)
+        {
+            string env = Environment.GetEnvironmentVariable(name.ToUpper());
+            return !string.IsNullOrEmpty(env) ? env : settings[name];
         }
 
         private static ConcurrentDictionary<int, T> LoadOverrideZone<T>(NameValueCollection settings, string section) where T : new()
@@ -93,10 +99,10 @@ namespace OmniLinkBridge
             {
                 ConcurrentDictionary<int, T> ret = new ConcurrentDictionary<int, T>();
 
-                if (settings[section] == null)
+                if (settings.CheckEnv(section) == null)
                     return ret;
 
-                string[] ids = settings[section].Split(',');
+                string[] ids = settings.CheckEnv(section).Split(',');
 
                 for (int i = 0; i < ids.Length; i++)
                 {
@@ -140,7 +146,7 @@ namespace OmniLinkBridge
         {
             try
             {
-                return int.Parse(settings[section]);
+                return int.Parse(settings.CheckEnv(section));
             }
             catch
             {
@@ -153,7 +159,7 @@ namespace OmniLinkBridge
         {
             try
             {
-                return new HashSet<int>(settings[section].ParseRanges());
+                return new HashSet<int>(settings.CheckEnv(section).ParseRanges());
             }
             catch
             {
@@ -166,7 +172,7 @@ namespace OmniLinkBridge
         {
             try
             {
-                int port = int.Parse(settings[section]);
+                int port = int.Parse(settings.CheckEnv(section));
 
                 if (port < 1 || port > 65534)
                     throw new Exception();
@@ -184,7 +190,7 @@ namespace OmniLinkBridge
         {
             try
             {
-                return new MailAddress(settings[section]);
+                return new MailAddress(settings.CheckEnv(section));
             }
             catch
             {
@@ -197,10 +203,10 @@ namespace OmniLinkBridge
         {
             try
             {
-                if(settings[section] == null)
+                if(settings.CheckEnv(section) == null)
                     return new MailAddress[] {};
 
-                string[] emails = settings[section].Split(',');
+                string[] emails = settings.CheckEnv(section).Split(',');
                 MailAddress[] addresses = new MailAddress[emails.Length];
 
                 for(int i=0; i < emails.Length; i++)
@@ -219,10 +225,10 @@ namespace OmniLinkBridge
         {
             try
             {
-                if (settings[section] == null)
+                if (settings.CheckEnv(section) == null)
                     return new string[] { };
 
-                return settings[section].Split(',');
+                return settings.CheckEnv(section).Split(',');
             }
             catch
             {
@@ -233,11 +239,13 @@ namespace OmniLinkBridge
 
         private static bool ValidateYesNo (NameValueCollection settings, string section)
         {
-            if (settings[section] == null)
+            string value = settings.CheckEnv(section);
+
+            if (value == null)
                 return false;
-            if (string.Compare(settings[section], "yes", true) == 0)
+            if (string.Compare(value, "yes", true) == 0)
                 return true;
-            else if (string.Compare(settings[section], "no", true) == 0)
+            else if (string.Compare(value, "no", true) == 0)
                 return false;
             else
             {

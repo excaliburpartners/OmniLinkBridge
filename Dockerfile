@@ -22,6 +22,7 @@ RUN apt-get update && \
 
 COPY --from=build /usr/lib/odbc /usr/lib/odbc
 COPY --from=build /etc/odbcinst.ini /etc/odbcinst.ini
+COPY --from=build /app/OmniLinkBridge.ini /config/OmniLinkBridge.ini
 
 EXPOSE 8000/tcp
 VOLUME /config
