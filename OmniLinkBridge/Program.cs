@@ -28,6 +28,12 @@ namespace OmniLinkBridge
                     case "-c":
                         Global.config_file = args[++i];
                         break;
+                    case "-e":
+                        Settings.UseEnvironment = true;
+                        break;
+                    case "-d":
+                        Settings.ShowDebug = true;
+                        break;
                     case "-s":
                         Global.webapi_subscriptions_file = args[++i];
                         break;
@@ -47,6 +53,9 @@ namespace OmniLinkBridge
 
             log4net.Config.XmlConfigurator.Configure();
 
+            if(Environment.UserInteractive || interactive)
+                Trace.Listeners.Add(new TextWriterTraceListener(Console.Out));
+
             try
             {
                 Settings.LoadSettings();
@@ -56,7 +65,6 @@ namespace OmniLinkBridge
                 // Errors are logged in LoadSettings();
                 Environment.Exit(1);
             }
-
 
             if (Environment.UserInteractive || interactive)
             {
@@ -79,8 +87,6 @@ namespace OmniLinkBridge
 
                 Console.TreatControlCAsInput = false;
                 Console.CancelKeyPress += new ConsoleCancelEventHandler(myHandler);
-
-                Trace.Listeners.Add(new TextWriterTraceListener(Console.Out));
 
                 server = new CoreServer();
             }
@@ -114,8 +120,11 @@ namespace OmniLinkBridge
         static void ShowHelp()
         {
             Console.WriteLine(
-                AppDomain.CurrentDomain.FriendlyName + " [-c config_file] [-s subscriptions_file] [-i]\n" +
+                AppDomain.CurrentDomain.FriendlyName + " [-c config_file] [-e] [-d] [-s subscriptions_file] [-i]\n" +
+                "\t[-debug-config] [-ignore-env]\n" +
                 "\t-c Specifies the configuration file. Default is OmniLinkBridge.ini\n" +
+                "\t-e Check environment variables for configuration settings\n" +
+                "\t-d Show debug output for configuration loading\n" +
                 "\t-s Specifies the web api subscriptions file. Default is WebSubscriptions.json\n" +
                 "\t-i Run in interactive mode");
         }

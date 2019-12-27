@@ -13,87 +13,110 @@ namespace OmniLinkBridge
     public static class Settings
     {
         private static readonly ILog log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
+        public static bool ShowDebug { get; set; }
+        public static bool UseEnvironment { get; set; }
 
         public static void LoadSettings()
         {
             NameValueCollection settings = LoadCollection(Global.config_file);
 
             // HAI / Leviton Omni Controller
-            Global.controller_address = settings.CheckEnv("controller_address");
-            Global.controller_port = ValidatePort(settings, "controller_port");
-            Global.controller_key1 = settings.CheckEnv("controller_key1");
-            Global.controller_key2 = settings.CheckEnv("controller_key2");
+            Global.controller_address = settings.ValidateHasValue("controller_address");
+            Global.controller_port = settings.ValidatePort("controller_port");
+            Global.controller_key1 = settings.ValidateHasValue("controller_key1");
+            Global.controller_key2 = settings.ValidateHasValue("controller_key2");
             Global.controller_name = settings.CheckEnv("controller_name") ?? "OmniLinkBridge";
 
             // Controller Time Sync
-            Global.time_sync = ValidateYesNo(settings, "time_sync");
-            Global.time_interval = ValidateInt(settings, "time_interval");
-            Global.time_drift = ValidateInt(settings, "time_drift");
+            Global.time_sync = settings.ValidateBool("time_sync");
+
+            if (Global.time_sync)
+            {
+                Global.time_interval = settings.ValidateInt("time_interval");
+                Global.time_drift = settings.ValidateInt("time_drift");
+            }
 
             // Verbose Console
-            Global.verbose_unhandled = ValidateYesNo(settings, "verbose_unhandled");
-            Global.verbose_event = ValidateYesNo(settings, "verbose_event");
-            Global.verbose_area = ValidateYesNo(settings, "verbose_area");
-            Global.verbose_zone = ValidateYesNo(settings, "verbose_zone");
-            Global.verbose_thermostat_timer = ValidateYesNo(settings, "verbose_thermostat_timer");
-            Global.verbose_thermostat = ValidateYesNo(settings, "verbose_thermostat");
-            Global.verbose_unit = ValidateYesNo(settings, "verbose_unit");
-            Global.verbose_message = ValidateYesNo(settings, "verbose_message");
+            Global.verbose_unhandled = settings.ValidateBool("verbose_unhandled");
+            Global.verbose_event = settings.ValidateBool("verbose_event");
+            Global.verbose_area = settings.ValidateBool("verbose_area");
+            Global.verbose_zone = settings.ValidateBool("verbose_zone");
+            Global.verbose_thermostat_timer = settings.ValidateBool("verbose_thermostat_timer");
+            Global.verbose_thermostat = settings.ValidateBool("verbose_thermostat");
+            Global.verbose_unit = settings.ValidateBool("verbose_unit");
+            Global.verbose_message = settings.ValidateBool("verbose_message");
 
             // mySQL Logging
-            Global.mysql_logging = ValidateYesNo(settings, "mysql_logging");
+            Global.mysql_logging = settings.ValidateBool("mysql_logging");
             Global.mysql_connection = settings.CheckEnv("mysql_connection");
 
             // Web Service
-            Global.webapi_enabled = ValidateYesNo(settings, "webapi_enabled");
-            Global.webapi_port = ValidatePort(settings, "webapi_port");
-            Global.webapi_override_zone = LoadOverrideZone<WebAPI.OverrideZone>(settings, "webapi_override_zone");
+            Global.webapi_enabled = settings.ValidateBool("webapi_enabled");
+
+            if (Global.webapi_enabled)
+            {
+                Global.webapi_port = settings.ValidatePort("webapi_port");
+                Global.webapi_override_zone = settings.LoadOverrideZone<WebAPI.OverrideZone>("webapi_override_zone");
+            }
 
             // MQTT
-            Global.mqtt_enabled = ValidateYesNo(settings, "mqtt_enabled");
-            Global.mqtt_server = settings.CheckEnv("mqtt_server");
-            Global.mqtt_port = ValidatePort(settings, "mqtt_port");
-            Global.mqtt_username = settings.CheckEnv("mqtt_username");
-            Global.mqtt_password = settings.CheckEnv("mqtt_password");
-            Global.mqtt_prefix = settings.CheckEnv("mqtt_prefix") ?? "omnilink";
-            Global.mqtt_discovery_prefix = settings.CheckEnv("mqtt_discovery_prefix") ?? "homeassistant";
-            Global.mqtt_discovery_name_prefix = settings.CheckEnv("mqtt_discovery_name_prefix") ?? string.Empty;
+            Global.mqtt_enabled = settings.ValidateBool("mqtt_enabled");
 
-            if (!string.IsNullOrEmpty(Global.mqtt_discovery_name_prefix))
-                Global.mqtt_discovery_name_prefix += " ";
+            if (Global.mqtt_enabled)
+            {
+                Global.mqtt_server = settings.CheckEnv("mqtt_server");
+                Global.mqtt_port = settings.ValidatePort("mqtt_port");
+                Global.mqtt_username = settings.CheckEnv("mqtt_username");
+                Global.mqtt_password = settings.CheckEnv("mqtt_password");
+                Global.mqtt_prefix = settings.CheckEnv("mqtt_prefix") ?? "omnilink";
+                Global.mqtt_discovery_prefix = settings.CheckEnv("mqtt_discovery_prefix") ?? "homeassistant";
+                Global.mqtt_discovery_name_prefix = settings.CheckEnv("mqtt_discovery_name_prefix") ?? string.Empty;
 
-            Global.mqtt_discovery_ignore_zones = ValidateRange(settings, "mqtt_discovery_ignore_zones");
-            Global.mqtt_discovery_ignore_units = ValidateRange(settings, "mqtt_discovery_ignore_units");
-            Global.mqtt_discovery_override_zone = LoadOverrideZone<MQTT.OverrideZone>(settings, "mqtt_discovery_override_zone");
+                if (!string.IsNullOrEmpty(Global.mqtt_discovery_name_prefix))
+                    Global.mqtt_discovery_name_prefix += " ";
+
+                Global.mqtt_discovery_ignore_zones = settings.ValidateRange("mqtt_discovery_ignore_zones");
+                Global.mqtt_discovery_ignore_units = settings.ValidateRange("mqtt_discovery_ignore_units");
+                Global.mqtt_discovery_override_zone = settings.LoadOverrideZone<MQTT.OverrideZone>("mqtt_discovery_override_zone");
+            }
 
             // Notifications
-            Global.notify_area = ValidateYesNo(settings, "notify_area");
-            Global.notify_message = ValidateYesNo(settings, "notify_message");
+            Global.notify_area = settings.ValidateBool("notify_area");
+            Global.notify_message = settings.ValidateBool("notify_message");
 
             // Email Notifications
             Global.mail_server = settings.CheckEnv("mail_server");
-            Global.mail_tls = ValidateYesNo(settings, "mail_tls");
-            Global.mail_port = ValidatePort(settings, "mail_port");
-            Global.mail_username = settings.CheckEnv("mail_username");
-            Global.mail_password = settings.CheckEnv("mail_password");
-            Global.mail_from = ValidateMailFrom(settings, "mail_from");
-            Global.mail_to = ValidateMailTo(settings, "mail_to");
+
+            if (!string.IsNullOrEmpty(Global.mail_server))
+            {
+                Global.mail_tls = settings.ValidateBool("mail_tls");
+                Global.mail_port = settings.ValidatePort("mail_port");
+                Global.mail_username = settings.CheckEnv("mail_username");
+                Global.mail_password = settings.CheckEnv("mail_password");
+                Global.mail_from = settings.ValidateMailFrom("mail_from");
+                Global.mail_to = settings.ValidateMailTo("mail_to");
+            }
 
             // Prowl Notifications
-            Global.prowl_key = ValidateMultipleStrings(settings, "prowl_key");
+            Global.prowl_key = settings.ValidateMultipleStrings("prowl_key");
 
             // Pushover Notifications
             Global.pushover_token = settings.CheckEnv("pushover_token");
-            Global.pushover_user = ValidateMultipleStrings(settings, "pushover_user");
+            Global.pushover_user = settings.ValidateMultipleStrings("pushover_user");
         }
 
         private static string CheckEnv(this NameValueCollection settings, string name)
         {
-            string env = Environment.GetEnvironmentVariable(name.ToUpper());
-            return !string.IsNullOrEmpty(env) ? env : settings[name];
+            string env = UseEnvironment ? Environment.GetEnvironmentVariable(name.ToUpper()) : null;
+            string value = !string.IsNullOrEmpty(env) ? env : settings[name];
+
+            if (ShowDebug)
+                log.Debug((!string.IsNullOrEmpty(env) ? "ENV" : "CONF").PadRight(5) + $"{name}: {value}");
+
+            return value;
         }
 
-        private static ConcurrentDictionary<int, T> LoadOverrideZone<T>(NameValueCollection settings, string section) where T : new()
+        private static ConcurrentDictionary<int, T> LoadOverrideZone<T>(this NameValueCollection settings, string section) where T : new()
         {
             try
             {
@@ -115,14 +138,14 @@ namespace OmniLinkBridge
 
                     T override_zone = new T();
 
-                    if (((object)override_zone) is WebAPI.OverrideZone webapi_zone)
+                    if (override_zone is WebAPI.OverrideZone webapi_zone)
                     {
                         if (!attributes.ContainsKey("device_type") || !Enum.TryParse(attributes["device_type"], out WebAPI.DeviceType attrib_device_type))
                             throw new Exception("Missing or invalid device_type attribute");
 
                         webapi_zone.device_type = attrib_device_type;
                     }
-                    else if (((object)override_zone) is MQTT.OverrideZone mqtt_zone)
+                    else if (override_zone is MQTT.OverrideZone mqtt_zone)
                     {
                         if (!attributes.ContainsKey("device_class") || !Enum.TryParse(attributes["device_class"], out MQTT.BinarySensor.DeviceClass attrib_device_class))
                             throw new Exception("Missing or invalid device_class attribute");
@@ -142,7 +165,20 @@ namespace OmniLinkBridge
             }
         }
 
-        private static int ValidateInt(NameValueCollection settings, string section)
+        private static string ValidateHasValue(this NameValueCollection settings, string section)
+        {
+            string value = settings.CheckEnv(section);
+
+            if(string.IsNullOrEmpty(value))
+            {
+                log.Error("Empty string specified for " + section);
+                throw new Exception();
+            }
+
+            return value;
+        }
+
+        private static int ValidateInt(this NameValueCollection settings, string section)
         {
             try
             {
@@ -155,7 +191,7 @@ namespace OmniLinkBridge
             }
         }
 
-        private static HashSet<int> ValidateRange(NameValueCollection settings, string section)
+        private static HashSet<int> ValidateRange(this NameValueCollection settings, string section)
         {
             try
             {
@@ -168,7 +204,7 @@ namespace OmniLinkBridge
             }
         }
 
-        private static int ValidatePort(NameValueCollection settings, string section)
+        private static int ValidatePort(this NameValueCollection settings, string section)
         {
             try
             {
@@ -186,7 +222,7 @@ namespace OmniLinkBridge
             }
         }
 
-        private static MailAddress ValidateMailFrom(NameValueCollection settings, string section)
+        private static MailAddress ValidateMailFrom(this NameValueCollection settings, string section)
         {
             try
             {
@@ -199,14 +235,16 @@ namespace OmniLinkBridge
             }
         }
 
-        private static MailAddress[] ValidateMailTo(NameValueCollection settings, string section)
+        private static MailAddress[] ValidateMailTo(this NameValueCollection settings, string section)
         {
             try
             {
-                if(settings.CheckEnv(section) == null)
+                string value = settings.CheckEnv(section);
+
+                if (value == null)
                     return new MailAddress[] {};
 
-                string[] emails = settings.CheckEnv(section).Split(',');
+                string[] emails = value.Split(',');
                 MailAddress[] addresses = new MailAddress[emails.Length];
 
                 for(int i=0; i < emails.Length; i++)
@@ -221,7 +259,7 @@ namespace OmniLinkBridge
             }
         }
 
-        private static string[] ValidateMultipleStrings(NameValueCollection settings, string section)
+        private static string[] ValidateMultipleStrings(this NameValueCollection settings, string section)
         {
             try
             {
@@ -237,19 +275,19 @@ namespace OmniLinkBridge
             }
         }
 
-        private static bool ValidateYesNo (NameValueCollection settings, string section)
+        private static bool ValidateBool (this NameValueCollection settings, string section)
         {
             string value = settings.CheckEnv(section);
 
             if (value == null)
                 return false;
-            if (string.Compare(value, "yes", true) == 0)
+            if (string.Compare(value, "yes", true) == 0 || string.Compare(value, "true", true) == 0)
                 return true;
-            else if (string.Compare(value, "no", true) == 0)
+            else if (string.Compare(value, "no", true) == 0 || string.Compare(value, "false", true) == 0)
                 return false;
             else
             {
-                log.Error("Invalid yes/no specified for " + section);
+                log.Error("Invalid yes/no or true/false specified for " + section);
                 throw new Exception();
             }
         }
@@ -257,6 +295,15 @@ namespace OmniLinkBridge
         private static NameValueCollection LoadCollection(string sFile)
         {
             NameValueCollection settings = new NameValueCollection();
+
+            if (ShowDebug)
+                log.Debug($"Using settings file {sFile}");
+
+            if(!File.Exists(sFile))
+            {
+                log.Warn($"Unable to locate settings file {sFile}");
+                return settings;
+            }
 
             try
             {
@@ -289,7 +336,7 @@ namespace OmniLinkBridge
             }
             catch (FileNotFoundException ex)
             {
-                log.Error("Unable to parse settings file " + sFile, ex);
+                log.Error("Error parsing settings file " + sFile, ex);
                 throw;
             }
 

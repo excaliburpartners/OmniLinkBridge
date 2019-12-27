@@ -12,6 +12,9 @@ namespace OmniLinkBridge.Notifications
 
         public void Notify(string source, string description, NotificationPriority priority)
         {
+            if (string.IsNullOrEmpty(Global.mail_server))
+                return;
+
             foreach (MailAddress address in Global.mail_to)
             {
                 MailMessage mail = new MailMessage
