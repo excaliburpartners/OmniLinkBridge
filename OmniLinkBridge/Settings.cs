@@ -16,10 +16,18 @@ namespace OmniLinkBridge
         public static bool ShowDebug { get; set; }
         public static bool UseEnvironment { get; set; }
 
-        public static void LoadSettings()
+        public static void LoadSettings(string file)
         {
-            NameValueCollection settings = LoadCollection(Global.config_file);
+            LoadSettings(LoadCollection(file));
+        }
 
+        public static void LoadSettings(string[] lines)
+        {
+            LoadSettings(LoadCollection(lines));
+        }
+
+        public static void LoadSettings(NameValueCollection settings)
+        {
             // HAI / Leviton Omni Controller
             Global.controller_address = settings.ValidateHasValue("controller_address");
             Global.controller_port = settings.ValidatePort("controller_port");
@@ -122,10 +130,12 @@ namespace OmniLinkBridge
             {
                 ConcurrentDictionary<int, T> ret = new ConcurrentDictionary<int, T>();
 
-                if (settings.CheckEnv(section) == null)
+                string value = settings.CheckEnv(section);
+
+                if (string.IsNullOrEmpty(value))
                     return ret;
 
-                string[] ids = settings.CheckEnv(section).Split(',');
+                string[] ids = value.Split(',');
 
                 for (int i = 0; i < ids.Length; i++)
                 {
@@ -195,6 +205,11 @@ namespace OmniLinkBridge
         {
             try
             {
+                string value = settings.CheckEnv(section);
+
+                if (string.IsNullOrEmpty(value))
+                    return new HashSet<int>();
+
                 return new HashSet<int>(settings.CheckEnv(section).ParseRanges());
             }
             catch
@@ -241,7 +256,7 @@ namespace OmniLinkBridge
             {
                 string value = settings.CheckEnv(section);
 
-                if (value == null)
+                if (string.IsNullOrEmpty(value))
                     return new MailAddress[] {};
 
                 string[] emails = value.Split(',');
@@ -292,55 +307,49 @@ namespace OmniLinkBridge
             }
         }
 
-        private static NameValueCollection LoadCollection(string sFile)
+        private static NameValueCollection LoadCollection(string[] lines)
         {
             NameValueCollection settings = new NameValueCollection();
 
+            foreach(string line in lines)
+            {
+                if (line.StartsWith("#"))
+                    continue;
+
+                int pos = line.IndexOf('=', 0);
+
+                if (pos == -1)
+                    continue;
+
+                string key = line.Substring(0, pos).Trim();
+                string value = line.Substring(pos + 1).Trim();
+
+                settings.Add(key, value);
+            }
+
+            return settings;
+        }
+
+        private static NameValueCollection LoadCollection(string sFile)
+        {
             if (ShowDebug)
                 log.Debug($"Using settings file {sFile}");
 
             if(!File.Exists(sFile))
             {
                 log.Warn($"Unable to locate settings file {sFile}");
-                return settings;
+                return new NameValueCollection();
             }
 
             try
             {
-                FileStream fs = new FileStream(sFile, FileMode.Open, FileAccess.Read);
-                StreamReader sr = new StreamReader(fs);
-
-                while (true)
-                {
-                    string line = sr.ReadLine();
-
-                    if (line == null)
-                        break;
-
-                    if (line.StartsWith("#"))
-                        continue;
-
-                    int pos = line.IndexOf('=', 0);
-
-                    if (pos == -1)
-                        continue;
-
-                    string key = line.Substring(0, pos).Trim();
-                    string value = line.Substring(pos + 1).Trim();
-
-                    settings.Add(key, value);
-                }
-
-                sr.Close();
-                fs.Close();
+                return LoadCollection(File.ReadAllLines(sFile));
             }
             catch (FileNotFoundException ex)
             {
                 log.Error("Error parsing settings file " + sFile, ex);
                 throw;
             }
-
-            return settings;
         }
     }
 }

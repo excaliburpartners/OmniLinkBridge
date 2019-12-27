@@ -47,11 +47,11 @@
     <Reference Include="System.Core" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AssemblyTestHarness.cs" />
     <Compile Include="ExtensionTest.cs" />
     <Compile Include="Mock\MockOmniLinkII.cs" />
     <Compile Include="Mock\SendCommandEventArgs.cs" />
     <Compile Include="MQTTTest.cs" />
+    <Compile Include="SettingsTest.cs" />
     <Compile Include="NotificationTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

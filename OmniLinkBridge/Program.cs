@@ -58,7 +58,7 @@ namespace OmniLinkBridge
 
             try
             {
-                Settings.LoadSettings();
+                Settings.LoadSettings(Global.config_file);
             }
             catch
             {

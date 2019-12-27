@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Net.Mail;
+using System.Reflection;
 
 namespace OmniLinkBridge
 {
@@ -75,5 +76,10 @@ namespace OmniLinkBridge
         // Pushover Notifications
         public static string pushover_token;
         public static string[] pushover_user;
+
+        public static object GetValue(string propName)
+        {
+            return typeof(Global).GetField(propName, BindingFlags.Public | BindingFlags.Static).GetValue(null);
+        }
     }
 }
