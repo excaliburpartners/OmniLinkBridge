@@ -1,5 +1,5 @@
 ﻿using HAI_Shared;
-using log4net;
+using Serilog;
 using System;
 using System.Reflection;
 using System.Threading;
@@ -8,7 +8,7 @@ namespace OmniLinkBridge.Modules
 {
     public class TimeSyncModule : IModule
     {
-        private static readonly ILog log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
+        private static readonly ILogger log = Log.Logger.ForContext(MethodBase.GetCurrentMethod().DeclaringType);
 
         private OmniLinkII OmniLink { get; set; }
 
@@ -78,7 +78,7 @@ namespace OmniLinkBridge.Modules
             }
             catch
             {
-                log.Warn("Controller time could not be parsed");
+                log.Warning("Controller time could not be parsed");
 
                 DateTime now = DateTime.Now;
                 OmniLink.Controller.Connection.Send(new clsOL2MsgSetTime(OmniLink.Controller.Connection, (byte)(now.Year % 100), (byte)now.Month, (byte)now.Day, (byte)now.DayOfWeek,
@@ -91,7 +91,8 @@ namespace OmniLinkBridge.Modules
 
             if (adj > Global.time_drift)
             {
-                log.Warn("Controller time " + time.ToString("MM/dd/yyyy HH:mm:ss") + " out of sync by " + adj + " seconds");
+                log.Warning("Controller time {controllerTime} out of sync by {driftSeconds} seconds",
+                    time.ToString("MM/dd/yyyy HH:mm:ss"),  adj);
 
                 DateTime now = DateTime.Now;
                 OmniLink.Controller.Connection.Send(new clsOL2MsgSetTime(OmniLink.Controller.Connection, (byte)(now.Year % 100), (byte)now.Month, (byte)now.Day, (byte)now.DayOfWeek,

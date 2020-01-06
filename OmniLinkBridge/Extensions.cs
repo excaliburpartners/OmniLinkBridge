@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace OmniLinkBridge
 {
@@ -21,6 +22,11 @@ namespace OmniLinkBridge
         public static bool IsBitSet(this byte b, int pos)
         {
             return (b & (1 << pos)) != 0;
+        }
+
+        public static string ToSpaceTitleCase(this string phrase)
+        {
+            return Regex.Replace(phrase, "(\\B[A-Z])", " $1");
         }
 
         public static List<int> ParseRanges(this string ranges)

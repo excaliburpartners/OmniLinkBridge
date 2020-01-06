@@ -9,7 +9,7 @@ You can use docker to build an image from git or download the [binary here](http
 - .NET Framework 4.5.2 (or Mono equivalent)
 
 ## Operation
-OmniLinkBridge is divided into the following modules and configurable settings. Configuration settings can also be set as environment variables by using their name in uppercase. Refer to [OmniLinkBridge.ini](https://github.com/excaliburpartners/OmniLinkBridge/blob/master/OmniLinkBridge/OmniLinkBridge.ini) for specifics.
+OmniLink Bridge is divided into the following modules and configurable settings. Configuration settings can also be set as environment variables by using their name in uppercase. Refer to [OmniLinkBridge.ini](https://github.com/excaliburpartners/OmniLinkBridge/blob/master/OmniLinkBridge/OmniLinkBridge.ini) for specifics.
 
 - OmniLinkII: controller_
     - Maintains connection to the OmniLink controller
@@ -330,3 +330,6 @@ Configure mysql_connection in OmniLinkBridge.ini. For Windows change DRIVER={MyS
 ```
 mysql_connection = DRIVER={MySQL};SERVER=localhost;DATABASE=OmniLinkBridge;USER=root;PASSWORD=myPassword;OPTION=3;
 ```
+
+## Telemetry
+OmniLink Bridge collects anonymous telemetry data to help improve the software. You can opt of telemetry by setting a TELEMETRY_OPTOUT environment variable to 1.

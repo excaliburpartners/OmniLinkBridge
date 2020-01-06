@@ -1,5 +1,5 @@
-﻿using log4net;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -10,7 +10,7 @@ namespace OmniLinkBridge.WebAPI
 {
     static class WebNotification
     {
-        private static readonly ILog log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
+        private static readonly ILogger log = Log.Logger.ForContext(MethodBase.GetCurrentMethod().DeclaringType);
 
         private static List<string> subscriptions = new List<string>();
         private static readonly object subscriptions_lock = new object();
@@ -52,7 +52,7 @@ namespace OmniLinkBridge.WebAPI
                 }
                 catch (Exception ex)
                 {
-                    log.Error("An error occurred sending notification to " + subscription, ex);
+                    log.Error(ex, "An error occurred sending notification to {client}", subscription);
                     subscriptions.Remove(subscription);
                     SaveSubscriptions();
                 }
@@ -63,7 +63,7 @@ namespace OmniLinkBridge.WebAPI
         {
             if (e.Error != null)
             {
-                log.Error("An error occurred sending notification to " + e.UserState.ToString(), e.Error);
+                log.Error(e.Error, "An error occurred sending notification to {client}", e.UserState.ToString());
 
                 lock (subscriptions_lock)
                     subscriptions.Remove(e.UserState.ToString());
@@ -88,7 +88,7 @@ namespace OmniLinkBridge.WebAPI
             }
             catch (Exception ex)
             {
-                log.Error("An error occurred restoring subscriptions", ex);
+                log.Error(ex, "An error occurred restoring subscriptions");
             }
         }
 
@@ -107,7 +107,7 @@ namespace OmniLinkBridge.WebAPI
             }
             catch (Exception ex)
             {
-                log.Error("An error occurred saving subscriptions", ex);
+                log.Error(ex, "An error occurred saving subscriptions");
             }
         }
     }

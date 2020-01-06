@@ -1,4 +1,5 @@
-﻿using log4net;
+﻿using OmniLinkBridge.Modules;
+using Serilog;
 using System;
 using System.Net;
 using System.Net.Mail;
@@ -8,7 +9,7 @@ namespace OmniLinkBridge.Notifications
 {
     public class EmailNotification : INotification
     {
-        private static readonly ILog log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
+        private static readonly ILogger log = Log.Logger.ForContext(MethodBase.GetCurrentMethod().DeclaringType);
 
         public void Notify(string source, string description, NotificationPriority priority)
         {
@@ -40,7 +41,7 @@ namespace OmniLinkBridge.Notifications
                     }
                     catch (Exception ex)
                     {
-                        log.Error("An error occurred sending email notification", ex);
+                        log.Error(ex, "An error occurred sending email notification");
                     }
                 }
             }

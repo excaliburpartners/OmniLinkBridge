@@ -1,4 +1,4 @@
-﻿using log4net;
+﻿using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Net;
@@ -8,7 +8,7 @@ namespace OmniLinkBridge.Notifications
 {
     public class ProwlNotification : INotification
     {
-        private static readonly ILog log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
+        private static readonly ILogger log = Log.Logger.ForContext(MethodBase.GetCurrentMethod().DeclaringType);
 
         private static readonly Uri URI = new Uri("https://api.prowlapp.com/publicapi/add");
 
@@ -37,7 +37,7 @@ namespace OmniLinkBridge.Notifications
         private void Client_UploadStringCompleted(object sender, UploadStringCompletedEventArgs e)
         {
             if (e.Error != null)
-                log.Error("An error occurred sending prowl notification", e.Error);
+                log.Error(e.Error, "An error occurred sending prowl notification");
         }
     }
 }

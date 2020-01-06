@@ -2,12 +2,12 @@
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
-[assembly: AssemblyTitle("OmniLinkBridgeTest")]
+[assembly: AssemblyTitle("OmniLink Bridge Test")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Excalibur Partners, LLC")]
 [assembly: AssemblyProduct("OmniLinkBridgeTest")]
-[assembly: AssemblyCopyright("Copyright © Excalibur Partners, LLC 2019")]
+[assembly: AssemblyCopyright("Copyright © Excalibur Partners, LLC 2020")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 

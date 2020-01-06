@@ -1,6 +1,6 @@
 ﻿using HAI_Shared;
-using log4net;
 using OmniLinkBridge.OmniLink;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
@@ -10,7 +10,7 @@ namespace OmniLinkBridge.MQTT
 {
     public class MessageProcessor
     {
-        private static readonly ILog log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
+        private static readonly ILogger log = Log.Logger.ForContext(MethodBase.GetCurrentMethod().DeclaringType);
 
         private readonly Regex regexTopic = new Regex(Global.mqtt_prefix + "/([A-Za-z]+)([0-9]+)/(.*)", RegexOptions.Compiled);
 
@@ -33,7 +33,8 @@ namespace OmniLinkBridge.MQTT
                 || !ushort.TryParse(match.Groups[2].Value, out ushort id))
                 return;
 
-            log.Debug($"Received: Type: {type.ToString()}, Id: {id}, Command: {topic.ToString()}, Value: {payload}");
+            log.Debug("Received: Type: {type}, Id: {id}, Command: {command}, Value: {value}",
+                type.ToString(), id, topic.ToString(), payload);
 
             if (type == CommandTypes.area && id <= OmniLink.Controller.Areas.Count)
                 ProcessAreaReceived(OmniLink.Controller.Areas[id], topic, payload);
@@ -68,7 +69,7 @@ namespace OmniLinkBridge.MQTT
                 if (area.Number == 0)
                     log.Debug("SetArea: 0 implies all areas will be changed");
 
-                log.Debug("SetArea: " + area.Number + " to " + cmd.ToString().Replace("arm_", "").Replace("_", " "));
+                log.Debug("SetArea: {id} to {value}", area.Number, cmd.ToString().Replace("arm_", "").Replace("_", " "));
                 OmniLink.SendCommand(AreaMapping[cmd], 0, (ushort)area.Number);
             }
         }
@@ -83,7 +84,7 @@ namespace OmniLinkBridge.MQTT
         {
             if (command == Topic.command && Enum.TryParse(payload, true, out ZoneCommands cmd))
             {
-                log.Debug("SetZone: " + zone.Number + " to " + payload);
+                log.Debug("SetZone: {id} to {value}", zone.Number, payload);
                 OmniLink.SendCommand(ZoneMapping[cmd], 0, (ushort)zone.Number);
             }
         }
@@ -100,13 +101,13 @@ namespace OmniLinkBridge.MQTT
             {
                 if (string.Compare(unit.ToState(), cmd.ToString()) != 0)
                 {
-                    log.Debug("SetUnit: " + unit.Number + " to " + cmd.ToString());
+                    log.Debug("SetUnit: {id} to {value}", unit.Number, cmd.ToString());
                     OmniLink.SendCommand(UnitMapping[cmd], 0, (ushort)unit.Number);
                 }
             }
             else if (command == Topic.brightness_command && int.TryParse(payload, out int unitValue))
             {
-                log.Debug("SetUnit: " + unit.Number + " to " + payload + "%");
+                log.Debug("SetUnit: {id} to {value}%", unit.Number, payload);
 
                 OmniLink.SendCommand(enuUnitCommand.Level, BitConverter.GetBytes(unitValue)[0], (ushort)unit.Number);
 
@@ -129,7 +130,8 @@ namespace OmniLinkBridge.MQTT
                 }
 
                 int temp = tempLow.ToOmniTemp();
-                log.Debug("SetThermostatHeatSetpoint: " + thermostat.Number + " to " + payload + tempUnit + "(" + temp + ")");
+                log.Debug("SetThermostatHeatSetpoint: {id} to {value}{temperatureUnit} ({temp})",
+                    thermostat.Number, payload, tempUnit, temp);
                 OmniLink.SendCommand(enuUnitCommand.SetLowSetPt, BitConverter.GetBytes(temp)[0], (ushort)thermostat.Number);
             }
             else if (command == Topic.temperature_cool_command && double.TryParse(payload, out double tempHigh))
@@ -142,35 +144,36 @@ namespace OmniLinkBridge.MQTT
                 }
 
                 int temp = tempHigh.ToOmniTemp();
-                log.Debug("SetThermostatCoolSetpoint: " + thermostat.Number + " to " + payload + tempUnit + "(" + temp + ")");
+                log.Debug("SetThermostatCoolSetpoint: {id} to {value}{temperatureUnit} ({temp})",
+                    thermostat.Number, payload, tempUnit, temp);
                 OmniLink.SendCommand(enuUnitCommand.SetHighSetPt, BitConverter.GetBytes(temp)[0], (ushort)thermostat.Number);
             }
             else if (command == Topic.humidify_command && double.TryParse(payload, out double humidify))
             {
                 // Humidity is reported where Fahrenheit temperatures 0-100 correspond to 0-100% relative humidity
                 int level = humidify.ToCelsius().ToOmniTemp();
-                log.Debug("SetThermostatHumidifySetpoint: " + thermostat.Number + " to " + payload + "% (" + level + ")");
+                log.Debug("SetThermostatHumidifySetpoint: {id} to {value}% ({level})", thermostat.Number, payload, level);
                 OmniLink.SendCommand(enuUnitCommand.SetHumidifySetPt, BitConverter.GetBytes(level)[0], (ushort)thermostat.Number);
             }
             else if (command == Topic.dehumidify_command && double.TryParse(payload, out double dehumidify))
             {
                 int level = dehumidify.ToCelsius().ToOmniTemp();
-                log.Debug("SetThermostatDehumidifySetpoint: " + thermostat.Number + " to " + payload + "% (" + level + ")");
+                log.Debug("SetThermostatDehumidifySetpoint: {id} to {value}% ({level})", thermostat.Number, payload, level);
                 OmniLink.SendCommand(enuUnitCommand.SetDeHumidifySetPt, BitConverter.GetBytes(level)[0], (ushort)thermostat.Number);
             }
             else if (command == Topic.mode_command && Enum.TryParse(payload, true, out enuThermostatMode mode))
             {
-                log.Debug("SetThermostatMode: " + thermostat.Number + " to " + payload);
+                log.Debug("SetThermostatMode: {id} to {value}", thermostat.Number, payload);
                 OmniLink.SendCommand(enuUnitCommand.Mode, BitConverter.GetBytes((int)mode)[0], (ushort)thermostat.Number);
             }
             else if (command == Topic.fan_mode_command && Enum.TryParse(payload, true, out enuThermostatFanMode fanMode))
             {
-                log.Debug("SetThermostatFanMode: " + thermostat.Number + " to " + payload);
+                log.Debug("SetThermostatFanMode: {id} to {value}", thermostat.Number, payload);
                 OmniLink.SendCommand(enuUnitCommand.Fan, BitConverter.GetBytes((int)fanMode)[0], (ushort)thermostat.Number);
             }
             else if (command == Topic.hold_command && Enum.TryParse(payload, true, out enuThermostatHoldMode holdMode))
             {
-                log.Debug("SetThermostatHold: " + thermostat.Number + " to " + payload);
+                log.Debug("SetThermostatHold: {id} to {value}", thermostat.Number, payload);
                 OmniLink.SendCommand(enuUnitCommand.Hold, BitConverter.GetBytes((int)holdMode)[0], (ushort)thermostat.Number);
             }
         }
@@ -179,7 +182,7 @@ namespace OmniLinkBridge.MQTT
         {
             if (command == Topic.command && Enum.TryParse(payload, true, out UnitCommands cmd) && cmd == UnitCommands.ON)
             {
-                log.Debug("PushButton: " + button.Number);
+                log.Debug("PushButton: {id}", button.Number);
                 OmniLink.SendCommand(enuUnitCommand.Button, 0, (ushort)button.Number);
             }
         }
@@ -196,7 +199,7 @@ namespace OmniLinkBridge.MQTT
         {
             if (command == Topic.command && Enum.TryParse(payload, true, out MessageCommands cmd))
             {
-                log.Debug("SetMessage: " + message.Number + " to " + cmd.ToString().Replace("_", " "));
+                log.Debug("SetMessage: {id} to {value}", message.Number, cmd.ToString().Replace("_", " "));
 
                 byte par = 0;
                 if (cmd == MessageCommands.show_no_beep)

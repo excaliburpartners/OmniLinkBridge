@@ -1,6 +1,6 @@
-﻿using log4net;
-using OmniLinkBridge.Notifications;
+﻿using OmniLinkBridge.Notifications;
 using OmniLinkBridge.OmniLink;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -12,7 +12,9 @@ namespace OmniLinkBridge.Modules
 {
     public class LoggerModule : IModule
     {
-        private static readonly ILog log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
+        private static readonly ILogger log = Log.Logger.ForContext(MethodBase.GetCurrentMethod().DeclaringType);
+
+        private bool running = true;
 
         private readonly OmniLinkII omnilink;
         private readonly List<string> alarms = new List<string>();
@@ -41,26 +43,22 @@ namespace OmniLinkBridge.Modules
         {
             if (Global.mysql_logging)
             {
-                log.Info("Connecting to database");
+                log.Information("Connecting to database");
 
                 mysql_conn = new OdbcConnection(Global.mysql_connection);
-
-                // Must make an initial connection
-                if (!DBOpen())
-                    Environment.Exit(1);
             }
 
             while (true)
             {
                 // End gracefully when not logging or database queue empty
-                if (!Global.running && (!Global.mysql_logging || DBQueueCount() == 0))
+                if (!running && (!Global.mysql_logging || DBQueueCount() == 0))
                     break;
 
                 // Make sure database connection is active
                 if (Global.mysql_logging && mysql_conn.State != ConnectionState.Open)
                 {
                     // Nothing we can do if shutting down
-                    if (!Global.running)
+                    if (!running)
                         break;
 
                     if (mysql_retry < DateTime.Now)
@@ -100,11 +98,11 @@ namespace OmniLinkBridge.Modules
                 {
                     if (mysql_conn.State != ConnectionState.Open)
                     {
-                        log.Warn("Lost connection to database");
+                        log.Warning("Lost connection to database");
                     }
                     else
                     {
-                        log.Error("Error executing query\r\n" + query, ex);
+                        log.Error(ex, "Error executing {query}", query);
 
                         // Prevent an endless loop from failed query
                         lock (mysql_lock)
@@ -119,6 +117,7 @@ namespace OmniLinkBridge.Modules
 
         public void Shutdown()
         {
+            running = false;
             trigger.Set();
         }
 
@@ -198,7 +197,7 @@ namespace OmniLinkBridge.Modules
                     e.Area.AreaDuressAlarmText + "','" + status + "')");
 
             if (Global.verbose_area)
-                log.Debug("AreaStatus " + e.ID + " " + e.Area.Name + ", Status: " + status);
+                log.Verbose("AreaStatus {id} {name}, Status: {status}", e.ID, e.Area.Name, status);
 
             if (Global.notify_area && e.Area.LastMode != e.Area.AreaMode)
                 Notification.Notify("Security", e.Area.Name + " " + e.Area.ModeText());
@@ -213,9 +212,9 @@ namespace OmniLinkBridge.Modules
             if (Global.verbose_zone)
             {
                 if (e.Zone.IsTemperatureZone())
-                    log.Debug("ZoneStatus " + e.ID + " " + e.Zone.Name + ", Temp: " + e.Zone.TempText());
+                    log.Verbose("ZoneStatus {id} {name}, Temp: {temp}", e.ID, e.Zone.Name, e.Zone.TempText());
                 else
-                    log.Debug("ZoneStatus " + e.ID + " " + e.Zone.Name + ", Status: " + e.Zone.StatusText());
+                    log.Verbose("ZoneStatus {id} {name}, Status: {status}", e.ID, e.Zone.Name, e.Zone.StatusText());
             }
         }
 
@@ -241,13 +240,15 @@ namespace OmniLinkBridge.Modules
 
             // Ignore events fired by thermostat polling
             if (!e.EventTimer && Global.verbose_thermostat)
-                log.Debug("ThermostatStatus " + e.ID + " " + e.Thermostat.Name +
-                    ", Status: " + e.Thermostat.TempText() + " " + e.Thermostat.HorC_StatusText() +
-                    ", Heat: " + e.Thermostat.HeatSetpointText() +
-                    ", Cool: " + e.Thermostat.CoolSetpointText() +
-                    ", Mode: " + e.Thermostat.ModeText() +
-                    ", Fan: " + e.Thermostat.FanModeText() +
-                    ", Hold: " + e.Thermostat.HoldStatusText());
+                log.Verbose("ThermostatStatus {id} {name}, Status: {temp} {status}, " +
+                    "Heat {heat}, Cool: {cool}, Mode: {mode}, Fan: {fan}, Hold: {hold}",
+                    e.ID, e.Thermostat.Name, 
+                    e.Thermostat.TempText(), e.Thermostat.HorC_StatusText(),
+                    e.Thermostat.HeatSetpointText(), 
+                    e.Thermostat.CoolSetpointText(),
+                    e.Thermostat.ModeText(),
+                    e.Thermostat.FanModeText(),
+                    e.Thermostat.HoldStatusText());
         }
 
         private void Omnilink_OnUnitStatus(object sender, UnitStatusEventArgs e)
@@ -266,7 +267,7 @@ namespace OmniLinkBridge.Modules
                     status + "','" + e.Unit.Status + "','" + e.Unit.StatusTime + "')");
 
             if (Global.verbose_unit)
-                log.Debug("UnitStatus " + e.ID + " " + e.Unit.Name + ", Status: " + status);
+                log.Verbose("UnitStatus {id} {name}, Status: {status}", e.ID, e.Unit.Name, status);
         }
 
         private void Omnilink_OnMessageStatus(object sender, MessageStatusEventArgs e)
@@ -276,7 +277,7 @@ namespace OmniLinkBridge.Modules
                 VALUES ('" + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + "','" + e.ID + "','" + e.Message.Name + "','" + e.Message.StatusText() + "')");
 
             if (Global.verbose_message)
-                log.Debug("MessageStatus " + e.ID + " " + e.Message.Name + ", " + e.Message.StatusText());
+                log.Verbose("MessageStatus {id} {name}, Status: {status}", e.ID, e.Message.Name, e.Message.StatusText());
 
             if (Global.notify_message)
                 Notification.Notify("Message", e.ID + " " + e.Message.Name + ", " + e.Message.StatusText());
@@ -289,7 +290,7 @@ namespace OmniLinkBridge.Modules
                 VALUES ('" + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + "','" + e.Type.ToString() + "','" + e.Value + "')");
 
             if (Global.verbose_event)
-                log.Debug("SystemEvent " + e.Type.ToString() + " " + e.Value);
+                log.Verbose("SystemEvent {name} {status}", e.Type.ToString(), e.Value);
 
             if (e.SendNotification)
                 Notification.Notify("SystemEvent", e.Type.ToString() + " " + e.Value);
@@ -306,7 +307,7 @@ namespace OmniLinkBridge.Modules
             }
             catch (Exception ex)
             {
-                log.Error("Failed to connect to database", ex);
+                log.Error(ex, "Failed to connect to database");
                 mysql_retry = DateTime.Now.AddMinutes(1);
                 return false;
             }

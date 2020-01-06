@@ -1,5 +1,4 @@
 ﻿using HAI_Shared;
-using log4net;
 using MQTTnet;
 using MQTTnet.Client;
 using MQTTnet.Client.Connecting;
@@ -11,6 +10,7 @@ using MQTTnet.Protocol;
 using Newtonsoft.Json;
 using OmniLinkBridge.MQTT;
 using OmniLinkBridge.OmniLink;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
@@ -22,7 +22,7 @@ namespace OmniLinkBridge.Modules
 {
     public class MQTTModule : IModule
     {
-        private static readonly ILog log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
+        private static readonly ILogger log = Log.Logger.ForContext(MethodBase.GetCurrentMethod().DeclaringType);
 
         public static DeviceRegistry MqttDeviceRegistry { get; set; }
 
@@ -90,7 +90,7 @@ namespace OmniLinkBridge.Modules
                 if (ControllerConnected)
                     PublishConfig();
             });
-            MqttClient.ConnectingFailedHandler = new ConnectingFailedHandlerDelegate((e) => log.Debug("Error connecting " + e.Exception.Message));
+            MqttClient.ConnectingFailedHandler = new ConnectingFailedHandlerDelegate((e) => log.Error("Error connecting {reason}", e.Exception.Message));
             MqttClient.DisconnectedHandler = new MqttClientDisconnectedHandlerDelegate((e) => log.Debug("Disconnected"));
 
             MqttClient.StartAsync(manoptions);
@@ -118,8 +118,7 @@ namespace OmniLinkBridge.Modules
             // Wait until shutdown
             trigger.WaitOne();
 
-            log.Debug("Publishing controller offline");
-            PublishAsync($"{Global.mqtt_prefix}/status", "offline");
+            PublishControllerStatus("offline");
 
             MqttClient.StopAsync();
         }
@@ -142,10 +141,13 @@ namespace OmniLinkBridge.Modules
             ControllerConnected = false;
 
             if (MqttClient.IsConnected)
-            {
-                log.Debug("Publishing controller offline");
-                PublishAsync($"{Global.mqtt_prefix}/status", "offline");
-            }
+                PublishControllerStatus("offline");
+        }
+
+        private void PublishControllerStatus(string status)
+        {
+            log.Information("Publishing controller {status}", status);
+            PublishAsync($"{Global.mqtt_prefix}/status", status);
         }
 
         private void PublishConfig()
@@ -157,15 +159,14 @@ namespace OmniLinkBridge.Modules
             PublishButtons();
             PublishMessages();
 
-            log.Debug("Publishing controller online");
-            PublishAsync($"{Global.mqtt_prefix}/status", "online");
+            PublishControllerStatus("online");
             PublishAsync($"{Global.mqtt_prefix}/model", OmniLink.Controller.GetModelText());
             PublishAsync($"{Global.mqtt_prefix}/version", OmniLink.Controller.GetVersionText());
         }
 
         private void PublishAreas()
         {
-            log.Debug("Publishing areas");
+            log.Debug("Publishing {type}", "areas");
 
             for (ushort i = 1; i <= OmniLink.Controller.Areas.Count; i++)
             {
@@ -214,7 +215,7 @@ namespace OmniLinkBridge.Modules
 
         private void PublishZones()
         {
-            log.Debug("Publishing zones");
+            log.Debug("Publishing {type}", "zones");
 
             for (ushort i = 1; i <= OmniLink.Controller.Zones.Count; i++)
             {
@@ -255,7 +256,7 @@ namespace OmniLinkBridge.Modules
 
         private void PublishUnits()
         {
-            log.Debug("Publishing units");
+            log.Debug("Publishing {type}", "units");
 
             for (ushort i = 1; i <= OmniLink.Controller.Units.Count; i++)
             {
@@ -289,7 +290,7 @@ namespace OmniLinkBridge.Modules
 
         private void PublishThermostats()
         {
-            log.Debug("Publishing thermostats");
+            log.Debug("Publishing {type}", "thermostats");
 
             for (ushort i = 1; i <= OmniLink.Controller.Thermostats.Count; i++)
             {
@@ -318,7 +319,7 @@ namespace OmniLinkBridge.Modules
 
         private void PublishButtons()
         {
-            log.Debug("Publishing buttons");
+            log.Debug("Publishing {type}", "buttons");
 
             for (ushort i = 1; i <= OmniLink.Controller.Buttons.Count; i++)
             {
@@ -342,7 +343,7 @@ namespace OmniLinkBridge.Modules
 
         private void PublishMessages()
         {
-            log.Debug("Publishing messages");
+            log.Debug("Publishing {type}", "messages");
 
             for (ushort i = 1; i <= OmniLink.Controller.Messages.Count; i++)
             {

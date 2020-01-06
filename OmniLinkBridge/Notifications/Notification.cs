@@ -1,4 +1,4 @@
-﻿using log4net;
+﻿using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
@@ -8,7 +8,7 @@ namespace OmniLinkBridge.Notifications
 {
     public static class Notification
     {
-        private static readonly ILog log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
+        private static readonly ILogger log = Log.Logger.ForContext(MethodBase.GetCurrentMethod().DeclaringType);
 
         private static readonly List<INotification> providers = new List<INotification>()
         {
@@ -27,7 +27,7 @@ namespace OmniLinkBridge.Notifications
                 }
                 catch (Exception ex)
                 {
-                    log.Error("Failed to send notification", ex);
+                    log.Error(ex, "Failed to send notification");
                 }
             });
         }

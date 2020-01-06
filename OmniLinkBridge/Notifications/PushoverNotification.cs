@@ -1,4 +1,4 @@
-﻿using log4net;
+﻿using Serilog;
 using System;
 using System.Collections.Specialized;
 using System.Net;
@@ -8,7 +8,7 @@ namespace OmniLinkBridge.Notifications
 {
     public class PushoverNotification : INotification
     {
-        private static readonly ILog log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
+        private static readonly ILogger log = Log.Logger.ForContext(MethodBase.GetCurrentMethod().DeclaringType);
 
         private static readonly Uri URI = new Uri("https://api.pushover.net/1/messages.json");
 
@@ -35,7 +35,7 @@ namespace OmniLinkBridge.Notifications
         private void Client_UploadStringCompleted(object sender, UploadStringCompletedEventArgs e)
         {
             if (e.Error != null)
-                log.Error("An error occurred sending pushover notification", e.Error);
+                log.Error(e.Error, "An error occurred sending pushover notification");
         }
     }
 }

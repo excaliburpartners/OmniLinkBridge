@@ -1,6 +1,6 @@
 ﻿using HAI_Shared;
-using log4net;
 using OmniLinkBridge.WebAPI;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
@@ -12,7 +12,7 @@ namespace OmniLinkBridge.WebAPI
     [ServiceBehavior(IncludeExceptionDetailInFaults = true)]
     public class OmniLinkService : IOmniLinkService
     {
-        private static readonly ILog log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
+        private static readonly ILogger log = Log.Logger.ForContext(MethodBase.GetCurrentMethod().DeclaringType);
 
         public void Subscribe(SubscribeContract contract)
         {
@@ -39,7 +39,7 @@ namespace OmniLinkBridge.WebAPI
 
         public AreaContract GetArea(ushort id)
         {
-            log.Debug("GetArea: " + id);
+            log.Debug("GetArea: {id}", id);
 
             WebOperationContext ctx = WebOperationContext.Current;
             ctx.OutgoingResponse.Headers.Add("type", "area");
@@ -139,7 +139,7 @@ namespace OmniLinkBridge.WebAPI
 
         public ZoneContract GetZone(ushort id)
         {
-            log.Debug("GetZone: " + id);
+            log.Debug("GetZone: {id}", id);
 
             WebOperationContext ctx = WebOperationContext.Current;
 
@@ -173,7 +173,7 @@ namespace OmniLinkBridge.WebAPI
 
         public UnitContract GetUnit(ushort id)
         {
-            log.Debug("GetUnit: " + id);
+            log.Debug("GetUnit: {id}", id);
 
             WebOperationContext ctx = WebOperationContext.Current;
             ctx.OutgoingResponse.Headers.Add("type", "unit");
@@ -183,7 +183,7 @@ namespace OmniLinkBridge.WebAPI
 
         public void SetUnit(CommandContract unit)
         {
-            log.Debug("SetUnit: " + unit.id + " to " + unit.value + "%");
+            log.Debug("SetUnit: {id} to {value}%", unit.id, unit.value);
 
             if (unit.value == 0)
                 WebServiceModule.OmniLink.Controller.SendCommand(enuUnitCommand.Off, 0, unit.id);
@@ -196,7 +196,7 @@ namespace OmniLinkBridge.WebAPI
 
         public void SetUnitKeypadPress(CommandContract unit)
         {
-            log.Debug("SetUnitKeypadPress: " + unit.id + " to " + unit.value + " button");
+            log.Debug("SetUnitKeypadPress: {id} to {value}", unit.id, unit.value);
             WebServiceModule.OmniLink.Controller.SendCommand(enuUnitCommand.LutronHomeWorksKeypadButtonPress, BitConverter.GetBytes(unit.value)[0], unit.id);
         }
 
@@ -217,7 +217,7 @@ namespace OmniLinkBridge.WebAPI
 
         public ThermostatContract GetThermostat(ushort id)
         {
-            log.Debug("GetThermostat: " + id);
+            log.Debug("GetThermostat: {id}", id);
 
             WebOperationContext ctx = WebOperationContext.Current;
             ctx.OutgoingResponse.Headers.Add("type", "thermostat");
@@ -236,7 +236,7 @@ namespace OmniLinkBridge.WebAPI
             }
 
             int temp = tempHigh.ToOmniTemp();
-            log.Debug("SetThermostatCoolSetpoint: " + unit.id + " to " + unit.value + tempUnit + "(" + temp + ")");
+            log.Debug("SetThermostatCoolSetpoint: {id} to {value}{tempUnit} {temp}", unit.id, unit.value, tempUnit, temp);
             WebServiceModule.OmniLink.Controller.SendCommand(enuUnitCommand.SetHighSetPt, BitConverter.GetBytes(temp)[0], unit.id);
         }
 
@@ -251,25 +251,25 @@ namespace OmniLinkBridge.WebAPI
             }
 
             int temp = tempLoad.ToOmniTemp();
-            log.Debug("SetThermostatHeatSetpoint: " + unit.id + " to " + unit.value + tempUnit + "(" + temp + ")");
+            log.Debug("SetThermostatHeatSetpoint: {id} to {value}{tempUnit} {temp}", unit.id, unit.value, tempUnit, temp);
             WebServiceModule.OmniLink.Controller.SendCommand(enuUnitCommand.SetLowSetPt, BitConverter.GetBytes(temp)[0], unit.id);
         }
 
         public void SetThermostatMode(CommandContract unit)
         {
-            log.Debug("SetThermostatMode: " + unit.id + " to " + unit.value);
+            log.Debug("SetThermostatMode: {id} to {value}", unit.id, unit.value);
             WebServiceModule.OmniLink.Controller.SendCommand(enuUnitCommand.Mode, BitConverter.GetBytes(unit.value)[0], unit.id);
         }
 
         public void SetThermostatFanMode(CommandContract unit)
         {
-            log.Debug("SetThermostatFanMode: " + unit.id + " to " + unit.value);
+            log.Debug("SetThermostatFanMode: {id} to {value}", unit.id, unit.value);
             WebServiceModule.OmniLink.Controller.SendCommand(enuUnitCommand.Fan, BitConverter.GetBytes(unit.value)[0], unit.id);
         }
 
         public void SetThermostatHold(CommandContract unit)
         {
-            log.Debug("SetThermostatHold: " + unit.id + " to " + unit.value);
+            log.Debug("SetThermostatHold: {id} to {value}", unit.id, unit.value);
             WebServiceModule.OmniLink.Controller.SendCommand(enuUnitCommand.Hold, BitConverter.GetBytes(unit.value)[0], unit.id);
         }
 
@@ -290,7 +290,7 @@ namespace OmniLinkBridge.WebAPI
 
         public void PushButton(CommandContract unit)
         {
-            log.Debug("PushButton: " + unit.id);
+            log.Debug("PushButton: {id}", unit.id);
             WebServiceModule.OmniLink.Controller.SendCommand(enuUnitCommand.Button, 0, unit.id);
         }
     }

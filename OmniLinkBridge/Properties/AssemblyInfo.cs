@@ -5,12 +5,12 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("OmniLinkBridge")]
+[assembly: AssemblyTitle("OmniLink Bridge")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Excalibur Partners, LLC")]
 [assembly: AssemblyProduct("OmniLinkBridge")]
-[assembly: AssemblyCopyright("Copyright © Excalibur Partners, LLC 2019")]
+[assembly: AssemblyCopyright("Copyright © Excalibur Partners, LLC 2020")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 

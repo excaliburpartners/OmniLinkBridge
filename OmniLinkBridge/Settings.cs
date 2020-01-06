@@ -1,4 +1,4 @@
-using log4net;
+using Serilog;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -7,14 +7,13 @@ using System.IO;
 using System.Linq;
 using System.Net.Mail;
 using System.Reflection;
+using System.Threading;
 
 namespace OmniLinkBridge
 {
     public static class Settings
     {
-        private static readonly ILog log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
-        public static bool ShowDebug { get; set; }
-        public static bool UseEnvironment { get; set; }
+        private static readonly ILogger log = Log.Logger.ForContext(MethodBase.GetCurrentMethod().DeclaringType);
 
         public static void LoadSettings(string file)
         {
@@ -115,10 +114,10 @@ namespace OmniLinkBridge
 
         private static string CheckEnv(this NameValueCollection settings, string name)
         {
-            string env = UseEnvironment ? Environment.GetEnvironmentVariable(name.ToUpper()) : null;
+            string env = Global.UseEnvironment ? Environment.GetEnvironmentVariable(name.ToUpper()) : null;
             string value = !string.IsNullOrEmpty(env) ? env : settings[name];
 
-            if (ShowDebug)
+            if (Global.DebugSettings)
                 log.Debug((!string.IsNullOrEmpty(env) ? "ENV" : "CONF").PadRight(5) + $"{name}: {value}");
 
             return value;
@@ -170,7 +169,7 @@ namespace OmniLinkBridge
             }
             catch (Exception ex)
             {
-                log.Error("Invalid override zone specified for " + section, ex);
+                log.Error(ex, "Invalid override zone specified for {section}", section);
                 throw;
             }
         }
@@ -181,7 +180,7 @@ namespace OmniLinkBridge
 
             if(string.IsNullOrEmpty(value))
             {
-                log.Error("Empty string specified for " + section);
+                log.Error("Empty string specified for {section}", section);
                 throw new Exception();
             }
 
@@ -196,7 +195,7 @@ namespace OmniLinkBridge
             }
             catch
             {
-                log.Error("Invalid integer specified for " + section);
+                log.Error("Invalid integer specified for {section}", section);
                 throw;
             }
         }
@@ -214,7 +213,7 @@ namespace OmniLinkBridge
             }
             catch
             {
-                log.Error("Invalid range specified for " + section);
+                log.Error("Invalid range specified for {section}", section);
                 throw;
             }
         }
@@ -232,7 +231,7 @@ namespace OmniLinkBridge
             }
             catch
             {
-                log.Error("Invalid port specified for " + section);
+                log.Error("Invalid port specified for {section}", section);
                 throw;
             }
         }
@@ -245,7 +244,7 @@ namespace OmniLinkBridge
             }
             catch
             {
-                log.Error("Invalid email specified for " + section);
+                log.Error("Invalid email specified for {section}", section);
                 throw;
             }
         }
@@ -269,7 +268,7 @@ namespace OmniLinkBridge
             }
             catch
             {
-                log.Error("Invalid email specified for " + section);
+                log.Error("Invalid email specified for {section}", section);
                 throw;
             }
         }
@@ -285,7 +284,7 @@ namespace OmniLinkBridge
             }
             catch
             {
-                log.Error("Invalid string specified for " + section);
+                log.Error("Invalid string specified for {section}", section);
                 throw;
             }
         }
@@ -302,7 +301,7 @@ namespace OmniLinkBridge
                 return false;
             else
             {
-                log.Error("Invalid yes/no or true/false specified for " + section);
+                log.Error("Invalid yes/no or true/false specified for {section}", section);
                 throw new Exception();
             }
         }
@@ -330,24 +329,24 @@ namespace OmniLinkBridge
             return settings;
         }
 
-        private static NameValueCollection LoadCollection(string sFile)
+        private static NameValueCollection LoadCollection(string file)
         {
-            if (ShowDebug)
-                log.Debug($"Using settings file {sFile}");
+            if (Global.DebugSettings)
+                log.Debug("Using settings file {file}", file);
 
-            if(!File.Exists(sFile))
+            if(!File.Exists(file))
             {
-                log.Warn($"Unable to locate settings file {sFile}");
+                log.Warning("Unable to locate settings file {file}", file);
                 return new NameValueCollection();
             }
 
             try
             {
-                return LoadCollection(File.ReadAllLines(sFile));
+                return LoadCollection(File.ReadAllLines(file));
             }
             catch (FileNotFoundException ex)
             {
-                log.Error("Error parsing settings file " + sFile, ex);
+                log.Error(ex, "Error parsing settings file {file}", file);
                 throw;
             }
         }

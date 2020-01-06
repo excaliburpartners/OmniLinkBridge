@@ -1,6 +1,7 @@
 ﻿using HAI_Shared;
 using OmniLinkBridge.OmniLink;
-using log4net;
+using Serilog;
+using Serilog.Context;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
@@ -12,7 +13,9 @@ namespace OmniLinkBridge.Modules
 {
     public class OmniLinkII : IModule, IOmniLinkII
     {
-        private static readonly ILog log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
+        private static readonly ILogger log = Log.Logger.ForContext(MethodBase.GetCurrentMethod().DeclaringType);
+
+        private bool running = true;
 
         // OmniLink Controller
         public clsHAC Controller { get; private set; }
@@ -54,8 +57,8 @@ namespace OmniLinkBridge.Modules
 
         public void Startup()
         {
-            while (Global.running)
-            {
+            while(running)
+            { 
                 // Make sure controller connection is active
                 if (Controller.Connection.ConnectionState == enuOmniLinkConnectionState.Offline &&
                     retry < DateTime.Now)
@@ -71,6 +74,7 @@ namespace OmniLinkBridge.Modules
 
         public void Shutdown()
         {
+            running = false;
             trigger.Set();
         }
 
@@ -92,7 +96,7 @@ namespace OmniLinkBridge.Modules
 
         private void Disconnect()
         {
-            log.Info("CONNECTION STATUS: Disconnecting");
+            log.Debug("Controller Status: {connectionStatus}", "Disconnecting");
 
             if (Controller.Connection.ConnectionState != enuOmniLinkConnectionState.Offline)
                 Controller.Connection.Disconnect();
@@ -100,187 +104,86 @@ namespace OmniLinkBridge.Modules
 
         private void HandleConnectStatus(enuOmniLinkCommStatus CS)
         {
+            var status = CS.ToString().ToSpaceTitleCase();
+
             switch (CS)
             {
-                case enuOmniLinkCommStatus.NoReply:
-                    log.Error("CONNECTION STATUS: No Reply");
-                    break;
-                case enuOmniLinkCommStatus.UnrecognizedReply:
-                    log.Error("CONNECTION STATUS: Unrecognized Reply");
-                    break;
-                case enuOmniLinkCommStatus.UnsupportedProtocol:
-                    log.Error("CONNECTION STATUS: Unsupported Protocol");
-                    break;
-                case enuOmniLinkCommStatus.ClientSessionTerminated:
-                    log.Error("CONNECTION STATUS: Client Session Terminated");
-                    break;
-                case enuOmniLinkCommStatus.ControllerSessionTerminated:
-                    log.Error("CONNECTION STATUS: Controller Session Terminated");
-                    break;
-                case enuOmniLinkCommStatus.CannotStartNewSession:
-                    log.Error("CONNECTION STATUS: Cannot Start New Session");
-                    break;
-                case enuOmniLinkCommStatus.LoginFailed:
-                    log.Error("CONNECTION STATUS: Login Failed");
-                    break;
-                case enuOmniLinkCommStatus.UnableToOpenSocket:
-                    log.Error("CONNECTION STATUS: Unable To Open Socket");
-                    break;
-                case enuOmniLinkCommStatus.UnableToConnect:
-                    log.Error("CONNECTION STATUS: Unable To Connect");
-                    break;
-                case enuOmniLinkCommStatus.SocketClosed:
-                    log.Error("CONNECTION STATUS: Socket Closed");
-                    break;
-                case enuOmniLinkCommStatus.UnexpectedError:
-                    log.Error("CONNECTION STATUS: Unexpected Error");
-                    break;
-                case enuOmniLinkCommStatus.UnableToCreateSocket:
-                    log.Error("CONNECTION STATUS: Unable To Create Socket");
-                    break;
-                case enuOmniLinkCommStatus.Retrying:
-                    log.Warn("CONNECTION STATUS: Retrying");
+                case enuOmniLinkCommStatus.Connecting:
+                    log.Debug("Controller Status: {connectionStatus}", status);
                     break;
                 case enuOmniLinkCommStatus.Connected:
                     IdentifyController();
                     break;
-                case enuOmniLinkCommStatus.Connecting:
-                    log.Info("CONNECTION STATUS: Connecting");
-                    break;
                 case enuOmniLinkCommStatus.Disconnected:
-                    log.Info("CONNECTION STATUS: Disconnected");
+                    log.Information("Controller Status: {connectionStatus}", status);
                     OnDisconnect?.Invoke(this, new EventArgs());
                     break;
                 case enuOmniLinkCommStatus.InterruptedFunctionCall:
-                    if (Global.running)
-                        log.Error("CONNECTION STATUS: Interrupted Function Call");
+                    if (running)
+                        log.Error("Controller Status: {connectionStatus}", status);
                     break;
-                case enuOmniLinkCommStatus.PermissionDenied:
-                    log.Error("CONNECTION STATUS: Permission Denied");
-                    break;
-                case enuOmniLinkCommStatus.BadAddress:
-                    log.Error("CONNECTION STATUS: Bad Address");
-                    break;
-                case enuOmniLinkCommStatus.InvalidArgument:
-                    log.Error("CONNECTION STATUS: Invalid Argument");
-                    break;
-                case enuOmniLinkCommStatus.TooManyOpenFiles:
-                    log.Error("CONNECTION STATUS: Too Many Open Files");
-                    break;
-                case enuOmniLinkCommStatus.ResourceTemporarilyUnavailable:
-                    log.Error("CONNECTION STATUS: Resource Temporarily Unavailable");
-                    break;
+
+                case enuOmniLinkCommStatus.Retrying:
                 case enuOmniLinkCommStatus.OperationNowInProgress:
-                    log.Warn("CONNECTION STATUS: Operation Now In Progress");
-                    break;
                 case enuOmniLinkCommStatus.OperationAlreadyInProgress:
-                    log.Warn("CONNECTION STATUS: Operation Already In Progress");
-                    break;
-                case enuOmniLinkCommStatus.SocketOperationOnNonSocket:
-                    log.Error("CONNECTION STATUS: Socket Operation On Non Socket");
-                    break;
-                case enuOmniLinkCommStatus.DestinationAddressRequired:
-                    log.Error("CONNECTION STATUS: Destination Address Required");
-                    break;
-                case enuOmniLinkCommStatus.MessgeTooLong:
-                    log.Error("CONNECTION STATUS: Message Too Long");
-                    break;
-                case enuOmniLinkCommStatus.WrongProtocolType:
-                    log.Error("CONNECTION STATUS: Wrong Protocol Type");
-                    break;
-                case enuOmniLinkCommStatus.BadProtocolOption:
-                    log.Error("CONNECTION STATUS: Bad Protocol Option");
-                    break;
-                case enuOmniLinkCommStatus.ProtocolNotSupported:
-                    log.Error("CONNECTION STATUS: Protocol Not Supported");
-                    break;
-                case enuOmniLinkCommStatus.SocketTypeNotSupported:
-                    log.Error("CONNECTION STATUS: Socket Type Not Supported");
-                    break;
-                case enuOmniLinkCommStatus.OperationNotSupported:
-                    log.Error("CONNECTION STATUS: Operation Not Supported");
-                    break;
-                case enuOmniLinkCommStatus.ProtocolFamilyNotSupported:
-                    log.Error("CONNECTION STATUS: Protocol Family Not Supported");
-                    break;
-                case enuOmniLinkCommStatus.AddressFamilyNotSupported:
-                    log.Error("CONNECTION STATUS: Address Family Not Supported");
-                    break;
-                case enuOmniLinkCommStatus.AddressInUse:
-                    log.Error("CONNECTION STATUS: Address In Use");
-                    break;
-                case enuOmniLinkCommStatus.AddressNotAvailable:
-                    log.Error("CONNECTION STATUS: Address Not Available");
-                    break;
-                case enuOmniLinkCommStatus.NetworkIsDown:
-                    log.Error("CONNECTION STATUS: Network Is Down");
-                    break;
-                case enuOmniLinkCommStatus.NetworkIsUnreachable:
-                    log.Error("CONNECTION STATUS: Network Is Unreachable");
-                    break;
-                case enuOmniLinkCommStatus.NetworkReset:
-                    log.Error("CONNECTION STATUS: Network Reset");
-                    break;
-                case enuOmniLinkCommStatus.ConnectionAborted:
-                    log.Error("CONNECTION STATUS: Connection Aborted");
-                    break;
-                case enuOmniLinkCommStatus.ConnectionResetByPeer:
-                    log.Error("CONNECTION STATUS: Connection Reset By Peer");
-                    break;
-                case enuOmniLinkCommStatus.NoBufferSpaceAvailable:
-                    log.Error("CONNECTION STATUS: No Buffer Space Available");
-                    break;
                 case enuOmniLinkCommStatus.AlreadyConnected:
-                    log.Warn("CONNECTION STATUS: Already Connected");
+                    log.Warning("Controller Status: {connectionStatus}", status);
                     break;
+
+                case enuOmniLinkCommStatus.NoReply:
+                case enuOmniLinkCommStatus.UnrecognizedReply:
+                case enuOmniLinkCommStatus.UnsupportedProtocol:
+                case enuOmniLinkCommStatus.ClientSessionTerminated:
+                case enuOmniLinkCommStatus.ControllerSessionTerminated:
+                case enuOmniLinkCommStatus.CannotStartNewSession:
+                case enuOmniLinkCommStatus.LoginFailed:
+                case enuOmniLinkCommStatus.UnableToOpenSocket:
+                case enuOmniLinkCommStatus.UnableToConnect:
+                case enuOmniLinkCommStatus.SocketClosed:
+                case enuOmniLinkCommStatus.UnexpectedError:
+                case enuOmniLinkCommStatus.UnableToCreateSocket:
+                case enuOmniLinkCommStatus.PermissionDenied:
+                case enuOmniLinkCommStatus.BadAddress:
+                case enuOmniLinkCommStatus.InvalidArgument:
+                case enuOmniLinkCommStatus.TooManyOpenFiles:
+                case enuOmniLinkCommStatus.ResourceTemporarilyUnavailable:
+                case enuOmniLinkCommStatus.SocketOperationOnNonSocket:
+                case enuOmniLinkCommStatus.DestinationAddressRequired:
+                case enuOmniLinkCommStatus.MessgeTooLong:
+                case enuOmniLinkCommStatus.WrongProtocolType:
+                case enuOmniLinkCommStatus.BadProtocolOption:
+                case enuOmniLinkCommStatus.ProtocolNotSupported:
+                case enuOmniLinkCommStatus.SocketTypeNotSupported:
+                case enuOmniLinkCommStatus.OperationNotSupported:
+                case enuOmniLinkCommStatus.ProtocolFamilyNotSupported:
+                case enuOmniLinkCommStatus.AddressFamilyNotSupported:
+                case enuOmniLinkCommStatus.AddressInUse:
+                case enuOmniLinkCommStatus.AddressNotAvailable:
+                case enuOmniLinkCommStatus.NetworkIsDown:
+                case enuOmniLinkCommStatus.NetworkIsUnreachable:
+                case enuOmniLinkCommStatus.NetworkReset:
+                case enuOmniLinkCommStatus.ConnectionAborted:
+                case enuOmniLinkCommStatus.ConnectionResetByPeer:
+                case enuOmniLinkCommStatus.NoBufferSpaceAvailable:
                 case enuOmniLinkCommStatus.NotConnected:
-                    log.Error("CONNECTION STATUS: Not Connected");
-                    break;
                 case enuOmniLinkCommStatus.CannotSendAfterShutdown:
-                    log.Error("CONNECTION STATUS: Cannot Send After Shutdown");
-                    break;
                 case enuOmniLinkCommStatus.ConnectionTimedOut:
-                    log.Error("CONNECTION STATUS: Connection Timed Out");
-                    break;
                 case enuOmniLinkCommStatus.ConnectionRefused:
-                    log.Error("CONNECTION STATUS: Connection Refused");
-                    break;
                 case enuOmniLinkCommStatus.HostIsDown:
-                    log.Error("CONNECTION STATUS: Host Is Down");
-                    break;
                 case enuOmniLinkCommStatus.HostUnreachable:
-                    log.Error("CONNECTION STATUS: Host Unreachable");
-                    break;
                 case enuOmniLinkCommStatus.TooManyProcesses:
-                    log.Error("CONNECTION STATUS: Too Many Processes");
-                    break;
                 case enuOmniLinkCommStatus.NetworkSubsystemIsUnavailable:
-                    log.Error("CONNECTION STATUS: Network Subsystem Is Unavailable");
-                    break;
                 case enuOmniLinkCommStatus.UnsupportedVersion:
-                    log.Error("CONNECTION STATUS: Unsupported Version");
-                    break;
                 case enuOmniLinkCommStatus.NotInitialized:
-                    log.Error("CONNECTION STATUS: Not Initialized");
-                    break;
                 case enuOmniLinkCommStatus.ShutdownInProgress:
-                    log.Error("CONNECTION STATUS: Shutdown In Progress");
-                    break;
                 case enuOmniLinkCommStatus.ClassTypeNotFound:
-                    log.Error("CONNECTION STATUS: Class Type Not Found");
-                    break;
                 case enuOmniLinkCommStatus.HostNotFound:
-                    log.Error("CONNECTION STATUS: Host Not Found");
-                    break;
                 case enuOmniLinkCommStatus.HostNotFoundTryAgain:
-                    log.Error("CONNECTION STATUS: Host Not Found Try Again");
-                    break;
                 case enuOmniLinkCommStatus.NonRecoverableError:
-                    log.Error("CONNECTION STATUS: Non Recoverable Error");
-                    break;
                 case enuOmniLinkCommStatus.NoDataOfRequestedType:
-                    log.Error("CONNECTION STATUS: No Data Of Requested Type");
+                    log.Error("Controller Status: {connectionStatus}", status);
                     break;
+
                 default:
                     break;
             }
@@ -316,7 +219,10 @@ namespace OmniLinkBridge.Modules
                 if (Controller.Model == MSG.ModelNumber)
                 {
                     Controller.CopySystemInformation(MSG);
-                    log.Info("CONTROLLER IS: " + Controller.GetModelText() + " (" + Controller.GetVersionText() + ")");
+
+                    using (LogContext.PushProperty("Telemetry", "Controller"))
+                        log.Information("Controller is {ControllerModel} firmware {ControllerVersion}",
+                            Controller.GetModelText(), Controller.GetVersionText());
 
                     _ = Connected();
 
@@ -371,7 +277,7 @@ namespace OmniLinkBridge.Modules
 
         private async Task GetNamed(enuObjectType type)
         {
-            log.Debug("Waiting for named units " + type.ToString());
+            log.Debug("Waiting for named units {unitType}", type.ToString());
 
             GetNextNamed(type, 0);
 
@@ -415,7 +321,9 @@ namespace OmniLinkBridge.Modules
                         Controller.TimeFormat = MSG2.Time;
                         Controller.TempFormat = MSG2.Temp;
 
-                        log.Debug("Temperature format: " + (Controller.TempFormat == enuTempFormat.Fahrenheit ? "Fahrenheit" : "Celsius"));
+                        using (LogContext.PushProperty("Telemetry", "TemperatureFormat"))
+                            log.Debug("Temperature format is {TemperatureFormat}",
+                                (Controller.TempFormat == enuTempFormat.Fahrenheit ? "Fahrenheit" : "Celsius"));
 
                         nameWait.Set();
                         break;
@@ -443,7 +351,8 @@ namespace OmniLinkBridge.Modules
                                     tstats[MSG.ObjectNumber] = DateTime.MinValue;
 
                                 Controller.Connection.Send(new clsOL2MsgRequestExtendedStatus(Controller.Connection, enuObjectType.Thermostat, MSG.ObjectNumber, MSG.ObjectNumber), HandleRequestThermostatStatus);
-                                log.Debug("Added thermostat to watch list " + Controller.Thermostats[MSG.ObjectNumber].Name);
+                                log.Debug("Added thermostat to watch list {thermostatName}",
+                                    Controller.Thermostats[MSG.ObjectNumber].Name);
                                 break;
                             case enuObjectType.Unit:
                                 Controller.Units.CopyProperties(MSG);
@@ -471,7 +380,7 @@ namespace OmniLinkBridge.Modules
         #region Notifications
         private void UnsolicitedNotifications(bool enable)
         {
-            log.Info("Unsolicited notifications " + (enable ? "enabled" : "disabled"));
+            log.Debug("Unsolicited notifications {status}", (enable ? "enabled" : "disabled"));
             Controller.Connection.Send(new clsOL2EnableNotifications(Controller.Connection, enable), null);
         }
 
@@ -676,7 +585,7 @@ namespace OmniLinkBridge.Modules
                 StringBuilder sb = new StringBuilder();
                 for (int i = 0; i < MSG.MessageLength; i++)
                     sb.Append(MSG.Data[i].ToString() + " ");
-                log.Debug("Unhandled SystemEvent Raw: " + sb.ToString() + "Num: " + MSG.SystemEvent);
+                log.Debug("Unhandled SystemEvent Raw: {raw}, Num: {num}", sb.ToString(), MSG.SystemEvent);
 
                 int num = ((int)MSG.MessageLength - 1) / 2;
                 for (int i = 0; i < num; i++)
@@ -745,7 +654,8 @@ namespace OmniLinkBridge.Modules
                                 });
                             }
                             else if (Global.verbose_thermostat_timer)
-                                log.Warn("Ignoring unsolicited unknown temp for Thermostat " + Controller.Thermostats[MSG.ObjectNumber(i)].Name);
+                                log.Debug("Ignoring unsolicited unknown temp for Thermostat {thermostatName}", 
+                                    Controller.Thermostats[MSG.ObjectNumber(i)].Name);
 
                             if (!tstats.ContainsKey(MSG.ObjectNumber(i)))
                                 tstats.Add(MSG.ObjectNumber(i), DateTime.Now);
@@ -753,7 +663,8 @@ namespace OmniLinkBridge.Modules
                                 tstats[MSG.ObjectNumber(i)] = DateTime.Now;
 
                             if (Global.verbose_thermostat_timer)
-                                log.Debug("Unsolicited status received for Thermostat " + Controller.Thermostats[MSG.ObjectNumber(i)].Name);
+                                log.Debug("Unsolicited status received for Thermostat {thermostatName}", 
+                                    Controller.Thermostats[MSG.ObjectNumber(i)].Name);
                         }
                     }
                     break;
@@ -817,7 +728,8 @@ namespace OmniLinkBridge.Modules
                         Controller.Connection.Send(new clsOL2MsgRequestExtendedStatus(Controller.Connection, enuObjectType.Thermostat, tstat.Key, tstat.Key), HandleRequestThermostatStatus);
 
                         if (Global.verbose_thermostat_timer)
-                            log.Debug("Polling status for Thermostat " + Controller.Thermostats[tstat.Key].Name);
+                            log.Debug("Polling status for Thermostat {thermostatName}",
+                                Controller.Thermostats[tstat.Key].Name);
                     }
 
                     // Log every minute if update within 5 minutes and connected
@@ -836,10 +748,12 @@ namespace OmniLinkBridge.Modules
                             });
                         }
                         else if (Global.verbose_thermostat_timer)
-                            log.Warn("Ignoring unknown temp for Thermostat " + Controller.Thermostats[tstat.Key].Name);
+                            log.Warning("Ignoring unknown temp for Thermostat {thermostatName}",
+                                Controller.Thermostats[tstat.Key].Name);
                     }
                     else if (Global.verbose_thermostat_timer)
-                        log.Warn("Not logging out of date status for Thermostat " + Controller.Thermostats[tstat.Key].Name);
+                        log.Warning("Not logging out of date status for Thermostat {thermostatName}",
+                            Controller.Thermostats[tstat.Key].Name);
                 }
             }
 
@@ -866,7 +780,8 @@ namespace OmniLinkBridge.Modules
                         tstats[MSG.ObjectNumber(i)] = DateTime.Now;
 
                     if (Global.verbose_thermostat_timer)
-                        log.Debug("Polling status received for Thermostat " + Controller.Thermostats[MSG.ObjectNumber(i)].Name);
+                        log.Debug("Polling status received for Thermostat {thermostatName}",
+                            Controller.Thermostats[MSG.ObjectNumber(i)].Name);
                 }
             }
         }

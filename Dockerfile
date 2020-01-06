@@ -28,4 +28,4 @@ EXPOSE 8000/tcp
 VOLUME /config
 WORKDIR /app
 COPY --from=build /app .
-CMD [ "mono",  "OmniLinkBridge.exe", "-i", "-c", "/config/OmniLinkBridge.ini", "-e", "-s", "/config/WebSubscriptions.json" ]
+CMD [ "mono",  "OmniLinkBridge.exe", "-i", "-c", "/config/OmniLinkBridge.ini", "-e", "-s", "/config/WebSubscriptions.json", "-lf", "disable" ]

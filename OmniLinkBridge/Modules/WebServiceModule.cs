@@ -1,8 +1,8 @@
-﻿using log4net;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using OmniLinkBridge.Modules;
 using OmniLinkBridge.OmniLink;
 using OmniLinkBridge.WebAPI;
+using Serilog;
 using System;
 using System.Reflection;
 using System.ServiceModel;
@@ -14,7 +14,7 @@ namespace OmniLinkBridge
 {
     public class WebServiceModule : IModule
     {
-        private static readonly ILog log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
+        private static readonly ILogger log = Log.Logger.ForContext(MethodBase.GetCurrentMethod().DeclaringType);
 
         public static OmniLinkII OmniLink { get; private set; }
 
@@ -43,11 +43,11 @@ namespace OmniLinkBridge
                 ServiceEndpoint ep = host.AddServiceEndpoint(typeof(IOmniLinkService), new WebHttpBinding(), "");
                 host.Open();
 
-                log.Info("Listening on " + uri.ToString());
+                log.Information("Listening on {url}", uri.ToString());
             }
             catch (CommunicationException ex)
             {
-                log.Error("An exception occurred starting web service", ex);
+                log.Error(ex, "An exception occurred starting web service");
                 host.Abort();
             }
 

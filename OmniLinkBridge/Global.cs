@@ -7,10 +7,8 @@ namespace OmniLinkBridge
 {
     public abstract class Global
     {
-        public static bool running;
-
-        // Config File
-        public static string config_file;
+        public static bool DebugSettings { get; set; }
+        public static bool UseEnvironment { get; set; }
 
         // HAI / Leviton Omni Controller
         public static string controller_address;

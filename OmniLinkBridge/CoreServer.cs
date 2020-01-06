@@ -1,5 +1,7 @@
-﻿using log4net;
-using OmniLinkBridge.Modules;
+﻿using OmniLinkBridge.Modules;
+using Serilog;
+using Serilog.Context;
+using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Threading;
@@ -9,11 +11,13 @@ namespace OmniLinkBridge
 {
     public class CoreServer
     {
-        private static readonly ILog log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
-
+        private static readonly ILogger log = Log.Logger.ForContext(MethodBase.GetCurrentMethod().DeclaringType);
+        
         private OmniLinkII omnilink;
         private readonly List<IModule> modules = new List<IModule>();
         private readonly List<Task> tasks = new List<Task>();
+        private readonly ManualResetEvent quitEvent = new ManualResetEvent(false);
+        private DateTime startTime;
 
         public CoreServer()
         {
@@ -23,11 +27,6 @@ namespace OmniLinkBridge
 
         private void Server()
         {
-            Global.running = true;
-
-            log.Debug("Starting up server " +
-                Assembly.GetExecutingAssembly().GetName().Version.ToString());
-
             // Controller connection
             modules.Add(omnilink = new OmniLinkII(Global.controller_address, Global.controller_port, Global.controller_key1, Global.controller_key2));
 
@@ -43,6 +42,12 @@ namespace OmniLinkBridge
             if(Global.mqtt_enabled)
                 modules.Add(new MQTTModule(omnilink));
 
+            startTime = DateTime.Now;
+
+            using (LogContext.PushProperty("Telemetry", "Startup"))
+                log.Information("Started version {Version} on {OperatingSystem} with {Modules}",
+                    Assembly.GetExecutingAssembly().GetName().Version, Environment.OSVersion, modules);
+
             // Startup modules         
             foreach (IModule module in modules)
             {
@@ -52,14 +57,11 @@ namespace OmniLinkBridge
                 }));
             }
 
-            // Wait for all threads to stop
-            Task.WaitAll(tasks.ToArray());
+            quitEvent.WaitOne();
         }
 
         public void Shutdown()
         {
-            Global.running = false;
-
             // Shutdown modules
             foreach (IModule module in modules)
                 module.Shutdown();
@@ -68,7 +70,12 @@ namespace OmniLinkBridge
             if (tasks != null)
                 Task.WaitAll(tasks.ToArray());
 
-            log.Debug("Shutdown completed");
+            using (LogContext.PushProperty("Telemetry", "Shutdown"))
+                log.Information("Shutdown completed with uptime {Uptime}", (DateTime.Now - startTime).ToString());
+
+            Log.CloseAndFlush();
+
+            quitEvent.Set();
         }
     }
 }
