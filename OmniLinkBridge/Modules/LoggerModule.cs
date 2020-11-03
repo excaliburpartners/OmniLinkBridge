@@ -1,4 +1,5 @@
-﻿using OmniLinkBridge.Notifications;
+﻿using HAI_Shared;
+using OmniLinkBridge.Notifications;
 using OmniLinkBridge.OmniLink;
 using Serilog;
 using System;
@@ -31,6 +32,7 @@ namespace OmniLinkBridge.Modules
         public LoggerModule(OmniLinkII omni)
         {
             omnilink = omni;
+            omnilink.OnConnect += Omnilink_OnConnect;
             omnilink.OnAreaStatus += Omnilink_OnAreaStatus;
             omnilink.OnZoneStatus += Omnilink_OnZoneStatus;
             omnilink.OnThermostatStatus += Omnilink_OnThermostatStatus;
@@ -121,64 +123,53 @@ namespace OmniLinkBridge.Modules
             trigger.Set();
         }
 
+        private void Omnilink_OnConnect(object sender, EventArgs e)
+        {
+            if (Global.verbose_area)
+            {
+                for (ushort i = 1; i <= omnilink.Controller.Areas.Count; i++)
+                {
+                    clsArea area = omnilink.Controller.Areas[i];
+
+                    if (i > 1 && area.DefaultProperties == true)
+                        continue;
+
+                    string status = area.ModeText();
+
+                    if (area.ExitTimer > 0)
+                        status = "ARMING " + status;
+
+                    if (area.EntryTimer > 0)
+                        status = "TRIPPED " + status;
+
+                    log.Verbose("Initial AreaStatus {id} {name}, Status: {status}, Alarms: {alarms}", i, area.Name, status, area.AreaAlarms);
+                }
+            }
+
+            if (Global.verbose_zone)
+            {
+                for (ushort i = 1; i <= omnilink.Controller.Zones.Count; i++)
+                {
+                    clsZone zone = omnilink.Controller.Zones[i];
+
+                    if (zone.DefaultProperties == true)
+                        continue;
+
+                    if (zone.IsTemperatureZone())
+                        log.Verbose("Initial ZoneStatus {id} {name}, Temp: {temp}", i, zone.Name, zone.TempText());
+                    else
+                        log.Verbose("Initial ZoneStatus {id} {name}, Status: {status}", i, zone.Name, zone.StatusText());
+                }
+            }
+        }
+
         private void Omnilink_OnAreaStatus(object sender, AreaStatusEventArgs e)
         {
-            // Alarm notifcation
-            if (e.Area.AreaFireAlarmText != "OK")
-            {
-                Notification.Notify("ALARM", "FIRE " + e.Area.Name + " " + e.Area.AreaFireAlarmText, NotificationPriority.Emergency);
-
-                if (!alarms.Contains("FIRE" + e.ID))
-                    alarms.Add("FIRE" + e.ID);
-            }
-            else if (alarms.Contains("FIRE" + e.ID))
-            {
-                Notification.Notify("ALARM CLEARED", "FIRE " + e.Area.Name + " " + e.Area.AreaFireAlarmText, NotificationPriority.High);
-
-                alarms.Remove("FIRE" + e.ID);
-            }
-
-            if (e.Area.AreaBurglaryAlarmText != "OK")
-            {
-                Notification.Notify("ALARM", "BURGLARY " + e.Area.Name + " " + e.Area.AreaBurglaryAlarmText, NotificationPriority.Emergency);
-
-                if (!alarms.Contains("BURGLARY" + e.ID))
-                    alarms.Add("BURGLARY" + e.ID);
-            }
-            else if (alarms.Contains("BURGLARY" + e.ID))
-            {
-                Notification.Notify("ALARM CLEARED", "BURGLARY " + e.Area.Name + " " + e.Area.AreaBurglaryAlarmText, NotificationPriority.High);
-
-                alarms.Remove("BURGLARY" + e.ID);
-            }
-
-            if (e.Area.AreaAuxAlarmText != "OK")
-            {
-                Notification.Notify("ALARM", "AUX " + e.Area.Name + " " + e.Area.AreaAuxAlarmText, NotificationPriority.Emergency);
-
-                if (!alarms.Contains("AUX" + e.ID))
-                    alarms.Add("AUX" + e.ID);
-            }
-            else if (alarms.Contains("AUX" + e.ID))
-            {
-                Notification.Notify("ALARM CLEARED", "AUX " + e.Area.Name + " " + e.Area.AreaAuxAlarmText, NotificationPriority.High);
-
-                alarms.Remove("AUX" + e.ID);
-            }
-
-            if (e.Area.AreaDuressAlarmText != "OK")
-            {
-                Notification.Notify("ALARM", "DURESS " + e.Area.Name + " " + e.Area.AreaDuressAlarmText, NotificationPriority.Emergency);
-
-                if (!alarms.Contains("DURESS" + e.ID))
-                    alarms.Add("DURESS" + e.ID);
-            }
-            else if (alarms.Contains("DURESS" + e.ID))
-            {
-                Notification.Notify("ALARM CLEARED", "DURESS " + e.Area.Name + " " + e.Area.AreaDuressAlarmText, NotificationPriority.High);
-
-                alarms.Remove("DURESS" + e.ID);
-            }
+            AlarmNotification(e, 0, "BURGLARY", e.Area.AreaBurglaryAlarmText);
+            AlarmNotification(e, 1, "FIRE", e.Area.AreaFireAlarmText);
+            AlarmNotification(e, 2, "GAS", e.Area.AreaGasAlarmText);
+            AlarmNotification(e, 3, "AUX", e.Area.AreaAuxAlarmText);
+            AlarmNotification(e, 6, "DURESS", e.Area.AreaDuressAlarmText);
 
             string status = e.Area.ModeText();
 
@@ -197,10 +188,27 @@ namespace OmniLinkBridge.Modules
                     e.Area.AreaDuressAlarmText + "','" + status + "')");
 
             if (Global.verbose_area)
-                log.Verbose("AreaStatus {id} {name}, Status: {status}", e.ID, e.Area.Name, status);
+                log.Verbose("AreaStatus {id} {name}, Status: {status}, Alarams: {alarms}", e.ID, e.Area.Name, status, e.Area.AreaAlarms);
 
             if (Global.notify_area && e.Area.LastMode != e.Area.AreaMode)
                 Notification.Notify("Security", e.Area.Name + " " + e.Area.ModeText());
+        }
+
+        private void AlarmNotification(AreaStatusEventArgs e, int alarmBit, string alarmType, string alarmText)
+        {
+            if (e.Area.AreaAlarms.IsBitSet(alarmBit))
+            {
+                Notification.Notify("ALARM", $"{alarmType} {e.Area.Name} {alarmText}", NotificationPriority.Emergency);
+
+                if (!alarms.Contains(alarmType + e.ID))
+                    alarms.Add(alarmType + e.ID);
+            }
+            else if (alarms.Contains(alarmType + e.ID))
+            {
+                Notification.Notify("ALARM CLEARED", $"{alarmType} {e.Area.Name} {alarmText}", NotificationPriority.High);
+
+                alarms.Remove(alarmType + e.ID);
+            }
         }
 
         private void Omnilink_OnZoneStatus(object sender, ZoneStatusEventArgs e)
@@ -267,7 +275,7 @@ namespace OmniLinkBridge.Modules
                     status + "','" + e.Unit.Status + "','" + e.Unit.StatusTime + "')");
 
             if (Global.verbose_unit)
-                log.Verbose("UnitStatus {id} {name}, Status: {status}", e.ID, e.Unit.Name, status);
+                log.Verbose("UnitStatus {id} {name}, Status: {status}, Value: {value}", e.ID, e.Unit.Name, status, e.Unit.Status);
         }
 
         private void Omnilink_OnMessageStatus(object sender, MessageStatusEventArgs e)
