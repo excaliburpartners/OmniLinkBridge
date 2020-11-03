@@ -116,6 +116,12 @@ namespace OmniLinkBridge.MQTT
                 // which will cause light to go to 100% brightness
                 unit.Status = (byte)(100 + unitValue);
             }
+            else if (command == Topic.scene_command && char.TryParse(payload, out char scene))
+            {
+                log.Debug("SetUnit: {id} to {value}", unit.Number, payload);
+
+                OmniLink.SendCommand(enuUnitCommand.Compose, (byte)(scene - 63), (ushort)unit.Number);
+            }
         }
 
         private void ProcessThermostatReceived(clsThermostat thermostat, Topic command, string payload)

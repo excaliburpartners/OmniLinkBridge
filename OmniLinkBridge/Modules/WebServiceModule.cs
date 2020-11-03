@@ -43,7 +43,7 @@ namespace OmniLinkBridge
                 ServiceEndpoint ep = host.AddServiceEndpoint(typeof(IOmniLinkService), new WebHttpBinding(), "");
                 host.Open();
 
-                log.Information("Listening on {url}", uri.ToString());
+                log.Information("Listening on {url}", uri);
             }
             catch (CommunicationException ex)
             {

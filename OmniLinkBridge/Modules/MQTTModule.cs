@@ -33,6 +33,9 @@ namespace OmniLinkBridge.Modules
 
         private readonly AutoResetEvent trigger = new AutoResetEvent(false);
 
+        private const string ONLINE = "online";
+        private const string OFFLINE = "offline";
+
         public MQTTModule(OmniLinkII omni)
         {
             OmniLink = omni;
@@ -53,7 +56,7 @@ namespace OmniLinkBridge.Modules
             MqttApplicationMessage lastwill = new MqttApplicationMessage()
             {
                 Topic = $"{Global.mqtt_prefix}/status",
-                Payload = Encoding.UTF8.GetBytes("offline"),
+                Payload = Encoding.UTF8.GetBytes(OFFLINE),
                 QualityOfServiceLevel = MqttQualityOfServiceLevel.AtMostOnce,
                 Retain = true
             };
@@ -80,7 +83,7 @@ namespace OmniLinkBridge.Modules
                 {
                     identifiers = Global.mqtt_prefix,
                     name = Global.mqtt_prefix,
-                    sw_version = $"{OmniLink.Controller.GetVersionText()} - OmniLinkBridge {Assembly.GetExecutingAssembly().GetName().Version.ToString()}",
+                    sw_version = $"{OmniLink.Controller.GetVersionText()} - OmniLinkBridge {Assembly.GetExecutingAssembly().GetName().Version}",
                     model = OmniLink.Controller.GetModelText(),
                     manufacturer = "Leviton"
                 };
@@ -103,6 +106,7 @@ namespace OmniLinkBridge.Modules
             {
                 Topic.command,
                 Topic.brightness_command,
+                Topic.scene_command,
                 Topic.temperature_heat_command,
                 Topic.temperature_cool_command,
                 Topic.humidify_command,
@@ -113,12 +117,12 @@ namespace OmniLinkBridge.Modules
             };
 
             toSubscribe.ForEach((command) => MqttClient.SubscribeAsync(
-                new TopicFilterBuilder().WithTopic($"{Global.mqtt_prefix}/+/{command.ToString()}").Build()));
+                new TopicFilterBuilder().WithTopic($"{Global.mqtt_prefix}/+/{command}").Build()));
 
             // Wait until shutdown
             trigger.WaitOne();
 
-            PublishControllerStatus("offline");
+            PublishControllerStatus(OFFLINE);
 
             MqttClient.StopAsync();
         }
@@ -141,7 +145,7 @@ namespace OmniLinkBridge.Modules
             ControllerConnected = false;
 
             if (MqttClient.IsConnected)
-                PublishControllerStatus("offline");
+                PublishControllerStatus(OFFLINE);
         }
 
         private void PublishControllerStatus(string status)
@@ -159,7 +163,7 @@ namespace OmniLinkBridge.Modules
             PublishButtons();
             PublishMessages();
 
-            PublishControllerStatus("online");
+            PublishControllerStatus(ONLINE);
             PublishAsync($"{Global.mqtt_prefix}/model", OmniLink.Controller.GetModelText());
             PublishAsync($"{Global.mqtt_prefix}/version", OmniLink.Controller.GetVersionText());
         }
@@ -177,38 +181,38 @@ namespace OmniLinkBridge.Modules
                 if (i > 1 && area.DefaultProperties == true)
                 {
                     PublishAsync(area.ToTopic(Topic.name), null);
-                    PublishAsync($"{Global.mqtt_discovery_prefix}/alarm_control_panel/{Global.mqtt_prefix}/area{i.ToString()}/config", null);
-                    PublishAsync($"{Global.mqtt_discovery_prefix}/binary_sensor/{Global.mqtt_prefix}/area{i.ToString()}burglary/config", null);
-                    PublishAsync($"{Global.mqtt_discovery_prefix}/binary_sensor/{Global.mqtt_prefix}/area{i.ToString()}fire/config", null);
-                    PublishAsync($"{Global.mqtt_discovery_prefix}/binary_sensor/{Global.mqtt_prefix}/area{i.ToString()}gas/config", null);
-                    PublishAsync($"{Global.mqtt_discovery_prefix}/binary_sensor/{Global.mqtt_prefix}/area{i.ToString()}aux/config", null);
-                    PublishAsync($"{Global.mqtt_discovery_prefix}/binary_sensor/{Global.mqtt_prefix}/area{i.ToString()}freeze/config", null);
-                    PublishAsync($"{Global.mqtt_discovery_prefix}/binary_sensor/{Global.mqtt_prefix}/area{i.ToString()}water/config", null);
-                    PublishAsync($"{Global.mqtt_discovery_prefix}/binary_sensor/{Global.mqtt_prefix}/area{i.ToString()}duress/config", null);
-                    PublishAsync($"{Global.mqtt_discovery_prefix}/binary_sensor/{Global.mqtt_prefix}/area{i.ToString()}temp/config", null);
+                    PublishAsync($"{Global.mqtt_discovery_prefix}/alarm_control_panel/{Global.mqtt_prefix}/area{i}/config", null);
+                    PublishAsync($"{Global.mqtt_discovery_prefix}/binary_sensor/{Global.mqtt_prefix}/area{i}burglary/config", null);
+                    PublishAsync($"{Global.mqtt_discovery_prefix}/binary_sensor/{Global.mqtt_prefix}/area{i}fire/config", null);
+                    PublishAsync($"{Global.mqtt_discovery_prefix}/binary_sensor/{Global.mqtt_prefix}/area{i}gas/config", null);
+                    PublishAsync($"{Global.mqtt_discovery_prefix}/binary_sensor/{Global.mqtt_prefix}/area{i}aux/config", null);
+                    PublishAsync($"{Global.mqtt_discovery_prefix}/binary_sensor/{Global.mqtt_prefix}/area{i}freeze/config", null);
+                    PublishAsync($"{Global.mqtt_discovery_prefix}/binary_sensor/{Global.mqtt_prefix}/area{i}water/config", null);
+                    PublishAsync($"{Global.mqtt_discovery_prefix}/binary_sensor/{Global.mqtt_prefix}/area{i}duress/config", null);
+                    PublishAsync($"{Global.mqtt_discovery_prefix}/binary_sensor/{Global.mqtt_prefix}/area{i}temp/config", null);
                     continue;
                 }
 
                 PublishAreaState(area);
 
                 PublishAsync(area.ToTopic(Topic.name), area.Name);
-                PublishAsync($"{Global.mqtt_discovery_prefix}/alarm_control_panel/{Global.mqtt_prefix}/area{i.ToString()}/config",
+                PublishAsync($"{Global.mqtt_discovery_prefix}/alarm_control_panel/{Global.mqtt_prefix}/area{i}/config",
                     JsonConvert.SerializeObject(area.ToConfig()));
-                PublishAsync($"{Global.mqtt_discovery_prefix}/binary_sensor/{Global.mqtt_prefix}/area{i.ToString()}burglary/config",
+                PublishAsync($"{Global.mqtt_discovery_prefix}/binary_sensor/{Global.mqtt_prefix}/area{i}burglary/config",
                     JsonConvert.SerializeObject(area.ToConfigBurglary()));
-                PublishAsync($"{Global.mqtt_discovery_prefix}/binary_sensor/{Global.mqtt_prefix}/area{i.ToString()}fire/config",
+                PublishAsync($"{Global.mqtt_discovery_prefix}/binary_sensor/{Global.mqtt_prefix}/area{i}fire/config",
                     JsonConvert.SerializeObject(area.ToConfigFire()));
-                PublishAsync($"{Global.mqtt_discovery_prefix}/binary_sensor/{Global.mqtt_prefix}/area{i.ToString()}gas/config",
+                PublishAsync($"{Global.mqtt_discovery_prefix}/binary_sensor/{Global.mqtt_prefix}/area{i}gas/config",
                     JsonConvert.SerializeObject(area.ToConfigGas()));
-                PublishAsync($"{Global.mqtt_discovery_prefix}/binary_sensor/{Global.mqtt_prefix}/area{i.ToString()}aux/config",
+                PublishAsync($"{Global.mqtt_discovery_prefix}/binary_sensor/{Global.mqtt_prefix}/area{i}aux/config",
                     JsonConvert.SerializeObject(area.ToConfigAux()));
-                PublishAsync($"{Global.mqtt_discovery_prefix}/binary_sensor/{Global.mqtt_prefix}/area{i.ToString()}freeze/config",
+                PublishAsync($"{Global.mqtt_discovery_prefix}/binary_sensor/{Global.mqtt_prefix}/area{i}freeze/config",
                     JsonConvert.SerializeObject(area.ToConfigFreeze()));
-                PublishAsync($"{Global.mqtt_discovery_prefix}/binary_sensor/{Global.mqtt_prefix}/area{i.ToString()}water/config",
+                PublishAsync($"{Global.mqtt_discovery_prefix}/binary_sensor/{Global.mqtt_prefix}/area{i}water/config",
                     JsonConvert.SerializeObject(area.ToConfigWater()));
-                PublishAsync($"{Global.mqtt_discovery_prefix}/binary_sensor/{Global.mqtt_prefix}/area{i.ToString()}duress/config",
+                PublishAsync($"{Global.mqtt_discovery_prefix}/binary_sensor/{Global.mqtt_prefix}/area{i}duress/config",
                    JsonConvert.SerializeObject(area.ToConfigDuress()));
-                PublishAsync($"{Global.mqtt_discovery_prefix}/binary_sensor/{Global.mqtt_prefix}/area{i.ToString()}temp/config",
+                PublishAsync($"{Global.mqtt_discovery_prefix}/binary_sensor/{Global.mqtt_prefix}/area{i}temp/config",
                    JsonConvert.SerializeObject(area.ToConfigTemp()));
             }
         }
@@ -233,23 +237,23 @@ namespace OmniLinkBridge.Modules
 
                 if (zone.DefaultProperties == true || Global.mqtt_discovery_ignore_zones.Contains(zone.Number))
                 {                  
-                    PublishAsync($"{Global.mqtt_discovery_prefix}/binary_sensor/{Global.mqtt_prefix}/zone{i.ToString()}/config", null);
-                    PublishAsync($"{Global.mqtt_discovery_prefix}/sensor/{Global.mqtt_prefix}/zone{i.ToString()}/config", null);
-                    PublishAsync($"{Global.mqtt_discovery_prefix}/sensor/{Global.mqtt_prefix}/zone{i.ToString()}temp/config", null);
-                    PublishAsync($"{Global.mqtt_discovery_prefix}/sensor/{Global.mqtt_prefix}/zone{i.ToString()}humidity/config", null);
+                    PublishAsync($"{Global.mqtt_discovery_prefix}/binary_sensor/{Global.mqtt_prefix}/zone{i}/config", null);
+                    PublishAsync($"{Global.mqtt_discovery_prefix}/sensor/{Global.mqtt_prefix}/zone{i}/config", null);
+                    PublishAsync($"{Global.mqtt_discovery_prefix}/sensor/{Global.mqtt_prefix}/zone{i}temp/config", null);
+                    PublishAsync($"{Global.mqtt_discovery_prefix}/sensor/{Global.mqtt_prefix}/zone{i}humidity/config", null);
                     continue;
                 }
 
-                PublishAsync($"{Global.mqtt_discovery_prefix}/binary_sensor/{Global.mqtt_prefix}/zone{i.ToString()}/config",
+                PublishAsync($"{Global.mqtt_discovery_prefix}/binary_sensor/{Global.mqtt_prefix}/zone{i}/config",
                     JsonConvert.SerializeObject(zone.ToConfig()));
-                PublishAsync($"{Global.mqtt_discovery_prefix}/sensor/{Global.mqtt_prefix}/zone{i.ToString()}/config",
+                PublishAsync($"{Global.mqtt_discovery_prefix}/sensor/{Global.mqtt_prefix}/zone{i}/config",
                     JsonConvert.SerializeObject(zone.ToConfigSensor()));
 
                 if (zone.IsTemperatureZone())
-                    PublishAsync($"{Global.mqtt_discovery_prefix}/sensor/{Global.mqtt_prefix}/zone{i.ToString()}temp/config",
+                    PublishAsync($"{Global.mqtt_discovery_prefix}/sensor/{Global.mqtt_prefix}/zone{i}temp/config",
                         JsonConvert.SerializeObject(zone.ToConfigTemp(OmniLink.Controller.TempFormat)));
                 else if (zone.IsHumidityZone())
-                    PublishAsync($"{Global.mqtt_discovery_prefix}/sensor/{Global.mqtt_prefix}/zone{i.ToString()}humidity/config",
+                    PublishAsync($"{Global.mqtt_discovery_prefix}/sensor/{Global.mqtt_prefix}/zone{i}humidity/config",
                         JsonConvert.SerializeObject(zone.ToConfigHumidity()));
             }
         }
@@ -275,15 +279,15 @@ namespace OmniLinkBridge.Modules
                 if (unit.DefaultProperties == true || Global.mqtt_discovery_ignore_units.Contains(unit.Number))
                 {
                     string type = i < 385 ? "light" : "switch";
-                    PublishAsync($"{Global.mqtt_discovery_prefix}/{type}/{Global.mqtt_prefix}/unit{i.ToString()}/config", null);
+                    PublishAsync($"{Global.mqtt_discovery_prefix}/{type}/{Global.mqtt_prefix}/unit{i}/config", null);
                     continue;
                 }
 
                 if (i < 385)
-                    PublishAsync($"{Global.mqtt_discovery_prefix}/light/{Global.mqtt_prefix}/unit{i.ToString()}/config",
+                    PublishAsync($"{Global.mqtt_discovery_prefix}/light/{Global.mqtt_prefix}/unit{i}/config",
                         JsonConvert.SerializeObject(unit.ToConfig()));
                 else
-                    PublishAsync($"{Global.mqtt_discovery_prefix}/switch/{Global.mqtt_prefix}/unit{i.ToString()}/config",
+                    PublishAsync($"{Global.mqtt_discovery_prefix}/switch/{Global.mqtt_prefix}/unit{i}/config",
                         JsonConvert.SerializeObject(unit.ToConfigSwitch()));
             }
         }
@@ -299,20 +303,20 @@ namespace OmniLinkBridge.Modules
                 if (thermostat.DefaultProperties == true)
                 {
                     PublishAsync(thermostat.ToTopic(Topic.name), null);
-                    PublishAsync($"{Global.mqtt_discovery_prefix}/climate/{Global.mqtt_prefix}/thermostat{i.ToString()}/config", null);
-                    PublishAsync($"{Global.mqtt_discovery_prefix}/sensor/{Global.mqtt_prefix}/thermostat{i.ToString()}temp/config", null);
-                    PublishAsync($"{Global.mqtt_discovery_prefix}/sensor/{Global.mqtt_prefix}/thermostat{i.ToString()}humidity/config", null);
+                    PublishAsync($"{Global.mqtt_discovery_prefix}/climate/{Global.mqtt_prefix}/thermostat{i}/config", null);
+                    PublishAsync($"{Global.mqtt_discovery_prefix}/sensor/{Global.mqtt_prefix}/thermostat{i}temp/config", null);
+                    PublishAsync($"{Global.mqtt_discovery_prefix}/sensor/{Global.mqtt_prefix}/thermostat{i}humidity/config", null);
                     continue;
                 }
 
                 PublishThermostatState(thermostat);
 
                 PublishAsync(thermostat.ToTopic(Topic.name), thermostat.Name);
-                PublishAsync($"{Global.mqtt_discovery_prefix}/climate/{Global.mqtt_prefix}/thermostat{i.ToString()}/config",
+                PublishAsync($"{Global.mqtt_discovery_prefix}/climate/{Global.mqtt_prefix}/thermostat{i}/config",
                     JsonConvert.SerializeObject(thermostat.ToConfig(OmniLink.Controller.TempFormat)));
-                PublishAsync($"{Global.mqtt_discovery_prefix}/sensor/{Global.mqtt_prefix}/thermostat{i.ToString()}temp/config",
+                PublishAsync($"{Global.mqtt_discovery_prefix}/sensor/{Global.mqtt_prefix}/thermostat{i}temp/config",
                     JsonConvert.SerializeObject(thermostat.ToConfigTemp(OmniLink.Controller.TempFormat)));
-                PublishAsync($"{Global.mqtt_discovery_prefix}/sensor/{Global.mqtt_prefix}/thermostat{i.ToString()}humidity/config",
+                PublishAsync($"{Global.mqtt_discovery_prefix}/sensor/{Global.mqtt_prefix}/thermostat{i}humidity/config",
                     JsonConvert.SerializeObject(thermostat.ToConfigHumidity()));
             }
         }
@@ -328,7 +332,7 @@ namespace OmniLinkBridge.Modules
                 if (button.DefaultProperties == true)
                 {
                     PublishAsync(button.ToTopic(Topic.name), null);
-                    PublishAsync($"{Global.mqtt_discovery_prefix}/switch/{Global.mqtt_prefix}/button{i.ToString()}/config", null);
+                    PublishAsync($"{Global.mqtt_discovery_prefix}/switch/{Global.mqtt_prefix}/button{i}/config", null);
                     continue;
                 }
 
@@ -336,7 +340,7 @@ namespace OmniLinkBridge.Modules
                 PublishAsync(button.ToTopic(Topic.state), "OFF");
 
                 PublishAsync(button.ToTopic(Topic.name), button.Name);
-                PublishAsync($"{Global.mqtt_discovery_prefix}/switch/{Global.mqtt_prefix}/button{i.ToString()}/config",
+                PublishAsync($"{Global.mqtt_discovery_prefix}/switch/{Global.mqtt_prefix}/button{i}/config",
                     JsonConvert.SerializeObject(button.ToConfig()));
             }
         }
@@ -459,8 +463,11 @@ namespace OmniLinkBridge.Modules
         {
             PublishAsync(unit.ToTopic(Topic.state), unit.ToState());
 
-            if(unit.Number < 385)
+            if (unit.Number < 385)
+            {
                 PublishAsync(unit.ToTopic(Topic.brightness_state), unit.ToBrightnessState().ToString());
+                PublishAsync(unit.ToTopic(Topic.scene_state), unit.ToSceneState());
+            }
         }
 
         private void PublishThermostatState(clsThermostat thermostat)

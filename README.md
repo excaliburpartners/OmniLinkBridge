@@ -195,6 +195,10 @@ string OFF, ON
 SUB omnilink/unitX/brightness_state  
 PUB omnilink/unitX/brightness_command  
 int Level from 0 to 100 percent
+
+SUB omnilink/unitX/scene_state  
+PUB omnilink/unitX/scene_command  
+string A-L
 ```
 
 ### Thermostats

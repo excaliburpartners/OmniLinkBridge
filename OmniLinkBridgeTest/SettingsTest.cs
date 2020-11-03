@@ -82,8 +82,10 @@ namespace OmniLinkBridgeTest
                 "verbose_message"
             })
             {
-                List<string> lines = new List<string>(RequiredSettings());
-                lines.Add($"{setting} = yes");
+                List<string> lines = new List<string>(RequiredSettings())
+                {
+                    $"{setting} = yes"
+                };
                 Settings.LoadSettings(lines.ToArray());
                 Assert.AreEqual(true, Global.GetValue(setting));
             }
@@ -193,8 +195,10 @@ namespace OmniLinkBridgeTest
                 "notify_message"
             })
             {
-                List<string> lines = new List<string>(RequiredSettings());
-                lines.Add($"{setting} = yes");
+                List<string> lines = new List<string>(RequiredSettings())
+                {
+                    $"{setting} = yes"
+                };
                 Settings.LoadSettings(lines.ToArray());
                 Assert.AreEqual(true, Global.GetValue(setting));
             }

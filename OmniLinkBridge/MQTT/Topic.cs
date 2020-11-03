@@ -9,6 +9,8 @@
         json_state,
         brightness_state,
         brightness_command,
+        scene_state,
+        scene_command,
         current_operation,
         current_temperature,
         current_humidity,

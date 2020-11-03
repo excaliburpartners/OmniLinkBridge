@@ -7,16 +7,18 @@ namespace OmniLinkBridge.MQTT
     {
         public static string ToTopic(this clsArea area, Topic topic)
         {
-            return $"{Global.mqtt_prefix}/area{area.Number.ToString()}/{topic.ToString()}";
+            return $"{Global.mqtt_prefix}/area{area.Number}/{topic}";
         }
 
         public static Alarm ToConfig(this clsArea area)
         {
-            Alarm ret = new Alarm();
-            ret.unique_id = $"{Global.mqtt_prefix}area{area.Number.ToString()}";
-            ret.name = Global.mqtt_discovery_name_prefix + area.Name;
-            ret.state_topic = area.ToTopic(Topic.basic_state);
-            ret.command_topic = area.ToTopic(Topic.command);
+            Alarm ret = new Alarm
+            {
+                unique_id = $"{Global.mqtt_prefix}area{area.Number}",
+                name = Global.mqtt_discovery_name_prefix + area.Name,
+                state_topic = area.ToTopic(Topic.basic_state),
+                command_topic = area.ToTopic(Topic.command)
+            };
             return ret;
         }
 
@@ -77,89 +79,105 @@ namespace OmniLinkBridge.MQTT
 
         public static BinarySensor ToConfigBurglary(this clsArea area)
         {
-            BinarySensor ret = new BinarySensor();
-            ret.unique_id = $"{Global.mqtt_prefix}area{area.Number.ToString()}burglary";
-            ret.name = $"{Global.mqtt_discovery_name_prefix}{area.Name} Burglary";
-            ret.device_class = BinarySensor.DeviceClass.safety;
-            ret.state_topic = area.ToTopic(Topic.json_state);
-            ret.value_template = "{% if value_json.burglary_alarm %} ON {%- else -%} OFF {%- endif %}";
+            BinarySensor ret = new BinarySensor
+            {
+                unique_id = $"{Global.mqtt_prefix}area{area.Number}burglary",
+                name = $"{Global.mqtt_discovery_name_prefix}{area.Name} Burglary",
+                device_class = BinarySensor.DeviceClass.safety,
+                state_topic = area.ToTopic(Topic.json_state),
+                value_template = "{% if value_json.burglary_alarm %} ON {%- else -%} OFF {%- endif %}"
+            };
             return ret;
         }
 
         public static BinarySensor ToConfigFire(this clsArea area)
         {
-            BinarySensor ret = new BinarySensor();
-            ret.unique_id = $"{Global.mqtt_prefix}area{area.Number.ToString()}fire";
-            ret.name = $"{Global.mqtt_discovery_name_prefix}{area.Name} Fire";
-            ret.device_class = BinarySensor.DeviceClass.smoke;
-            ret.state_topic = area.ToTopic(Topic.json_state);
-            ret.value_template = "{% if value_json.fire_alarm %} ON {%- else -%} OFF {%- endif %}";
+            BinarySensor ret = new BinarySensor
+            {
+                unique_id = $"{Global.mqtt_prefix}area{area.Number}fire",
+                name = $"{Global.mqtt_discovery_name_prefix}{area.Name} Fire",
+                device_class = BinarySensor.DeviceClass.smoke,
+                state_topic = area.ToTopic(Topic.json_state),
+                value_template = "{% if value_json.fire_alarm %} ON {%- else -%} OFF {%- endif %}"
+            };
             return ret;
         }
 
         public static BinarySensor ToConfigGas(this clsArea area)
         {
-            BinarySensor ret = new BinarySensor();
-            ret.unique_id = $"{Global.mqtt_prefix}area{area.Number.ToString()}gas";
-            ret.name = $"{Global.mqtt_discovery_name_prefix}{area.Name} Gas";
-            ret.device_class = BinarySensor.DeviceClass.gas;
-            ret.state_topic = area.ToTopic(Topic.json_state);
-            ret.value_template = "{% if value_json.gas_alarm %} ON {%- else -%} OFF {%- endif %}";
+            BinarySensor ret = new BinarySensor
+            {
+                unique_id = $"{Global.mqtt_prefix}area{area.Number}gas",
+                name = $"{Global.mqtt_discovery_name_prefix}{area.Name} Gas",
+                device_class = BinarySensor.DeviceClass.gas,
+                state_topic = area.ToTopic(Topic.json_state),
+                value_template = "{% if value_json.gas_alarm %} ON {%- else -%} OFF {%- endif %}"
+            };
             return ret;
         }
 
         public static BinarySensor ToConfigAux(this clsArea area)
         {
-            BinarySensor ret = new BinarySensor();
-            ret.unique_id = $"{Global.mqtt_prefix}area{area.Number.ToString()}auxiliary";
-            ret.name = $"{Global.mqtt_discovery_name_prefix}{area.Name} Auxiliary";
-            ret.device_class = BinarySensor.DeviceClass.problem;
-            ret.state_topic = area.ToTopic(Topic.json_state);
-            ret.value_template = "{% if  value_json.burglary_alarm %} ON {%- else -%} OFF {%- endif %}";
+            BinarySensor ret = new BinarySensor
+            {
+                unique_id = $"{Global.mqtt_prefix}area{area.Number}auxiliary",
+                name = $"{Global.mqtt_discovery_name_prefix}{area.Name} Auxiliary",
+                device_class = BinarySensor.DeviceClass.problem,
+                state_topic = area.ToTopic(Topic.json_state),
+                value_template = "{% if  value_json.burglary_alarm %} ON {%- else -%} OFF {%- endif %}"
+            };
             return ret;
         }
 
         public static BinarySensor ToConfigFreeze(this clsArea area)
         {
-            BinarySensor ret = new BinarySensor();
-            ret.unique_id = $"{Global.mqtt_prefix}area{area.Number.ToString()}freeze";
-            ret.name = $"{Global.mqtt_discovery_name_prefix}{area.Name} Freeze";
-            ret.device_class = BinarySensor.DeviceClass.cold;
-            ret.state_topic = area.ToTopic(Topic.json_state);
-            ret.value_template = "{% if value_json.freeze_alarm %} ON {%- else -%} OFF {%- endif %}";
+            BinarySensor ret = new BinarySensor
+            {
+                unique_id = $"{Global.mqtt_prefix}area{area.Number}freeze",
+                name = $"{Global.mqtt_discovery_name_prefix}{area.Name} Freeze",
+                device_class = BinarySensor.DeviceClass.cold,
+                state_topic = area.ToTopic(Topic.json_state),
+                value_template = "{% if value_json.freeze_alarm %} ON {%- else -%} OFF {%- endif %}"
+            };
             return ret;
         }
 
         public static BinarySensor ToConfigWater(this clsArea area)
         {
-            BinarySensor ret = new BinarySensor();
-            ret.unique_id = $"{Global.mqtt_prefix}area{area.Number.ToString()}water";
-            ret.name = $"{Global.mqtt_discovery_name_prefix}{area.Name} Water";
-            ret.device_class = BinarySensor.DeviceClass.moisture;
-            ret.state_topic = area.ToTopic(Topic.json_state);
-            ret.value_template = "{% if value_json.water_alarm %} ON {%- else -%} OFF {%- endif %}";
+            BinarySensor ret = new BinarySensor
+            {
+                unique_id = $"{Global.mqtt_prefix}area{area.Number}water",
+                name = $"{Global.mqtt_discovery_name_prefix}{area.Name} Water",
+                device_class = BinarySensor.DeviceClass.moisture,
+                state_topic = area.ToTopic(Topic.json_state),
+                value_template = "{% if value_json.water_alarm %} ON {%- else -%} OFF {%- endif %}"
+            };
             return ret;
         }
 
         public static BinarySensor ToConfigDuress(this clsArea area)
         {
-            BinarySensor ret = new BinarySensor();
-            ret.unique_id = $"{Global.mqtt_prefix}area{area.Number.ToString()}duress";
-            ret.name = $"{Global.mqtt_discovery_name_prefix}{area.Name} Duress";
-            ret.device_class = BinarySensor.DeviceClass.safety;
-            ret.state_topic = area.ToTopic(Topic.json_state);
-            ret.value_template = "{% if value_json.duress_alarm %} ON {%- else -%} OFF {%- endif %}";
+            BinarySensor ret = new BinarySensor
+            {
+                unique_id = $"{Global.mqtt_prefix}area{area.Number}duress",
+                name = $"{Global.mqtt_discovery_name_prefix}{area.Name} Duress",
+                device_class = BinarySensor.DeviceClass.safety,
+                state_topic = area.ToTopic(Topic.json_state),
+                value_template = "{% if value_json.duress_alarm %} ON {%- else -%} OFF {%- endif %}"
+            };
             return ret;
         }
 
         public static BinarySensor ToConfigTemp(this clsArea area)
         {
-            BinarySensor ret = new BinarySensor();
-            ret.unique_id = $"{Global.mqtt_prefix}area{area.Number.ToString()}temp";
-            ret.name = $"{Global.mqtt_discovery_name_prefix}{area.Name} Temp";
-            ret.device_class = BinarySensor.DeviceClass.heat;
-            ret.state_topic = area.ToTopic(Topic.json_state);
-            ret.value_template = "{% if value_json.temperature_alarm %} ON {%- else -%} OFF {%- endif %}";
+            BinarySensor ret = new BinarySensor
+            {
+                unique_id = $"{Global.mqtt_prefix}area{area.Number}temp",
+                name = $"{Global.mqtt_discovery_name_prefix}{area.Name} Temp",
+                device_class = BinarySensor.DeviceClass.heat,
+                state_topic = area.ToTopic(Topic.json_state),
+                value_template = "{% if value_json.temperature_alarm %} ON {%- else -%} OFF {%- endif %}"
+            };
             return ret;
         }
 
@@ -209,36 +227,42 @@ namespace OmniLinkBridge.MQTT
 
         public static string ToTopic(this clsZone zone, Topic topic)
         {
-            return $"{Global.mqtt_prefix}/zone{zone.Number.ToString()}/{topic.ToString()}";
+            return $"{Global.mqtt_prefix}/zone{zone.Number}/{topic}";
         }
 
         public static Sensor ToConfigTemp(this clsZone zone, enuTempFormat format)
         {
-            Sensor ret = new Sensor();
-            ret.unique_id = $"{Global.mqtt_prefix}zone{zone.Number.ToString()}temp";
-            ret.name = $"{Global.mqtt_discovery_name_prefix}{zone.Name} Temp";
-            ret.device_class = Sensor.DeviceClass.temperature;
-            ret.state_topic = zone.ToTopic(Topic.current_temperature);
-            ret.unit_of_measurement = (format == enuTempFormat.Fahrenheit ? "°F" : "°C");
+            Sensor ret = new Sensor
+            {
+                unique_id = $"{Global.mqtt_prefix}zone{zone.Number}temp",
+                name = $"{Global.mqtt_discovery_name_prefix}{zone.Name} Temp",
+                device_class = Sensor.DeviceClass.temperature,
+                state_topic = zone.ToTopic(Topic.current_temperature),
+                unit_of_measurement = (format == enuTempFormat.Fahrenheit ? "°F" : "°C")
+            };
             return ret;
         }
 
         public static Sensor ToConfigHumidity(this clsZone zone)
         {
-            Sensor ret = new Sensor();
-            ret.unique_id = $"{Global.mqtt_prefix}zone{zone.Number.ToString()}humidity";
-            ret.name = $"{Global.mqtt_discovery_name_prefix}{zone.Name} Humidity";
-            ret.device_class = Sensor.DeviceClass.humidity;
-            ret.state_topic = zone.ToTopic(Topic.current_humidity);
-            ret.unit_of_measurement = "%";
+            Sensor ret = new Sensor
+            {
+                unique_id = $"{Global.mqtt_prefix}zone{zone.Number}humidity",
+                name = $"{Global.mqtt_discovery_name_prefix}{zone.Name} Humidity",
+                device_class = Sensor.DeviceClass.humidity,
+                state_topic = zone.ToTopic(Topic.current_humidity),
+                unit_of_measurement = "%"
+            };
             return ret;
         }
 
         public static Sensor ToConfigSensor(this clsZone zone)
         {
-            Sensor ret = new Sensor();
-            ret.unique_id = $"{Global.mqtt_prefix}zone{zone.Number.ToString()}";
-            ret.name = Global.mqtt_discovery_name_prefix + zone.Name;
+            Sensor ret = new Sensor
+            {
+                unique_id = $"{Global.mqtt_prefix}zone{zone.Number}",
+                name = Global.mqtt_discovery_name_prefix + zone.Name
+            };
 
             switch (zone.ZoneType)
             {
@@ -276,9 +300,11 @@ namespace OmniLinkBridge.MQTT
 
         public static BinarySensor ToConfig(this clsZone zone)
         {
-            BinarySensor ret = new BinarySensor();
-            ret.unique_id = $"{Global.mqtt_prefix}zone{zone.Number.ToString()}binary";
-            ret.name = Global.mqtt_discovery_name_prefix + zone.Name;
+            BinarySensor ret = new BinarySensor
+            {
+                unique_id = $"{Global.mqtt_prefix}zone{zone.Number}binary",
+                name = Global.mqtt_discovery_name_prefix + zone.Name
+            };
 
             Global.mqtt_discovery_override_zone.TryGetValue(zone.Number, out OverrideZone override_zone);
 
@@ -344,28 +370,32 @@ namespace OmniLinkBridge.MQTT
 
         public static string ToTopic(this clsUnit unit, Topic topic)
         {
-            return $"{Global.mqtt_prefix}/unit{unit.Number.ToString()}/{topic.ToString()}";
+            return $"{Global.mqtt_prefix}/unit{unit.Number}/{topic}";
         }
 
         public static Light ToConfig(this clsUnit unit)
         {
-            Light ret = new Light();
-            ret.unique_id = $"{Global.mqtt_prefix}unit{unit.Number.ToString()}light";
-            ret.name = Global.mqtt_discovery_name_prefix + unit.Name;
-            ret.state_topic = unit.ToTopic(Topic.state);
-            ret.command_topic = unit.ToTopic(Topic.command);
-            ret.brightness_state_topic = unit.ToTopic(Topic.brightness_state);
-            ret.brightness_command_topic = unit.ToTopic(Topic.brightness_command);
+            Light ret = new Light
+            {
+                unique_id = $"{Global.mqtt_prefix}unit{unit.Number}light",
+                name = Global.mqtt_discovery_name_prefix + unit.Name,
+                state_topic = unit.ToTopic(Topic.state),
+                command_topic = unit.ToTopic(Topic.command),
+                brightness_state_topic = unit.ToTopic(Topic.brightness_state),
+                brightness_command_topic = unit.ToTopic(Topic.brightness_command)
+            };
             return ret;
         }
 
         public static Switch ToConfigSwitch(this clsUnit unit)
         {
-            Switch ret = new Switch();
-            ret.unique_id = $"{Global.mqtt_prefix}unit{unit.Number.ToString()}switch";
-            ret.name = Global.mqtt_discovery_name_prefix + unit.Name;
-            ret.state_topic = unit.ToTopic(Topic.state);
-            ret.command_topic = unit.ToTopic(Topic.command);
+            Switch ret = new Switch
+            {
+                unique_id = $"{Global.mqtt_prefix}unit{unit.Number}switch",
+                name = Global.mqtt_discovery_name_prefix + unit.Name,
+                state_topic = unit.ToTopic(Topic.state),
+                command_topic = unit.ToTopic(Topic.command)
+            };
             return ret;
         }
 
@@ -384,30 +414,43 @@ namespace OmniLinkBridge.MQTT
                 return 0;
         }
 
+        public static string ToSceneState(this clsUnit unit)
+        {
+            if (unit.Status >= 2 && unit.Status <= 13)
+                // 2-13 maps to scene A-L respectively
+                return ((char)(unit.Status + 63)).ToString();
+
+            return string.Empty;
+        }
+
         public static string ToTopic(this clsThermostat thermostat, Topic topic)
         {
-            return $"{Global.mqtt_prefix}/thermostat{thermostat.Number.ToString()}/{topic.ToString()}";
+            return $"{Global.mqtt_prefix}/thermostat{thermostat.Number}/{topic}";
         }
 
         public static Sensor ToConfigTemp(this clsThermostat thermostat, enuTempFormat format)
         {
-            Sensor ret = new Sensor();
-            ret.unique_id = $"{Global.mqtt_prefix}thermostat{thermostat.Number.ToString()}temp";
-            ret.name = $"{Global.mqtt_discovery_name_prefix}{thermostat.Name} Temp";
-            ret.device_class = Sensor.DeviceClass.temperature;
-            ret.state_topic = thermostat.ToTopic(Topic.current_temperature);
-            ret.unit_of_measurement = (format == enuTempFormat.Fahrenheit ? "°F" : "°C");
+            Sensor ret = new Sensor
+            {
+                unique_id = $"{Global.mqtt_prefix}thermostat{thermostat.Number}temp",
+                name = $"{Global.mqtt_discovery_name_prefix}{thermostat.Name} Temp",
+                device_class = Sensor.DeviceClass.temperature,
+                state_topic = thermostat.ToTopic(Topic.current_temperature),
+                unit_of_measurement = (format == enuTempFormat.Fahrenheit ? "°F" : "°C")
+            };
             return ret;
         }
 
         public static Sensor ToConfigHumidity(this clsThermostat thermostat)
         {
-            Sensor ret = new Sensor();
-            ret.unique_id = $"{Global.mqtt_prefix}thermostat{thermostat.Number.ToString()}humidity";
-            ret.name = $"{Global.mqtt_discovery_name_prefix}{thermostat.Name} Humidity";
-            ret.device_class = Sensor.DeviceClass.humidity;
-            ret.state_topic = thermostat.ToTopic(Topic.current_humidity);
-            ret.unit_of_measurement = "%";
+            Sensor ret = new Sensor
+            {
+                unique_id = $"{Global.mqtt_prefix}thermostat{thermostat.Number}humidity",
+                name = $"{Global.mqtt_discovery_name_prefix}{thermostat.Name} Humidity",
+                device_class = Sensor.DeviceClass.humidity,
+                state_topic = thermostat.ToTopic(Topic.current_humidity),
+                unit_of_measurement = "%"
+            };
             return ret;
         }
 
@@ -421,7 +464,7 @@ namespace OmniLinkBridge.MQTT
                 ret.max_temp = "35";
             }
 
-            ret.unique_id = $"{Global.mqtt_prefix}thermostat{thermostat.Number.ToString()}";
+            ret.unique_id = $"{Global.mqtt_prefix}thermostat{thermostat.Number}";
             ret.name = Global.mqtt_discovery_name_prefix + thermostat.Name;
             ret.current_temperature_topic = thermostat.ToTopic(Topic.current_temperature);
 
@@ -456,22 +499,24 @@ namespace OmniLinkBridge.MQTT
 
         public static string ToTopic(this clsButton button, Topic topic)
         {
-            return $"{Global.mqtt_prefix}/button{button.Number.ToString()}/{topic.ToString()}";
+            return $"{Global.mqtt_prefix}/button{button.Number}/{topic}";
         }
 
         public static Switch ToConfig(this clsButton button)
         {
-            Switch ret = new Switch();
-            ret.unique_id = $"{Global.mqtt_prefix}button{button.Number.ToString()}";
-            ret.name = Global.mqtt_discovery_name_prefix + button.Name;
-            ret.state_topic = button.ToTopic(Topic.state);
-            ret.command_topic = button.ToTopic(Topic.command);
+            Switch ret = new Switch
+            {
+                unique_id = $"{Global.mqtt_prefix}button{button.Number}",
+                name = Global.mqtt_discovery_name_prefix + button.Name,
+                state_topic = button.ToTopic(Topic.state),
+                command_topic = button.ToTopic(Topic.command)
+            };
             return ret;
         }
 
         public static string ToTopic(this clsMessage message, Topic topic)
         {
-            return $"{Global.mqtt_prefix}/message{message.Number.ToString()}/{topic.ToString()}";
+            return $"{Global.mqtt_prefix}/message{message.Number}/{topic}";
         }
 
         public static string ToState(this clsMessage message)
