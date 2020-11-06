@@ -5,8 +5,9 @@ namespace OmniLinkBridge.OmniLink
 {
     public class SystemStatusEventArgs : EventArgs
     {
-        public enuEventType Type { get; set; }
+        public SystemEventType Type { get; set; }
         public string Value { get; set; }
+        public bool Trouble { get; set; }
         public bool SendNotification { get; set; }
     }
 }

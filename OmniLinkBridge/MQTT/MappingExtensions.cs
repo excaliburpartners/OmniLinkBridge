@@ -1,5 +1,6 @@
 ﻿using HAI_Shared;
 using Newtonsoft.Json;
+using System.Collections.Generic;
 
 namespace OmniLinkBridge.MQTT
 {
@@ -31,24 +32,16 @@ namespace OmniLinkBridge.MQTT
             else if (area.ExitTimer > 0)
                 return "pending";
 
-            switch (area.AreaMode)
+            return area.AreaMode switch
             {
-                case enuSecurityMode.Night:
-                    return "armed_night";
-                case enuSecurityMode.NightDly:
-                    return "armed_night_delay";
-                case enuSecurityMode.Day:
-                    return "armed_home";
-                case enuSecurityMode.DayInst:
-                    return "armed_home_instant";
-                case enuSecurityMode.Away:
-                    return "armed_away";
-                case enuSecurityMode.Vacation:
-                    return "armed_vacation";
-                case enuSecurityMode.Off:
-                default:
-                    return "disarmed";
-            }
+                enuSecurityMode.Night => "armed_night",
+                enuSecurityMode.NightDly => "armed_night_delay",
+                enuSecurityMode.Day => "armed_home",
+                enuSecurityMode.DayInst => "armed_home_instant",
+                enuSecurityMode.Away => "armed_away",
+                enuSecurityMode.Vacation => "armed_vacation",
+                _ => "disarmed",
+            };
         }
 
         public static string ToBasicState(this clsArea area)
@@ -196,32 +189,16 @@ namespace OmniLinkBridge.MQTT
                 temperature_alarm = area.AreaAlarms.IsBitSet(7)
             };
 
-            switch (area.AreaMode)
+            state.mode = area.AreaMode switch
             {
-                case enuSecurityMode.Night:
-                    state.mode = "night";
-                    break;
-                case enuSecurityMode.NightDly:
-                    state.mode = "night_delay";
-                    break;
-                case enuSecurityMode.Day:
-                    state.mode = "home";
-                    break;
-                case enuSecurityMode.DayInst:
-                    state.mode = "home_instant";
-                    break;
-                case enuSecurityMode.Away:
-                    state.mode = "away";
-                    break;
-                case enuSecurityMode.Vacation:
-                    state.mode = "vacation";
-                    break;
-                case enuSecurityMode.Off:
-                default:
-                    state.mode = "off";
-                    break;
-            }
-
+                enuSecurityMode.Night => "night",
+                enuSecurityMode.NightDly => "night_delay",
+                enuSecurityMode.Day => "home",
+                enuSecurityMode.DayInst => "home_instant",
+                enuSecurityMode.Away => "away",
+                enuSecurityMode.Vacation => "vacation",
+                _ => "off",
+            };
             return JsonConvert.SerializeObject(state);
         }
 
@@ -456,9 +433,19 @@ namespace OmniLinkBridge.MQTT
 
         public static Climate ToConfig(this clsThermostat thermostat, enuTempFormat format)
         {
-            Climate ret = new Climate();
+            Climate ret = new Climate
+            {
+                modes = thermostat.Type switch
+                {
+                    enuThermostatType.AutoHeatCool => new List<string>(new string[] { "auto", "off", "cool", "heat" }),
+                    enuThermostatType.HeatCool => new List<string>(new string[] { "off", "cool", "heat" }),
+                    enuThermostatType.HeatOnly => new List<string>(new string[] { "off", "heat" }),
+                    enuThermostatType.CoolOnly => new List<string>(new string[] { "off", "cool" }),
+                    _ => new List<string>(new string[] { "off" }),
+                }
+            };
 
-            if(format == enuTempFormat.Celsius)
+            if (format == enuTempFormat.Celsius)
             {
                 ret.min_temp = "7";
                 ret.max_temp = "35";

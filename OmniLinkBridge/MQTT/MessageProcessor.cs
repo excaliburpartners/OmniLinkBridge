@@ -72,6 +72,16 @@ namespace OmniLinkBridge.MQTT
                 log.Debug("SetArea: {id} to {value}", area.Number, cmd.ToString().Replace("arm_", "").Replace("_", " "));
                 OmniLink.SendCommand(AreaMapping[cmd], 0, (ushort)area.Number);
             }
+            else if (command == Topic.alarm_command && area.Number > 0 && Enum.TryParse(payload, true, out AlarmCommands alarm))
+            {
+                log.Debug("SetAreaAlarm: {id} to {value}", area.Number, payload);
+
+                OmniLink.Controller.Connection.Send(new clsOL2MsgActivateKeypadEmg(OmniLink.Controller.Connection)
+                {
+                    Area = (byte)area.Number,
+                    EmgType = (byte)alarm
+                }, (M, B, Timeout) => { });
+            }
         }
 
         private static readonly IDictionary<ZoneCommands, enuUnitCommand> ZoneMapping = new Dictionary<ZoneCommands, enuUnitCommand>
@@ -169,8 +179,17 @@ namespace OmniLinkBridge.MQTT
             }
             else if (command == Topic.mode_command && Enum.TryParse(payload, true, out enuThermostatMode mode))
             {
-                log.Debug("SetThermostatMode: {id} to {value}", thermostat.Number, payload);
-                OmniLink.SendCommand(enuUnitCommand.Mode, BitConverter.GetBytes((int)mode)[0], (ushort)thermostat.Number);
+                if (thermostat.Type == enuThermostatType.AutoHeatCool ||
+                    (thermostat.Type == enuThermostatType.HeatCool && mode != enuThermostatMode.Auto) ||
+                    (thermostat.Type == enuThermostatType.CoolOnly &&
+                        (mode == enuThermostatMode.Off || mode == enuThermostatMode.Cool)) ||
+                    (thermostat.Type == enuThermostatType.HeatOnly &&
+                        (mode == enuThermostatMode.Off || mode == enuThermostatMode.Heat || mode == enuThermostatMode.E_Heat)) ||
+                    mode == enuThermostatMode.Off)
+                {
+                    log.Debug("SetThermostatMode: {id} to {value}", thermostat.Number, payload);
+                    OmniLink.SendCommand(enuUnitCommand.Mode, BitConverter.GetBytes((int)mode)[0], (ushort)thermostat.Number);
+                }
             }
             else if (command == Topic.fan_mode_command && Enum.TryParse(payload, true, out enuThermostatFanMode fanMode))
             {

@@ -16,9 +16,11 @@ namespace OmniLinkBridgeTest.Mock
 
         public MockOmniLinkII()
         {
-            Controller = new clsHAC();
-            Controller.Model = enuModel.OMNI_PRO_II;
-            Controller.TempFormat = enuTempFormat.Fahrenheit;
+            Controller = new clsHAC
+            {
+                Model = enuModel.OMNI_PRO_II,
+                TempFormat = enuTempFormat.Fahrenheit
+            };
         }
 
         public bool SendCommand(enuUnitCommand Cmd, byte Par, ushort Pr2)

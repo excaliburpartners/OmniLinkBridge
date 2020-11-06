@@ -298,7 +298,7 @@ namespace OmniLinkBridge.Modules
                 VALUES ('" + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + "','" + e.Type.ToString() + "','" + e.Value + "')");
 
             if (Global.verbose_event)
-                log.Verbose("SystemEvent {name} {status}", e.Type.ToString(), e.Value);
+                log.Verbose("SystemEvent {name}, Status: {status}", e.Type.ToString(), e.Value);
 
             if (e.SendNotification)
                 Notification.Notify("SystemEvent", e.Type.ToString() + " " + e.Value);

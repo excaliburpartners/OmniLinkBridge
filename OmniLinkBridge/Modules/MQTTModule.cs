@@ -47,6 +47,7 @@ namespace OmniLinkBridge.Modules
             OmniLink.OnThermostatStatus += Omnilink_OnThermostatStatus;
             OmniLink.OnButtonStatus += OmniLink_OnButtonStatus;
             OmniLink.OnMessageStatus += OmniLink_OnMessageStatus;
+            OmniLink.OnSystemStatus += OmniLink_OnSystemStatus;
 
             MessageProcessor = new MessageProcessor(omni);
         }
@@ -105,6 +106,7 @@ namespace OmniLinkBridge.Modules
             List<Topic> toSubscribe = new List<Topic>()
             {
                 Topic.command,
+                Topic.alarm_command,
                 Topic.brightness_command,
                 Topic.scene_command,
                 Topic.temperature_heat_command,
@@ -117,7 +119,7 @@ namespace OmniLinkBridge.Modules
             };
 
             toSubscribe.ForEach((command) => MqttClient.SubscribeAsync(
-                new TopicFilterBuilder().WithTopic($"{Global.mqtt_prefix}/+/{command}").Build()));
+                new MqttTopicFilterBuilder().WithTopic($"{Global.mqtt_prefix}/+/{command}").Build()));
 
             // Wait until shutdown
             trigger.WaitOne();
@@ -156,6 +158,7 @@ namespace OmniLinkBridge.Modules
 
         private void PublishConfig()
         {
+            PublishSystem();
             PublishAreas();
             PublishZones();
             PublishUnits();
@@ -166,6 +169,41 @@ namespace OmniLinkBridge.Modules
             PublishControllerStatus(ONLINE);
             PublishAsync($"{Global.mqtt_prefix}/model", OmniLink.Controller.GetModelText());
             PublishAsync($"{Global.mqtt_prefix}/version", OmniLink.Controller.GetVersionText());
+        }
+
+        private void PublishSystem()
+        {
+            log.Debug("Publishing {type}", "system");
+
+            PublishAsync($"{Global.mqtt_discovery_prefix}/binary_sensor/{Global.mqtt_prefix}/system_phone/config",
+                JsonConvert.SerializeObject(SystemTroubleConfig("phone", "Phone")));
+            PublishAsync($"{Global.mqtt_discovery_prefix}/binary_sensor/{Global.mqtt_prefix}/system_ac/config",
+                JsonConvert.SerializeObject(SystemTroubleConfig("ac", "AC")));
+            PublishAsync($"{Global.mqtt_discovery_prefix}/binary_sensor/{Global.mqtt_prefix}/system_battery/config",
+                JsonConvert.SerializeObject(SystemTroubleConfig("battery", "Battery")));
+            PublishAsync($"{Global.mqtt_discovery_prefix}/binary_sensor/{Global.mqtt_prefix}/system_dcm/config",
+                JsonConvert.SerializeObject(SystemTroubleConfig("dcm", "DCM")));
+
+            PublishAsync(SystemTroubleTopic("phone"), OmniLink.TroublePhone ? "trouble" : "secure");
+            PublishAsync(SystemTroubleTopic("ac"), OmniLink.TroubleAC ? "trouble" : "secure");
+            PublishAsync(SystemTroubleTopic("battery"), OmniLink.TroubleBattery ? "trouble" : "secure");
+            PublishAsync(SystemTroubleTopic("dcn"), OmniLink.TroubleDCM ? "trouble" : "secure");
+        }
+
+        public string SystemTroubleTopic(string type)
+        {
+            return $"{Global.mqtt_prefix}/system/{type}/{Topic.state}";
+        }
+
+        public BinarySensor SystemTroubleConfig(string type, string name)
+        {
+            return new BinarySensor
+            {
+                unique_id = $"{Global.mqtt_prefix}system{type}",
+                name = $"{Global.mqtt_discovery_name_prefix} System {name}",
+                state_topic = SystemTroubleTopic(type),
+                device_class = BinarySensor.DeviceClass.problem
+            };
         }
 
         private void PublishAreas()
@@ -439,6 +477,21 @@ namespace OmniLinkBridge.Modules
                 return;
 
             PublishMessageState(e.Message);
+        }
+
+        private void OmniLink_OnSystemStatus(object sender, SystemStatusEventArgs e)
+        {
+            if (!MqttClient.IsConnected)
+                return;
+
+            if(e.Type == SystemEventType.Phone)
+                PublishAsync(SystemTroubleTopic("phone"), e.Trouble ? "trouble" : "secure");
+            else if (e.Type == SystemEventType.AC)
+                PublishAsync(SystemTroubleTopic("ac"), e.Trouble ? "trouble" : "secure");
+            else if (e.Type == SystemEventType.Button)
+                PublishAsync(SystemTroubleTopic("battery"), e.Trouble ? "trouble" : "secure");
+            else if (e.Type == SystemEventType.DCM)
+                PublishAsync(SystemTroubleTopic("dcm"), e.Trouble ? "trouble" : "secure");
         }
 
         private void PublishAreaState(clsArea area)

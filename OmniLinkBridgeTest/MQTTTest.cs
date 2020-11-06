@@ -134,6 +134,70 @@ namespace OmniLinkBridgeTest
         }
 
         [TestMethod]
+        public void ThermostatModeCommandInvalid()
+        {
+            SendCommandEventArgs actual = null;
+            omniLink.OnSendCommand += (sender, e) => { actual = e; };
+
+            omniLink.Controller.Thermostats[1].Type = enuThermostatType.HeatCool;
+            messageProcessor.Process($"omnilink/thermostat1/mode_command", "auto");
+            Assert.IsNull(actual);
+
+            omniLink.Controller.Thermostats[1].Type = enuThermostatType.CoolOnly;
+            messageProcessor.Process($"omnilink/thermostat1/mode_command", "auto");
+            Assert.IsNull(actual);
+            messageProcessor.Process($"omnilink/thermostat1/mode_command", "heat");
+            Assert.IsNull(actual);
+
+            omniLink.Controller.Thermostats[1].Type = enuThermostatType.HeatOnly;
+            messageProcessor.Process($"omnilink/thermostat1/mode_command", "auto");
+            Assert.IsNull(actual);
+            messageProcessor.Process($"omnilink/thermostat1/mode_command", "cool");
+            Assert.IsNull(actual);
+        }
+
+        [TestMethod]
+        public void ThermostatModeCommand()
+        {
+            void check(ushort id, string payload, enuUnitCommand command, int mode)
+            {
+                SendCommandEventArgs actual = null;
+                omniLink.OnSendCommand += (sender, e) => { actual = e; };
+                messageProcessor.Process($"omnilink/thermostat{id}/mode_command", payload);
+                SendCommandEventArgs expected = new SendCommandEventArgs()
+                {
+                    Cmd = command,
+                    Par = (byte)mode,
+                    Pr2 = id
+                };
+                Assert.AreEqual(expected, actual);
+            }
+
+            omniLink.Controller.Thermostats[1].Type = enuThermostatType.AutoHeatCool;
+
+            check(1, "auto", enuUnitCommand.Mode, (int)enuThermostatMode.Auto);
+            check(1, "cool", enuUnitCommand.Mode, (int)enuThermostatMode.Cool);
+            check(1, "heat", enuUnitCommand.Mode, (int)enuThermostatMode.Heat);
+            check(1, "off", enuUnitCommand.Mode, (int)enuThermostatMode.Off);
+
+            omniLink.Controller.Thermostats[1].Type = enuThermostatType.HeatCool;
+
+            check(1, "cool", enuUnitCommand.Mode, (int)enuThermostatMode.Cool);
+            check(1, "heat", enuUnitCommand.Mode, (int)enuThermostatMode.Heat);
+            check(1, "off", enuUnitCommand.Mode, (int)enuThermostatMode.Off);
+
+            omniLink.Controller.Thermostats[1].Type = enuThermostatType.CoolOnly;
+
+            check(1, "cool", enuUnitCommand.Mode, (int)enuThermostatMode.Cool);
+            check(1, "off", enuUnitCommand.Mode, (int)enuThermostatMode.Off);
+
+            omniLink.Controller.Thermostats[1].Type = enuThermostatType.HeatOnly;
+
+            check(1, "heat", enuUnitCommand.Mode, (int)enuThermostatMode.Heat);
+            check(1, "off", enuUnitCommand.Mode, (int)enuThermostatMode.Off);
+        }
+
+        [TestMethod]
         public void ButtonCommand()
         {
             void check(ushort id, string payload, enuUnitCommand command)

@@ -21,6 +21,11 @@ namespace OmniLinkBridge.Modules
         public clsHAC Controller { get; private set; }
         private DateTime retry = DateTime.MinValue;
 
+        public bool TroublePhone { get; set; }
+        public bool TroubleAC { get; set; }
+        public bool TroubleBattery { get; set; }
+        public bool TroubleDCM { get; set; }
+
         // Thermostats
         private readonly Dictionary<ushort, DateTime> tstats = new Dictionary<ushort, DateTime>();
         private readonly System.Timers.Timer tstat_timer = new System.Timers.Timer();
@@ -254,6 +259,7 @@ namespace OmniLinkBridge.Modules
             log.Debug("Retrieving named units");
 
             await GetSystemFormats();
+            await GetSystemTroubles();
             await GetNamed(enuObjectType.Area);
             await GetNamed(enuObjectType.Zone);
             await GetNamed(enuObjectType.Thermostat);
@@ -266,7 +272,20 @@ namespace OmniLinkBridge.Modules
         {
             log.Debug("Waiting for system formats");
 
-            clsOL2MsgRequestSystemFormats MSG = new clsOL2MsgRequestSystemFormats(Controller.Connection);
+            var MSG = new clsOL2MsgRequestSystemFormats(Controller.Connection);
+            Controller.Connection.Send(MSG, HandleNamedPropertiesResponse);
+
+            await Task.Run(() =>
+            {
+                nameWait.WaitOne(new TimeSpan(0, 0, 10));
+            });
+        }
+
+        private async Task GetSystemTroubles()
+        {
+            log.Debug("Waiting for system troubles");
+
+            var MSG = new clsOL2MsgRequestSystemTroubles(Controller.Connection);
             Controller.Connection.Send(MSG, HandleNamedPropertiesResponse);
 
             await Task.Run(() =>
@@ -289,7 +308,7 @@ namespace OmniLinkBridge.Modules
 
         private void GetNextNamed(enuObjectType type, int ix)
         {
-            clsOL2MsgRequestProperties MSG = new clsOL2MsgRequestProperties(Controller.Connection)
+            var MSG = new clsOL2MsgRequestProperties(Controller.Connection)
             {
                 ObjectType = type,
                 IndexNumber = (UInt16)ix,
@@ -315,15 +334,25 @@ namespace OmniLinkBridge.Modules
                         nameWait.Set();
                         break;
                     case enuOmniLink2MessageType.SystemFormats:
-                        clsOL2MsgSystemFormats MSG2 = new clsOL2MsgSystemFormats(Controller.Connection, B);
+                        var systemFormats = new clsOL2MsgSystemFormats(Controller.Connection, B);
 
-                        Controller.DateFormat = MSG2.Date;
-                        Controller.TimeFormat = MSG2.Time;
-                        Controller.TempFormat = MSG2.Temp;
+                        Controller.DateFormat = systemFormats.Date;
+                        Controller.TimeFormat = systemFormats.Time;
+                        Controller.TempFormat = systemFormats.Temp;
 
                         using (LogContext.PushProperty("Telemetry", "TemperatureFormat"))
                             log.Debug("Temperature format is {TemperatureFormat}",
                                 (Controller.TempFormat == enuTempFormat.Fahrenheit ? "Fahrenheit" : "Celsius"));
+
+                        nameWait.Set();
+                        break;
+                    case enuOmniLink2MessageType.SystemTroubles:
+                        var systemTroubles = new clsOL2MsgSystemTroubles(Controller.Connection, B);
+
+                        TroublePhone = systemTroubles.Contains(enuTroubles.PhoneLine);
+                        TroubleAC = systemTroubles.Contains(enuTroubles.AC);
+                        TroubleBattery = systemTroubles.Contains(enuTroubles.BatteryLow);
+                        TroubleDCM = systemTroubles.Contains(enuTroubles.DCM);
 
                         nameWait.Set();
                         break;
@@ -473,7 +502,7 @@ namespace OmniLinkBridge.Modules
 
             if (MSG.SystemEvent >= 1 && MSG.SystemEvent <= 255)
             {
-                eventargs.Type = enuEventType.USER_MACRO_BUTTON;
+                eventargs.Type = SystemEventType.Button;
                 eventargs.Value = ((int)MSG.SystemEvent).ToString() + " " + Controller.Buttons[MSG.SystemEvent].Name;
 
                 OnSystemStatus?.Invoke(this, eventargs);
@@ -484,87 +513,103 @@ namespace OmniLinkBridge.Modules
                     Button = Controller.Buttons[MSG.SystemEvent]
                 });
             }
-            else if (MSG.SystemEvent >= 768 && MSG.SystemEvent <= 771)
+            else if (MSG.SystemEvent >= (ushort)enuEventType.PHONE_LINE_DEAD && 
+                MSG.SystemEvent <= (ushort)enuEventType.PHONE_LINE_ON_HOOK)
             {
-                eventargs.Type = enuEventType.PHONE_;
+                eventargs.Type = SystemEventType.Phone;
 
-                if (MSG.SystemEvent == 768)
+                if (MSG.SystemEvent == (ushort)enuEventType.PHONE_)
                 {
                     eventargs.Value = "DEAD";
+                    eventargs.Trouble = true;
                     eventargs.SendNotification = true;
                 }
-                else if (MSG.SystemEvent == 769)
+                else if (MSG.SystemEvent == (ushort)enuEventType.PHONE_LINE_RING)
                     eventargs.Value = "RING";
-                else if (MSG.SystemEvent == 770)
+                else if (MSG.SystemEvent == (ushort)enuEventType.PHONE_LINE_OFF_HOOK)
                     eventargs.Value = "OFF HOOK";
-                else if (MSG.SystemEvent == 771)
+                else if (MSG.SystemEvent == (ushort)enuEventType.PHONE_LINE_ON_HOOK)
                     eventargs.Value = "ON HOOK";
 
                 OnSystemStatus?.Invoke(this, eventargs);
             }
-            else if (MSG.SystemEvent >= 772 && MSG.SystemEvent <= 773)
+            else if (MSG.SystemEvent >= (ushort)enuEventType.AC_POWER_OFF && 
+                MSG.SystemEvent <= (ushort)enuEventType.AC_POWER_RESTORED)
             {
-                eventargs.Type = enuEventType.AC_POWER_;
+                eventargs.Type = SystemEventType.AC;
                 eventargs.SendNotification = true;
 
-                if (MSG.SystemEvent == 772)
+                if (MSG.SystemEvent == (ushort)enuEventType.AC_POWER_OFF)
+                {
                     eventargs.Value = "OFF";
-                else if (MSG.SystemEvent == 773)
+                    eventargs.Trouble = true;
+                }
+                else if (MSG.SystemEvent == (ushort)enuEventType.AC_POWER_RESTORED)
                     eventargs.Value = "RESTORED";
 
                 OnSystemStatus?.Invoke(this, eventargs);
             }
-            else if (MSG.SystemEvent >= 774 && MSG.SystemEvent <= 775)
+            else if (MSG.SystemEvent >= (ushort)enuEventType.BATTERY_LOW && 
+                MSG.SystemEvent <= (ushort)enuEventType.BATTERY_OK)
             {
-                eventargs.Type = enuEventType.BATTERY_;
+                eventargs.Type = SystemEventType.Battery;
                 eventargs.SendNotification = true;
 
-                if (MSG.SystemEvent == 774)
+                if (MSG.SystemEvent == (ushort)enuEventType.BATTERY_LOW)
+                {
                     eventargs.Value = "LOW";
-                else if (MSG.SystemEvent == 775)
+                    eventargs.Trouble = true;
+                }
+                else if (MSG.SystemEvent == (ushort)enuEventType.BATTERY_OK)
                     eventargs.Value = "OK";
 
                 OnSystemStatus?.Invoke(this, eventargs);
             }
-            else if (MSG.SystemEvent >= 776 && MSG.SystemEvent <= 777)
+            else if (MSG.SystemEvent >= (ushort)enuEventType.DCM_TROUBLE && 
+                MSG.SystemEvent <= (ushort)enuEventType.DCM_OK)
             {
-                eventargs.Type = enuEventType.DCM_;
+                eventargs.Type = SystemEventType.DCM;
+
                 eventargs.SendNotification = true;
 
-                if (MSG.SystemEvent == 776)
+                if (MSG.SystemEvent == (ushort)enuEventType.DCM_TROUBLE)
+                {
                     eventargs.Value = "TROUBLE";
-                else if (MSG.SystemEvent == 777)
+                    eventargs.Trouble = true;
+                }
+                else if (MSG.SystemEvent == (ushort)enuEventType.DCM_OK)
                     eventargs.Value = "OK";
 
                 OnSystemStatus?.Invoke(this, eventargs);
             }
-            else if (MSG.SystemEvent >= 778 && MSG.SystemEvent <= 781)
+            else if (MSG.SystemEvent >= (ushort)enuEventType.ENERGY_COST_LOW && 
+                MSG.SystemEvent <= (ushort)enuEventType.ENERGY_COST_CRITICAL)
             {
-                eventargs.Type = enuEventType.ENERGY_COST_;
+                eventargs.Type = SystemEventType.EnergyCost;
 
-                if (MSG.SystemEvent == 778)
+                if (MSG.SystemEvent == (ushort)enuEventType.ENERGY_COST_LOW)
                     eventargs.Value = "LOW";
-                else if (MSG.SystemEvent == 779)
+                else if (MSG.SystemEvent == (ushort)enuEventType.ENERGY_COST_MID)
                     eventargs.Value = "MID";
-                else if (MSG.SystemEvent == 780)
+                else if (MSG.SystemEvent == (ushort)enuEventType.ENERGY_COST_HIGH)
                     eventargs.Value = "HIGH";
-                else if (MSG.SystemEvent == 781)
+                else if (MSG.SystemEvent == (ushort)enuEventType.ENERGY_COST_CRITICAL)
                     eventargs.Value = "CRITICAL";
 
                 OnSystemStatus?.Invoke(this, eventargs);
             }
             else if (MSG.SystemEvent >= 782 && MSG.SystemEvent <= 787)
             {
-                eventargs.Type = enuEventType.CAMERA;
+                eventargs.Type = SystemEventType.Camera;
                 eventargs.Value = (MSG.SystemEvent - 781).ToString();
 
                 OnSystemStatus?.Invoke(this, eventargs);
             }
             else if (MSG.SystemEvent >= 61440 && MSG.SystemEvent <= 64511)
             {
-                eventargs.Type = enuEventType.SWITCH_PRESS;
-                int state = (int)MSG.Data[1] - 240;
-                int id = (int)MSG.Data[2];
+                eventargs.Type = SystemEventType.SwitchPress;
+                int state = MSG.Data[1] - 240;
+                int id = MSG.Data[2];
 
                 eventargs.Value = "Unit: " + id + ", State: " + state;
 
@@ -572,9 +617,9 @@ namespace OmniLinkBridge.Modules
             }
             else if (MSG.SystemEvent >= 64512 && MSG.SystemEvent <= 65535)
             {
-                eventargs.Type = enuEventType.UPB_LINK;
-                int state = (int)MSG.Data[1] - 252;
-                int id = (int)MSG.Data[2];
+                eventargs.Type = SystemEventType.UPBLink;
+                int state = MSG.Data[1] - 252;
+                int id = MSG.Data[2];
 
                 eventargs.Value = "Link: " + id + ", State: " + state;
 
@@ -587,7 +632,7 @@ namespace OmniLinkBridge.Modules
                     sb.Append(MSG.Data[i].ToString() + " ");
                 log.Debug("Unhandled SystemEvent Raw: {raw}, Num: {num}", sb.ToString(), MSG.SystemEvent);
 
-                int num = ((int)MSG.MessageLength - 1) / 2;
+                int num = (MSG.MessageLength - 1) / 2;
                 for (int i = 0; i < num; i++)
                 {
                     log.Debug("Unhandled SystemEvent: " +

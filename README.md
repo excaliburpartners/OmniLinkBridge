@@ -146,6 +146,20 @@ systemctl start omnilinkbridge.service
 ```
 
 ## MQTT
+### System
+```
+SUB omnilink/system/phone/state
+string secure, trouble
+
+SUB omnilink/system/ac/state
+string secure, trouble
+
+SUB omnilink/system/battery/state
+string secure, trouble
+
+SUB omnilink/system/dcm/state
+string secure, trouble
+```
 
 ### Areas
 ```
@@ -158,8 +172,14 @@ string triggered, pending, armed_night, armed_night_delay, armed_home, armed_hom
 SUB omnilink/areaX/basic_state  
 string triggered, pending, armed_night, armed_home, armed_away, disarmed
 
+SUB omnilink/areaX/json_state
+string json
+
 PUB omnilink/areaX/command  
 string arm_home, arm_away, arm_night, disarm, arm_home_instant, arm_night_delay, arm_vacation
+
+PUB omnilink/areaX/alarm_command
+string burglary, fire, auxiliary
 ```
 
 ### Zones

@@ -5,6 +5,7 @@
         name,
         state,
         command,
+        alarm_command,
         basic_state,
         json_state,
         brightness_state,
@@ -27,6 +28,6 @@
         fan_mode_state,
         fan_mode_command,
         hold_state,
-        hold_command
+        hold_command,
     }
 }

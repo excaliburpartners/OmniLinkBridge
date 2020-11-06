@@ -15,14 +15,12 @@ namespace OmniLinkBridgeTest.Mock
 
         public override bool Equals(object other)
         {
-            var toCompareWith = other as SendCommandEventArgs;
-
-            if (toCompareWith == null)
+            if (!(other is SendCommandEventArgs toCompareWith))
                 return false;
 
-            return this.Cmd == toCompareWith.Cmd &&
-                this.Par == toCompareWith.Par &&
-                this.Pr2 == toCompareWith.Pr2;
+            return Cmd == toCompareWith.Cmd &&
+                Par == toCompareWith.Par &&
+                Pr2 == toCompareWith.Pr2;
         }
 
         public override int GetHashCode()
