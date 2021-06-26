@@ -167,10 +167,10 @@ SUB omnilink/areaX/name
 string Area name
 
 SUB omnilink/areaX/state  
-string triggered, pending, armed_night, armed_night_delay, armed_home, armed_home_instant, armed_away, armed_vacation, disarmed
+string triggered, arming, armed_night, armed_night_delay, armed_home, armed_home_instant, armed_away, armed_vacation, disarmed
 
 SUB omnilink/areaX/basic_state  
-string triggered, pending, armed_night, armed_home, armed_away, disarmed
+string triggered, arming, armed_night, armed_home, armed_away, disarmed
 
 SUB omnilink/areaX/json_state
 string json
@@ -227,7 +227,7 @@ SUB omnilink/thermostatX/name
 string Thermostat name
 
 SUB omnilink/thermostatX/current_operation  
-string idle, cool, heat
+string idle, cooling, heating
 
 SUB omnilink/thermostatX/current_temperature  
 int Current temperature in degrees fahrenheit  
