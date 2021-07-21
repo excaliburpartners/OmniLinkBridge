@@ -275,6 +275,21 @@ namespace OmniLinkBridge.MQTT
             return ret;
         }
 
+        public static Switch ToConfigSwitch(this clsZone zone)
+        {
+            Switch ret = new Switch
+            {
+                unique_id = $"{Global.mqtt_prefix}zone{zone.Number}switch",
+                name = $"{Global.mqtt_discovery_name_prefix}{zone.Name} Bypass",
+                state_topic = zone.ToTopic(Topic.state),
+                command_topic = zone.ToTopic(Topic.command),
+                payload_off = "restore",
+                payload_on = "bypass",
+                value_template = "{% if value == 'bypassed' %} bypass {%- else -%} restore {%- endif %}"
+            };
+            return ret;
+        }
+
         public static BinarySensor ToConfig(this clsZone zone)
         {
             BinarySensor ret = new BinarySensor

@@ -277,6 +277,7 @@ namespace OmniLinkBridge.Modules
                 {                  
                     PublishAsync($"{Global.mqtt_discovery_prefix}/binary_sensor/{Global.mqtt_prefix}/zone{i}/config", null);
                     PublishAsync($"{Global.mqtt_discovery_prefix}/sensor/{Global.mqtt_prefix}/zone{i}/config", null);
+                    PublishAsync($"{Global.mqtt_discovery_prefix}/switch/{Global.mqtt_prefix}/zone{i}/config", null);
                     PublishAsync($"{Global.mqtt_discovery_prefix}/sensor/{Global.mqtt_prefix}/zone{i}temp/config", null);
                     PublishAsync($"{Global.mqtt_discovery_prefix}/sensor/{Global.mqtt_prefix}/zone{i}humidity/config", null);
                     continue;
@@ -286,6 +287,8 @@ namespace OmniLinkBridge.Modules
                     JsonConvert.SerializeObject(zone.ToConfig()));
                 PublishAsync($"{Global.mqtt_discovery_prefix}/sensor/{Global.mqtt_prefix}/zone{i}/config",
                     JsonConvert.SerializeObject(zone.ToConfigSensor()));
+                PublishAsync($"{Global.mqtt_discovery_prefix}/switch/{Global.mqtt_prefix}/zone{i}/config",
+                    JsonConvert.SerializeObject(zone.ToConfigSwitch()));
 
                 if (zone.IsTemperatureZone())
                     PublishAsync($"{Global.mqtt_discovery_prefix}/sensor/{Global.mqtt_prefix}/zone{i}temp/config",
