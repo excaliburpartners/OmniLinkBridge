@@ -39,7 +39,7 @@ namespace OmniLinkBridgeTest
         [TestMethod]
         public void AreaCommand()
         {
-            void check(ushort id, string payload, enuUnitCommand command)
+            void check(ushort id, int code, string payload, enuUnitCommand command)
             {
                 SendCommandEventArgs actual = null;
                 omniLink.OnSendCommand += (sender, e) => { actual = e; };
@@ -47,29 +47,35 @@ namespace OmniLinkBridgeTest
                 SendCommandEventArgs expected = new SendCommandEventArgs()
                 {
                     Cmd = command,
-                    Par = 0,
+                    Par = (byte)code,
                     Pr2 = id
                 };
                 Assert.AreEqual(expected, actual);
             }
 
-            // First area standard format
-            check(1, "disarm", enuUnitCommand.SecurityOff);
-            check(1, "arm_home", enuUnitCommand.SecurityDay);
-            check(1, "arm_away", enuUnitCommand.SecurityAway);
-            check(1, "arm_night", enuUnitCommand.SecurityNight);
-            check(1, "arm_home_instant", enuUnitCommand.SecurityDyi);
-            check(1, "arm_night_delay", enuUnitCommand.SecurityNtd);
-            check(1, "arm_vacation", enuUnitCommand.SecurityVac);
+            // Standard format
+            check(1, 0, "disarm", enuUnitCommand.SecurityOff);
+            check(1, 0, "arm_home", enuUnitCommand.SecurityDay);
+            check(1, 0, "arm_away", enuUnitCommand.SecurityAway);
+            check(1, 0, "arm_night", enuUnitCommand.SecurityNight);
+            check(1, 0, "arm_home_instant", enuUnitCommand.SecurityDyi);
+            check(1, 0, "arm_night_delay", enuUnitCommand.SecurityNtd);
+            check(1, 0, "arm_vacation", enuUnitCommand.SecurityVac);
 
-            // Last area with case check
-            check(8, "DISARM", enuUnitCommand.SecurityOff);
+            // Check all areas
+            check(0, 0, "disarm", enuUnitCommand.SecurityOff);
+
+            // Check with optional code
+            check(1, 1, "disarm,1", enuUnitCommand.SecurityOff);
+
+            // Check case insensitivity
+            check(8, 0, "DISARM", enuUnitCommand.SecurityOff);
         }
 
         [TestMethod]
         public void ZoneCommand()
         {
-            void check(ushort id, string payload, enuUnitCommand command)
+            void check(ushort id, int code, string payload, enuUnitCommand command, bool ensureNull = false)
             {
                 SendCommandEventArgs actual = null;
                 omniLink.OnSendCommand += (sender, e) => { actual = e; };
@@ -77,16 +83,31 @@ namespace OmniLinkBridgeTest
                 SendCommandEventArgs expected = new SendCommandEventArgs()
                 {
                     Cmd = command,
-                    Par = 0,
+                    Par = (byte)code,
                     Pr2 = id
                 };
-                Assert.AreEqual(expected, actual);
+
+                if (ensureNull)
+                    Assert.IsNull(actual);
+                else
+                    Assert.AreEqual(expected, actual);
             }
 
-            check(1, "bypass", enuUnitCommand.Bypass);
-            check(1, "restore", enuUnitCommand.Restore);
+            // Standard format
+            check(1, 0, "bypass", enuUnitCommand.Bypass);
+            check(1, 0, "restore", enuUnitCommand.Restore);
 
-            check(2, "BYPASS", enuUnitCommand.Bypass);
+            // Check all zones
+            check(0, 0, "restore", enuUnitCommand.Restore);
+
+            // Not allowed to bypass all zones
+            check(0, 0, "bypass", enuUnitCommand.Bypass, true);
+
+            // Check with optional code
+            check(1, 1, "bypass,1", enuUnitCommand.Bypass);
+
+            // Check case insensitivity
+            check(2, 0, "BYPASS", enuUnitCommand.Bypass);
         }
 
         [TestMethod]

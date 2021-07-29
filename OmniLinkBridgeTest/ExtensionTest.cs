@@ -39,6 +39,23 @@ namespace OmniLinkBridgeTest
         }
 
         [TestMethod]
+        public void TestToCommandCode()
+        {
+            string payload, command;
+            int code;
+
+            payload = "disarm";
+            (command, code) = payload.ToCommandCode();
+            Assert.AreEqual(command, "disarm");
+            Assert.AreEqual(code, 0);
+
+            payload = "disarm,1";
+            (command, code) = payload.ToCommandCode();
+            Assert.AreEqual(command, "disarm");
+            Assert.AreEqual(code, 1);
+        }
+
+        [TestMethod]
         public void TestParseRange()
         {
             List<int> empty = "".ParseRanges();

@@ -24,6 +24,17 @@ namespace OmniLinkBridge
             return (b & (1 << pos)) != 0;
         }
 
+        public static (string, int) ToCommandCode(this string payload)
+        {
+            string[] payloads = payload.Split(',');
+
+            int code = 0;
+            if (payloads.Length > 1)
+                int.TryParse(payloads[1], out code);
+
+            return (payloads[0], code);
+        }
+
         public static string ToSpaceTitleCase(this string phrase)
         {
             return Regex.Replace(phrase, "(\\B[A-Z])", " $1");

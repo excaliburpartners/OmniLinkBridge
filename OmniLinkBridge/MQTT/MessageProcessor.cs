@@ -38,7 +38,7 @@ namespace OmniLinkBridge.MQTT
 
             if (type == CommandTypes.area && id <= OmniLink.Controller.Areas.Count)
                 ProcessAreaReceived(OmniLink.Controller.Areas[id], topic, payload);
-            else if (type == CommandTypes.zone && id > 0 && id <= OmniLink.Controller.Zones.Count)
+            else if (type == CommandTypes.zone && id <= OmniLink.Controller.Zones.Count)
                 ProcessZoneReceived(OmniLink.Controller.Zones[id], topic, payload);
             else if (type == CommandTypes.unit && id > 0 && id <= OmniLink.Controller.Units.Count)
                 ProcessUnitReceived(OmniLink.Controller.Units[id], topic, payload);
@@ -64,13 +64,16 @@ namespace OmniLinkBridge.MQTT
 
         private void ProcessAreaReceived(clsArea area, Topic command, string payload)
         {
+            int code;
+            (payload, code) = payload.ToCommandCode();
+
             if (command == Topic.command && Enum.TryParse(payload, true, out AreaCommands cmd))
             {
                 if (area.Number == 0)
                     log.Debug("SetArea: 0 implies all areas will be changed");
 
                 log.Debug("SetArea: {id} to {value}", area.Number, cmd.ToString().Replace("arm_", "").Replace("_", " "));
-                OmniLink.SendCommand(AreaMapping[cmd], 0, (ushort)area.Number);
+                OmniLink.SendCommand(AreaMapping[cmd], (byte)code, (ushort)area.Number);
             }
             else if (command == Topic.alarm_command && area.Number > 0 && Enum.TryParse(payload, true, out AlarmCommands alarm))
             {
@@ -92,10 +95,17 @@ namespace OmniLinkBridge.MQTT
 
         private void ProcessZoneReceived(clsZone zone, Topic command, string payload)
         {
-            if (command == Topic.command && Enum.TryParse(payload, true, out ZoneCommands cmd))
+            int code;
+            (payload, code) = payload.ToCommandCode();
+
+            if (command == Topic.command && Enum.TryParse(payload, true, out ZoneCommands cmd) && 
+                !(zone.Number == 0 && cmd == ZoneCommands.bypass))
             {
+                if (zone.Number == 0)
+                    log.Debug("SetZone: 0 implies all zones will be restored");
+
                 log.Debug("SetZone: {id} to {value}", zone.Number, payload);
-                OmniLink.SendCommand(ZoneMapping[cmd], 0, (ushort)zone.Number);
+                OmniLink.SendCommand(ZoneMapping[cmd], (byte)code, (ushort)zone.Number);
             }
         }
 

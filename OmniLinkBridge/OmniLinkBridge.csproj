@@ -173,10 +173,10 @@
       <Version>4.5.0</Version>
     </PackageReference>
     <PackageReference Include="MQTTnet.Extensions.ManagedClient">
-      <Version>3.0.13</Version>
+      <Version>3.0.16</Version>
     </PackageReference>
     <PackageReference Include="Newtonsoft.Json">
-      <Version>12.0.3</Version>
+      <Version>13.0.1</Version>
     </PackageReference>
     <PackageReference Include="Serilog">
       <Version>2.10.0</Version>
@@ -185,16 +185,19 @@
       <Version>1.1.0</Version>
     </PackageReference>
     <PackageReference Include="Serilog.Sinks.Async">
-      <Version>1.4.0</Version>
+      <Version>1.5.0</Version>
     </PackageReference>
     <PackageReference Include="Serilog.Sinks.Console">
-      <Version>3.1.1</Version>
+      <Version>4.0.0</Version>
     </PackageReference>
     <PackageReference Include="Serilog.Sinks.File">
-      <Version>4.1.0</Version>
+      <Version>5.0.0</Version>
     </PackageReference>
     <PackageReference Include="Serilog.Sinks.Http">
       <Version>7.2.0</Version>
+    </PackageReference>
+    <PackageReference Include="System.ValueTuple">
+      <Version>4.5.0</Version>
     </PackageReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

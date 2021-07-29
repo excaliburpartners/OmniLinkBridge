@@ -177,6 +177,8 @@ string json
 
 PUB omnilink/areaX/command  
 string arm_home, arm_away, arm_night, disarm, arm_home_instant, arm_night_delay, arm_vacation
+note Use area 0 for all areas
+note Optionally the user code number can be specified 'disarm,1'
 
 PUB omnilink/areaX/alarm_command
 string burglary, fire, auxiliary
@@ -201,6 +203,8 @@ int Current relative humidity
 
 PUB omnilink/zoneX/command  
 string bypass, restore
+note Use zone 0 to restore all zones
+note Optionally the user code number can be specified 'bypass,1'
 ```
 
 ### Units
