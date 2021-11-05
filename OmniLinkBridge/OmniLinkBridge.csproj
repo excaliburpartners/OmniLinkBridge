@@ -93,6 +93,7 @@
     <Compile Include="MQTT\DeviceRegistry.cs" />
     <Compile Include="MQTT\MessageCommands.cs" />
     <Compile Include="MQTT\MessageProcessor.cs" />
+    <Compile Include="MQTT\Number.cs" />
     <Compile Include="MQTT\OverrideZone.cs" />
     <Compile Include="MQTT\Switch.cs" />
     <Compile Include="MQTT\Light.cs" />

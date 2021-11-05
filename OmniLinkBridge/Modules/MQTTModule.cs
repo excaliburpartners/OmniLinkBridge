@@ -200,7 +200,7 @@ namespace OmniLinkBridge.Modules
             return new BinarySensor
             {
                 unique_id = $"{Global.mqtt_prefix}system{type}",
-                name = $"{Global.mqtt_discovery_name_prefix} System {name}",
+                name = $"{Global.mqtt_discovery_name_prefix}System {name}",
                 state_topic = SystemTroubleTopic(type),
                 device_class = BinarySensor.DeviceClass.problem
             };
@@ -345,6 +345,8 @@ namespace OmniLinkBridge.Modules
                 {
                     PublishAsync(thermostat.ToTopic(Topic.name), null);
                     PublishAsync($"{Global.mqtt_discovery_prefix}/climate/{Global.mqtt_prefix}/thermostat{i}/config", null);
+                    PublishAsync($"{Global.mqtt_discovery_prefix}/number/{Global.mqtt_prefix}/thermostat{i}humidify/config", null);
+                    PublishAsync($"{Global.mqtt_discovery_prefix}/number/{Global.mqtt_prefix}/thermostat{i}dehumidify/config", null);
                     PublishAsync($"{Global.mqtt_discovery_prefix}/sensor/{Global.mqtt_prefix}/thermostat{i}temp/config", null);
                     PublishAsync($"{Global.mqtt_discovery_prefix}/sensor/{Global.mqtt_prefix}/thermostat{i}humidity/config", null);
                     continue;
@@ -355,6 +357,10 @@ namespace OmniLinkBridge.Modules
                 PublishAsync(thermostat.ToTopic(Topic.name), thermostat.Name);
                 PublishAsync($"{Global.mqtt_discovery_prefix}/climate/{Global.mqtt_prefix}/thermostat{i}/config",
                     JsonConvert.SerializeObject(thermostat.ToConfig(OmniLink.Controller.TempFormat)));
+                PublishAsync($"{Global.mqtt_discovery_prefix}/number/{Global.mqtt_prefix}/thermostat{i}humidify/config",
+                    JsonConvert.SerializeObject(thermostat.ToConfigHumidify()));
+                PublishAsync($"{Global.mqtt_discovery_prefix}/number/{Global.mqtt_prefix}/thermostat{i}dehumidify/config",
+                    JsonConvert.SerializeObject(thermostat.ToConfigDehumidify()));
                 PublishAsync($"{Global.mqtt_discovery_prefix}/sensor/{Global.mqtt_prefix}/thermostat{i}temp/config",
                     JsonConvert.SerializeObject(thermostat.ToConfigTemp(OmniLink.Controller.TempFormat)));
                 PublishAsync($"{Global.mqtt_discovery_prefix}/sensor/{Global.mqtt_prefix}/thermostat{i}humidity/config",

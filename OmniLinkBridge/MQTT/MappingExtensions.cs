@@ -433,6 +433,32 @@ namespace OmniLinkBridge.MQTT
             return ret;
         }
 
+        public static Number ToConfigHumidify(this clsThermostat thermostat)
+        {
+            Number ret = new Number
+            {
+                unique_id = $"{Global.mqtt_prefix}thermostat{thermostat.Number}humidify",
+                name = $"{Global.mqtt_discovery_name_prefix}{thermostat.Name} Humidify",
+                icon = "mdi:water-percent",
+                state_topic = thermostat.ToTopic(Topic.humidify_state),
+                command_topic = thermostat.ToTopic(Topic.humidify_command),
+            };
+            return ret;
+        }
+
+        public static Number ToConfigDehumidify(this clsThermostat thermostat)
+        {
+            Number ret = new Number
+            {
+                unique_id = $"{Global.mqtt_prefix}thermostat{thermostat.Number}dehumidify",
+                name = $"{Global.mqtt_discovery_name_prefix}{thermostat.Name} Dehumidify",
+                icon = "mdi:water-percent",
+                state_topic = thermostat.ToTopic(Topic.dehumidify_state),
+                command_topic = thermostat.ToTopic(Topic.dehumidify_command),
+            };
+            return ret;
+        }
+
         public static Sensor ToConfigHumidity(this clsThermostat thermostat)
         {
             Sensor ret = new Sensor
