@@ -478,7 +478,7 @@ namespace OmniLinkBridge.MQTT
             ret.temperature_high_state_topic = thermostat.ToTopic(Topic.temperature_cool_state);
             ret.temperature_high_command_topic = thermostat.ToTopic(Topic.temperature_cool_command);
 
-            ret.mode_state_topic = thermostat.ToTopic(Topic.mode_state);
+            ret.mode_state_topic = thermostat.ToTopic(Topic.mode_basic_state);
             ret.mode_command_topic = thermostat.ToTopic(Topic.mode_command);
 
             ret.fan_mode_state_topic = thermostat.ToTopic(Topic.fan_mode_state);
@@ -497,6 +497,22 @@ namespace OmniLinkBridge.MQTT
                 return "cooling";
             else
                 return "idle";
+        }
+
+        public static string ToModeState(this clsThermostat thermostat)
+        {
+            if (thermostat.Mode == enuThermostatMode.E_Heat)
+                return "e_heat";
+            else
+                return thermostat.ModeText().ToLower();
+        }
+
+        public static string ToModeBasicState(this clsThermostat thermostat)
+        {
+            if (thermostat.Mode == enuThermostatMode.E_Heat)
+                return "heat";
+            else
+                return thermostat.ModeText().ToLower();
         }
 
         public static string ToTopic(this clsButton button, Topic topic)

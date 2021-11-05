@@ -24,6 +24,7 @@
         dehumidify_state,
         dehumidify_command,
         mode_state,
+        mode_basic_state,
         mode_command,
         fan_mode_state,
         fan_mode_command,

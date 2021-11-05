@@ -85,9 +85,9 @@ CREATE TABLE IF NOT EXISTS `log_thermostats` (
   `humidity` smallint(6) NOT NULL,
   `humidify` smallint(6) NOT NULL,
   `dehumidify` smallint(6) NOT NULL,
-  `mode` varchar(5) NOT NULL,
+  `mode` varchar(14) NOT NULL,
   `fan` varchar(5) NOT NULL,
-  `hold` varchar(5) NOT NULL,
+  `hold` varchar(8) NOT NULL,
   PRIMARY KEY  (`log_tstat_id`)
 ) ENGINE=MyISAM  DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;
 

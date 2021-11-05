@@ -26,5 +26,6 @@ namespace OmniLinkBridge.MQTT
 
         public string hold_state_topic { get; set; }
         public string hold_command_topic { get; set; }
+        public List<string> hold_modes { get; set; } = new List<string>(new string[] { "on", "vacation" });
     }
 }

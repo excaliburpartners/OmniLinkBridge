@@ -535,7 +535,8 @@ namespace OmniLinkBridge.Modules
             PublishAsync(thermostat.ToTopic(Topic.temperature_cool_state), thermostat.CoolSetpointText());
             PublishAsync(thermostat.ToTopic(Topic.humidify_state), thermostat.HumidifySetpointText());
             PublishAsync(thermostat.ToTopic(Topic.dehumidify_state), thermostat.DehumidifySetpointText());
-            PublishAsync(thermostat.ToTopic(Topic.mode_state), thermostat.ModeText().ToLower());
+            PublishAsync(thermostat.ToTopic(Topic.mode_state), thermostat.ToModeState());
+            PublishAsync(thermostat.ToTopic(Topic.mode_basic_state), thermostat.ToModeBasicState());
             PublishAsync(thermostat.ToTopic(Topic.fan_mode_state), thermostat.FanModeText().ToLower());
             PublishAsync(thermostat.ToTopic(Topic.hold_state), thermostat.HoldStatusText().ToLower());
         }

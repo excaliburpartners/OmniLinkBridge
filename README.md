@@ -253,15 +253,20 @@ int Setpoint in relative humidity
 
 SUB omnilink/thermostatX/mode_state  
 PUB omnilink/thermostatX/mode_command  
+string auto, off, cool, heat, e_heat
+
+SUB omnilink/thermostatX/mode_basic_state  
 string auto, off, cool, heat
 
 SUB omnilink/thermostatX/fan_mode_state  
 PUB omnilink/thermostatX/fan_mode_command  
 string auto, on, cycle
 
-SUB omnilink/thermostatX/hold_state  
+SUB omnilink/thermostatX/hold_state   
+string off, on, vacation
+
 PUB omnilink/thermostatX/hold_command  
-string off, hold
+string off, on
 ```
 
 ### Buttons
