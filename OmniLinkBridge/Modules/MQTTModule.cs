@@ -97,7 +97,7 @@ namespace OmniLinkBridge.Modules
             MqttClient.ConnectingFailedHandler = new ConnectingFailedHandlerDelegate((e) => log.Error("Error connecting {reason}", e.Exception.Message));
             MqttClient.DisconnectedHandler = new MqttClientDisconnectedHandlerDelegate((e) => log.Debug("Disconnected"));
 
-            MqttClient.StartAsync(manoptions);
+            MqttClient.StartAsync(manoptions).Wait();
 
             MqttClient.ApplicationMessageReceivedHandler = new MqttApplicationMessageReceivedHandlerDelegate((e) =>
                 MessageProcessor.Process(e.ApplicationMessage.Topic, Encoding.UTF8.GetString(e.ApplicationMessage.Payload)));
@@ -126,7 +126,7 @@ namespace OmniLinkBridge.Modules
 
             PublishControllerStatus(OFFLINE);
 
-            MqttClient.StopAsync();
+            MqttClient.StopAsync().Wait();
         }
 
         public void Shutdown()
@@ -406,7 +406,7 @@ namespace OmniLinkBridge.Modules
                     continue;
                 }
 
-                PublishMessageState(message);
+                PublishMessageStateAsync(message);
 
                 PublishAsync(message.ToTopic(Topic.name), message.Name);
             }
@@ -477,7 +477,7 @@ namespace OmniLinkBridge.Modules
             if (!MqttClient.IsConnected)
                 return;
 
-            await PublishButtonState(e.Button);
+            await PublishButtonStateAsync(e.Button);
         }
 
         private void OmniLink_OnMessageStatus(object sender, MessageStatusEventArgs e)
@@ -485,7 +485,7 @@ namespace OmniLinkBridge.Modules
             if (!MqttClient.IsConnected)
                 return;
 
-            PublishMessageState(e.Message);
+            PublishMessageStateAsync(e.Message);
         }
 
         private void OmniLink_OnSystemStatus(object sender, SystemStatusEventArgs e)
@@ -547,7 +547,7 @@ namespace OmniLinkBridge.Modules
             PublishAsync(thermostat.ToTopic(Topic.hold_state), thermostat.HoldStatusText().ToLower());
         }
 
-        private async Task PublishButtonState(clsButton button)
+        private async Task PublishButtonStateAsync(clsButton button)
         {
             // Simulate a momentary press
             await PublishAsync(button.ToTopic(Topic.state), "ON");
@@ -555,9 +555,9 @@ namespace OmniLinkBridge.Modules
             await PublishAsync(button.ToTopic(Topic.state), "OFF");
         }
 
-        private void PublishMessageState(clsMessage message)
+        private Task PublishMessageStateAsync(clsMessage message)
         {
-            PublishAsync(message.ToTopic(Topic.state), message.ToState());
+            return PublishAsync(message.ToTopic(Topic.state), message.ToState());
         }
 
         private Task PublishAsync(string topic, string payload)

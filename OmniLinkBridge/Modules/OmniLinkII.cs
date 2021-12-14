@@ -95,16 +95,18 @@ namespace OmniLinkBridge.Modules
             {
                 retry = DateTime.Now.AddMinutes(1);
 
+                log.Debug("Controller: {connectionStatus}", "Connect");
                 Controller.Connection.Connect(HandleConnectStatus, HandleUnsolicitedPackets);
             }
         }
 
         private void Disconnect()
         {
-            log.Debug("Controller Status: {connectionStatus}", "Disconnecting");
-
             if (Controller.Connection.ConnectionState != enuOmniLinkConnectionState.Offline)
+            {
+                log.Debug("Controller: {connectionStatus}", "Disconnect");
                 Controller.Connection.Disconnect();
+            }
         }
 
         private void HandleConnectStatus(enuOmniLinkCommStatus CS)
@@ -135,61 +137,8 @@ namespace OmniLinkBridge.Modules
                     log.Warning("Controller Status: {connectionStatus}", status);
                     break;
 
-                case enuOmniLinkCommStatus.NoReply:
-                case enuOmniLinkCommStatus.UnrecognizedReply:
-                case enuOmniLinkCommStatus.UnsupportedProtocol:
-                case enuOmniLinkCommStatus.ClientSessionTerminated:
-                case enuOmniLinkCommStatus.ControllerSessionTerminated:
-                case enuOmniLinkCommStatus.CannotStartNewSession:
-                case enuOmniLinkCommStatus.LoginFailed:
-                case enuOmniLinkCommStatus.UnableToOpenSocket:
-                case enuOmniLinkCommStatus.UnableToConnect:
-                case enuOmniLinkCommStatus.SocketClosed:
-                case enuOmniLinkCommStatus.UnexpectedError:
-                case enuOmniLinkCommStatus.UnableToCreateSocket:
-                case enuOmniLinkCommStatus.PermissionDenied:
-                case enuOmniLinkCommStatus.BadAddress:
-                case enuOmniLinkCommStatus.InvalidArgument:
-                case enuOmniLinkCommStatus.TooManyOpenFiles:
-                case enuOmniLinkCommStatus.ResourceTemporarilyUnavailable:
-                case enuOmniLinkCommStatus.SocketOperationOnNonSocket:
-                case enuOmniLinkCommStatus.DestinationAddressRequired:
-                case enuOmniLinkCommStatus.MessgeTooLong:
-                case enuOmniLinkCommStatus.WrongProtocolType:
-                case enuOmniLinkCommStatus.BadProtocolOption:
-                case enuOmniLinkCommStatus.ProtocolNotSupported:
-                case enuOmniLinkCommStatus.SocketTypeNotSupported:
-                case enuOmniLinkCommStatus.OperationNotSupported:
-                case enuOmniLinkCommStatus.ProtocolFamilyNotSupported:
-                case enuOmniLinkCommStatus.AddressFamilyNotSupported:
-                case enuOmniLinkCommStatus.AddressInUse:
-                case enuOmniLinkCommStatus.AddressNotAvailable:
-                case enuOmniLinkCommStatus.NetworkIsDown:
-                case enuOmniLinkCommStatus.NetworkIsUnreachable:
-                case enuOmniLinkCommStatus.NetworkReset:
-                case enuOmniLinkCommStatus.ConnectionAborted:
-                case enuOmniLinkCommStatus.ConnectionResetByPeer:
-                case enuOmniLinkCommStatus.NoBufferSpaceAvailable:
-                case enuOmniLinkCommStatus.NotConnected:
-                case enuOmniLinkCommStatus.CannotSendAfterShutdown:
-                case enuOmniLinkCommStatus.ConnectionTimedOut:
-                case enuOmniLinkCommStatus.ConnectionRefused:
-                case enuOmniLinkCommStatus.HostIsDown:
-                case enuOmniLinkCommStatus.HostUnreachable:
-                case enuOmniLinkCommStatus.TooManyProcesses:
-                case enuOmniLinkCommStatus.NetworkSubsystemIsUnavailable:
-                case enuOmniLinkCommStatus.UnsupportedVersion:
-                case enuOmniLinkCommStatus.NotInitialized:
-                case enuOmniLinkCommStatus.ShutdownInProgress:
-                case enuOmniLinkCommStatus.ClassTypeNotFound:
-                case enuOmniLinkCommStatus.HostNotFound:
-                case enuOmniLinkCommStatus.HostNotFoundTryAgain:
-                case enuOmniLinkCommStatus.NonRecoverableError:
-                case enuOmniLinkCommStatus.NoDataOfRequestedType:
-                    log.Error("Controller Status: {connectionStatus}", status);
-                    break;
-
                 default:
+                    log.Error("Controller Status: {connectionStatus}", status);
                     break;
             }
         }
@@ -203,7 +152,7 @@ namespace OmniLinkBridge.Modules
             }
         }
 
-        private void HandleIdentifyController(clsOmniLinkMessageQueueItem M, byte[] B, bool Timeout)
+        private async void HandleIdentifyController(clsOmniLinkMessageQueueItem M, byte[] B, bool Timeout)
         {
             if (Timeout)
                 return;
@@ -229,8 +178,7 @@ namespace OmniLinkBridge.Modules
                         log.Information("Controller is {ControllerModel} firmware {ControllerVersion}",
                             Controller.GetModelText(), Controller.GetVersionText());
 
-                    _ = Connected();
-
+                    await ConnectedAsync();
                     return;
                 }
 
@@ -239,7 +187,7 @@ namespace OmniLinkBridge.Modules
             }
         }
 
-        private async Task Connected()
+        private async Task ConnectedAsync()
         {
             retry = DateTime.MinValue;
 
@@ -768,7 +716,9 @@ namespace OmniLinkBridge.Modules
                 foreach (KeyValuePair<ushort, DateTime> tstat in tstats)
                 {
                     // Poll every 4 minutes if no prior update
-                    if (RoundToMinute(tstat.Value).AddMinutes(4) <= RoundToMinute(DateTime.Now))
+                    if (RoundToMinute(tstat.Value).AddMinutes(4) <= RoundToMinute(DateTime.Now) &&
+                        (Controller.Connection.ConnectionState == enuOmniLinkConnectionState.Online ||
+                        Controller.Connection.ConnectionState == enuOmniLinkConnectionState.OnlineSecure))
                     {
                         Controller.Connection.Send(new clsOL2MsgRequestExtendedStatus(Controller.Connection, enuObjectType.Thermostat, tstat.Key, tstat.Key), HandleRequestThermostatStatus);
 
