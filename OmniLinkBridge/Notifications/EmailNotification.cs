@@ -26,23 +26,21 @@ namespace OmniLinkBridge.Notifications
                 };
                 mail.To.Add(address);
 
-                using (SmtpClient smtp = new SmtpClient(Global.mail_server, Global.mail_port))
+                using SmtpClient smtp = new SmtpClient(Global.mail_server, Global.mail_port);
+                smtp.EnableSsl = Global.mail_tls;
+                if (!string.IsNullOrEmpty(Global.mail_username))
                 {
-                    smtp.EnableSsl = Global.mail_tls;
-                    if (!string.IsNullOrEmpty(Global.mail_username))
-                    {
-                        smtp.UseDefaultCredentials = false;
-                        smtp.Credentials = new NetworkCredential(Global.mail_username, Global.mail_password);
-                    }
+                    smtp.UseDefaultCredentials = false;
+                    smtp.Credentials = new NetworkCredential(Global.mail_username, Global.mail_password);
+                }
 
-                    try
-                    {
-                        smtp.Send(mail);
-                    }
-                    catch (Exception ex)
-                    {
-                        log.Error(ex, "An error occurred sending email notification");
-                    }
+                try
+                {
+                    smtp.Send(mail);
+                }
+                catch (Exception ex)
+                {
+                    log.Error(ex, "An error occurred sending email notification");
                 }
             }
         }

@@ -24,11 +24,9 @@ namespace OmniLinkBridge.Notifications
                     { "message", description }
                 };
 
-                using (WebClient client = new WebClient())
-                {
-                    client.UploadValues(URI, parameters);
-                    client.UploadStringCompleted += Client_UploadStringCompleted;
-                }
+                using WebClient client = new WebClient();
+                client.UploadValues(URI, parameters);
+                client.UploadStringCompleted += Client_UploadStringCompleted;
             }
         }
 

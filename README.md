@@ -6,7 +6,7 @@ You can use docker to build an image from git or download the [binary here](http
 
 ## Requirements
 - [Docker](https://www.docker.com/)
-- .NET Framework 4.5.2 (or Mono equivalent)
+- .NET Framework 4.7.2 (or Mono equivalent)
 
 ## Operation
 OmniLink Bridge is divided into the following modules and configurable settings. Configuration settings can also be set as environment variables by using their name in uppercase. Refer to [OmniLinkBridge.ini](https://github.com/excaliburpartners/OmniLinkBridge/blob/master/OmniLinkBridge/OmniLinkBridge.ini) for specifics.

@@ -25,12 +25,10 @@ namespace OmniLinkBridge.Notifications
                     "description=" + description
                 };
 
-                using (WebClient client = new WebClient())
-                {
-                    client.Headers[HttpRequestHeader.ContentType] = "application/x-www-form-urlencoded";
-                    client.UploadStringAsync(URI, string.Join("&", parameters.ToArray()));
-                    client.UploadStringCompleted += Client_UploadStringCompleted;
-                }
+                using WebClient client = new WebClient();
+                client.Headers[HttpRequestHeader.ContentType] = "application/x-www-form-urlencoded";
+                client.UploadStringAsync(URI, string.Join("&", parameters.ToArray()));
+                client.UploadStringCompleted += Client_UploadStringCompleted;
             }
         }
 

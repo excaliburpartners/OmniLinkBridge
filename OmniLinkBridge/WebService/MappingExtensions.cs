@@ -13,14 +13,15 @@ namespace OmniLinkBridge.WebAPI
 
         public static AreaContract ToContract(this clsArea area)
         {
-            AreaContract ret = new AreaContract();
-
-            ret.id = (ushort)area.Number;
-            ret.name = area.Name;
-            ret.burglary = area.AreaBurglaryAlarmText;
-            ret.co = area.AreaGasAlarmText;
-            ret.fire = area.AreaFireAlarmText;
-            ret.water = area.AreaWaterAlarmText;
+            AreaContract ret = new AreaContract
+            {
+                id = (ushort)area.Number,
+                name = area.Name,
+                burglary = area.AreaBurglaryAlarmText,
+                co = area.AreaGasAlarmText,
+                fire = area.AreaFireAlarmText,
+                water = area.AreaWaterAlarmText
+            };
 
             if (area.ExitTimer > 0)
             {
@@ -37,12 +38,13 @@ namespace OmniLinkBridge.WebAPI
 
         public static ZoneContract ToContract(this clsZone zone)
         {
-            ZoneContract ret = new ZoneContract();
-
-            ret.id = (ushort)zone.Number;
-            ret.zonetype = zone.ZoneType;
-            ret.name = zone.Name;
-            ret.status = zone.StatusText();
+            ZoneContract ret = new ZoneContract
+            {
+                id = (ushort)zone.Number,
+                zonetype = zone.ZoneType,
+                name = zone.Name,
+                status = zone.StatusText()
+            };
 
             if (zone.IsTemperatureZone())
                 ret.temp = zone.TempText();
@@ -54,10 +56,11 @@ namespace OmniLinkBridge.WebAPI
 
         public static UnitContract ToContract(this clsUnit unit)
         {
-            UnitContract ret = new UnitContract();
-
-            ret.id = (ushort)unit.Number;
-            ret.name = unit.Name;
+            UnitContract ret = new UnitContract
+            {
+                id = (ushort)unit.Number,
+                name = unit.Name
+            };
 
             if (unit.Status > 100)
                 ret.level = (ushort)(unit.Status - 100);
@@ -71,17 +74,16 @@ namespace OmniLinkBridge.WebAPI
 
         public static ThermostatContract ToContract(this clsThermostat unit)
         {
-            ThermostatContract ret = new ThermostatContract();
+            ThermostatContract ret = new ThermostatContract
+            {
+                id = (ushort)unit.Number,
+                name = unit.Name
+            };
 
-            ret.id = (ushort)unit.Number;
-            ret.name = unit.Name;
-
-            ushort temp, heat, cool, humidity;
-
-            ushort.TryParse(unit.TempText(), out temp);
-            ushort.TryParse(unit.HeatSetpointText(), out heat);
-            ushort.TryParse(unit.CoolSetpointText(), out cool);
-            ushort.TryParse(unit.HumidityText(), out humidity);
+            ushort.TryParse(unit.TempText(), out ushort temp);
+            ushort.TryParse(unit.HeatSetpointText(), out ushort heat);
+            ushort.TryParse(unit.CoolSetpointText(), out ushort cool);
+            ushort.TryParse(unit.HumidityText(), out ushort humidity);
 
             ret.temp = temp;
             ret.humidity = humidity;
