@@ -27,5 +27,11 @@ namespace OmniLinkBridge.MQTT
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public string value_template { get; set; }
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public string payload_off { get; set; }
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public string payload_on { get; set; }
     }
 }

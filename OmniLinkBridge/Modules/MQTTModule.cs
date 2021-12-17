@@ -187,7 +187,7 @@ namespace OmniLinkBridge.Modules
             PublishAsync(SystemTroubleTopic("phone"), OmniLink.TroublePhone ? "trouble" : "secure");
             PublishAsync(SystemTroubleTopic("ac"), OmniLink.TroubleAC ? "trouble" : "secure");
             PublishAsync(SystemTroubleTopic("battery"), OmniLink.TroubleBattery ? "trouble" : "secure");
-            PublishAsync(SystemTroubleTopic("dcn"), OmniLink.TroubleDCM ? "trouble" : "secure");
+            PublishAsync(SystemTroubleTopic("dcm"), OmniLink.TroubleDCM ? "trouble" : "secure");
         }
 
         public string SystemTroubleTopic(string type)
@@ -202,7 +202,9 @@ namespace OmniLinkBridge.Modules
                 unique_id = $"{Global.mqtt_prefix}system{type}",
                 name = $"{Global.mqtt_discovery_name_prefix}System {name}",
                 state_topic = SystemTroubleTopic(type),
-                device_class = BinarySensor.DeviceClass.problem
+                device_class = BinarySensor.DeviceClass.problem,
+                payload_off = "secure",
+                payload_on = "trouble"
             };
         }
 
