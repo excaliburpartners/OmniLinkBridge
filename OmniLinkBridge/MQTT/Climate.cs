@@ -24,8 +24,8 @@ namespace OmniLinkBridge.MQTT
         public string fan_mode_command_topic { get; set; }
         public List<string> fan_modes { get; set; } = new List<string>(new string[] { "auto", "on", "cycle" });
 
-        public string hold_state_topic { get; set; }
-        public string hold_command_topic { get; set; }
-        public List<string> hold_modes { get; set; } = new List<string>(new string[] { "on", "vacation" });
+        public string preset_mode_state_topic { get; set; }
+        public string preset_mode_command_topic { get; set; }
+        public List<string> preset_modes { get; set; } = new List<string>(new string[] { "off", "on", "vacation" });
     }
 }

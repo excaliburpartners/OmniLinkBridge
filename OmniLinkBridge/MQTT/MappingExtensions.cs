@@ -510,8 +510,8 @@ namespace OmniLinkBridge.MQTT
             ret.fan_mode_state_topic = thermostat.ToTopic(Topic.fan_mode_state);
             ret.fan_mode_command_topic = thermostat.ToTopic(Topic.fan_mode_command);
 
-            ret.hold_state_topic = thermostat.ToTopic(Topic.hold_state);
-            ret.hold_command_topic = thermostat.ToTopic(Topic.hold_command);
+            ret.preset_mode_state_topic = thermostat.ToTopic(Topic.hold_state);
+            ret.preset_mode_command_topic = thermostat.ToTopic(Topic.hold_command);
             return ret;
         }
 
