@@ -7,7 +7,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Excalibur Partners, LLC")]
 [assembly: AssemblyProduct("OmniLinkBridgeTest")]
-[assembly: AssemblyCopyright("Copyright © Excalibur Partners, LLC 2020")]
+[assembly: AssemblyCopyright("Copyright © Excalibur Partners, LLC 2022")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 

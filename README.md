@@ -170,7 +170,7 @@ SUB omnilink/areaX/state
 string triggered, arming, armed_night, armed_night_delay, armed_home, armed_home_instant, armed_away, armed_vacation, disarmed
 
 SUB omnilink/areaX/basic_state  
-string triggered, arming, armed_night, armed_home, armed_away, disarmed
+string triggered, arming, armed_night, armed_home, armed_away, armed_vacation, disarmed
 
 SUB omnilink/areaX/json_state
 string json

@@ -62,8 +62,9 @@ namespace OmniLinkBridge.MQTT
                 case enuSecurityMode.DayInst:
                     return "armed_home";
                 case enuSecurityMode.Away:
-                case enuSecurityMode.Vacation:
                     return "armed_away";
+                case enuSecurityMode.Vacation:
+                    return "armed_vacation";
                 case enuSecurityMode.Off:
                 default:
                     return "disarmed";

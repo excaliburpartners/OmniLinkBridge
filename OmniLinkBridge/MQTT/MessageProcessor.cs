@@ -56,10 +56,10 @@ namespace OmniLinkBridge.MQTT
             { AreaCommands.arm_home, enuUnitCommand.SecurityDay },
             { AreaCommands.arm_away, enuUnitCommand.SecurityAway },
             { AreaCommands.arm_night, enuUnitCommand.SecurityNight },
+            { AreaCommands.arm_vacation, enuUnitCommand.SecurityVac },
             // The below aren't supported by Home Assistant
             { AreaCommands.arm_home_instant, enuUnitCommand.SecurityDyi },
-            { AreaCommands.arm_night_delay, enuUnitCommand.SecurityNtd },
-            { AreaCommands.arm_vacation, enuUnitCommand.SecurityVac },
+            { AreaCommands.arm_night_delay, enuUnitCommand.SecurityNtd }
         };
 
         private void ProcessAreaReceived(clsArea area, Topic command, string payload)
