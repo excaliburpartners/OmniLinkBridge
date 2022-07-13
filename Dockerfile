@@ -1,14 +1,21 @@
 FROM mono:latest AS build
 
+ARG TARGETPLATFORM
+
 RUN apt-get update && \
   apt-get install -y unixodbc
 
 WORKDIR /build
 ADD https://dev.mysql.com/get/Downloads/Connector-ODBC/8.0/mysql-connector-odbc-8.0.18-linux-debian9-x86-64bit.tar.gz /build
-RUN tar zxf mysql-connector-odbc-8.0.18-linux-debian9-x86-64bit.tar.gz && \
+RUN if [ "$TARGETPLATFORM" = "linux/amd64" ]; then \
+  tar zxf mysql-connector-odbc-8.0.18-linux-debian9-x86-64bit.tar.gz && \
   mkdir -p /usr/lib/odbc/ && \
   cp mysql-connector-odbc-8.0.18-linux-debian9-x86-64bit/lib/* /usr/lib/odbc/ && \
-  mysql-connector-odbc-8.0.18-linux-debian9-x86-64bit/bin/myodbc-installer -d -a -n "MySQL" -t "DRIVER=/usr/lib/odbc/libmyodbc8w.so"
+  mysql-connector-odbc-8.0.18-linux-debian9-x86-64bit/bin/myodbc-installer -d -a -n "MySQL" -t "DRIVER=/usr/lib/odbc/libmyodbc8w.so"; \
+  else \
+  mkdir -p /usr/lib/odbc/ && \
+  touch /etc/odbcinst.ini; \
+  fi
 
 COPY . .
 RUN nuget restore /build/OmniLinkBridge.sln
