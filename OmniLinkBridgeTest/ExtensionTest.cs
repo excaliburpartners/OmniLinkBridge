@@ -3,6 +3,7 @@ using System.Text;
 using System.Collections.Generic;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using OmniLinkBridge;
+using OmniLinkBridge.MQTT;
 
 namespace OmniLinkBridgeTest
 {
@@ -41,18 +42,51 @@ namespace OmniLinkBridgeTest
         [TestMethod]
         public void TestToCommandCode()
         {
-            string payload, command;
-            int code;
+            string payload;
+            AreaCommandCode parser;
 
             payload = "disarm";
-            (command, code) = payload.ToCommandCode();
-            Assert.AreEqual(command, "disarm");
-            Assert.AreEqual(code, 0);
+            parser = payload.ToCommandCode(supportValidate: true);
+            Assert.AreEqual(parser.Success, true);
+            Assert.AreEqual(parser.Command, "disarm");
+            Assert.AreEqual(parser.Validate, false);
+            Assert.AreEqual(parser.Code, 0);
 
             payload = "disarm,1";
-            (command, code) = payload.ToCommandCode();
-            Assert.AreEqual(command, "disarm");
-            Assert.AreEqual(code, 1);
+            parser = payload.ToCommandCode(supportValidate: true);
+            Assert.AreEqual(parser.Success, true);
+            Assert.AreEqual(parser.Command, "disarm");
+            Assert.AreEqual(parser.Validate, false);
+            Assert.AreEqual(parser.Code, 1);
+
+            payload = "disarm,validate,1234";
+            parser = payload.ToCommandCode(supportValidate: true);
+            Assert.AreEqual(parser.Success, true);
+            Assert.AreEqual(parser.Command, "disarm");
+            Assert.AreEqual(parser.Validate, true);
+            Assert.AreEqual(parser.Code, 1234);
+
+            // Falures
+            payload = "disarm,1a";
+            parser = payload.ToCommandCode(supportValidate: true);
+            Assert.AreEqual(parser.Success, false);
+            Assert.AreEqual(parser.Command, "disarm");
+            Assert.AreEqual(parser.Validate, false);
+            Assert.AreEqual(parser.Code, 0);
+
+            payload = "disarm,validate,";
+            parser = payload.ToCommandCode(supportValidate: true);
+            Assert.AreEqual(parser.Success, false);
+            Assert.AreEqual(parser.Command, "disarm");
+            Assert.AreEqual(parser.Validate, true);
+            Assert.AreEqual(parser.Code, 0);
+
+            payload = "disarm,test,1234";
+            parser = payload.ToCommandCode(supportValidate: true);
+            Assert.AreEqual(parser.Success, false);
+            Assert.AreEqual(parser.Command, "disarm");
+            Assert.AreEqual(parser.Validate, false);
+            Assert.AreEqual(parser.Code, 0);
         }
 
         [TestMethod]

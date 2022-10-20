@@ -18,8 +18,16 @@ namespace OmniLinkBridge.MQTT
                 unique_id = $"{Global.mqtt_prefix}area{area.Number}",
                 name = Global.mqtt_discovery_name_prefix + area.Name,
                 state_topic = area.ToTopic(Topic.basic_state),
-                command_topic = area.ToTopic(Topic.command)
+                command_topic = area.ToTopic(Topic.command),
+
             };
+
+            if(Global.mqtt_discovery_area_code_required.Contains(area.Number))
+            {
+                ret.command_template = "{{ action }},validate,{{ code }}";
+                ret.code = "REMOTE_CODE";
+            }
+
             return ret;
         }
 
@@ -118,7 +126,7 @@ namespace OmniLinkBridge.MQTT
                 name = $"{Global.mqtt_discovery_name_prefix}{area.Name} Auxiliary",
                 device_class = BinarySensor.DeviceClass.problem,
                 state_topic = area.ToTopic(Topic.json_state),
-                value_template = "{% if  value_json.burglary_alarm %} ON {%- else -%} OFF {%- endif %}"
+                value_template = "{% if value_json.burglary_alarm %} ON {%- else -%} OFF {%- endif %}"
             };
             return ret;
         }
@@ -177,7 +185,7 @@ namespace OmniLinkBridge.MQTT
 
         public static string ToJsonState(this clsArea area)
         {
-            AreaState state = new AreaState()
+            AreaState state = new AreaState
             {
                 arming = area.ExitTimer > 0,
                 burglary_alarm = area.AreaAlarms.IsBitSet(0),
@@ -187,18 +195,17 @@ namespace OmniLinkBridge.MQTT
                 freeze_alarm = area.AreaAlarms.IsBitSet(4),
                 water_alarm = area.AreaAlarms.IsBitSet(5),
                 duress_alarm = area.AreaAlarms.IsBitSet(6),
-                temperature_alarm = area.AreaAlarms.IsBitSet(7)
-            };
-
-            state.mode = area.AreaMode switch
-            {
-                enuSecurityMode.Night => "night",
-                enuSecurityMode.NightDly => "night_delay",
-                enuSecurityMode.Day => "home",
-                enuSecurityMode.DayInst => "home_instant",
-                enuSecurityMode.Away => "away",
-                enuSecurityMode.Vacation => "vacation",
-                _ => "off",
+                temperature_alarm = area.AreaAlarms.IsBitSet(7),
+                mode = area.AreaMode switch
+                {
+                    enuSecurityMode.Night => "night",
+                    enuSecurityMode.NightDly => "night_delay",
+                    enuSecurityMode.Day => "home",
+                    enuSecurityMode.DayInst => "home_instant",
+                    enuSecurityMode.Away => "away",
+                    enuSecurityMode.Vacation => "vacation",
+                    _ => "off",
+                }
             };
             return JsonConvert.SerializeObject(state);
         }

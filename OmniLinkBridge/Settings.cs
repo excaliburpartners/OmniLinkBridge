@@ -84,6 +84,7 @@ namespace OmniLinkBridge
 
                 Global.mqtt_discovery_ignore_zones = settings.ValidateRange("mqtt_discovery_ignore_zones");
                 Global.mqtt_discovery_ignore_units = settings.ValidateRange("mqtt_discovery_ignore_units");
+                Global.mqtt_discovery_area_code_required = settings.ValidateRange("mqtt_discovery_area_code_required");
                 Global.mqtt_discovery_override_zone = settings.LoadOverrideZone<MQTT.OverrideZone>("mqtt_discovery_override_zone");
             }
 

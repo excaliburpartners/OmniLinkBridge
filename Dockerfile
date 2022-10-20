@@ -1,6 +1,7 @@
 FROM mono:latest AS build
 
 ARG TARGETPLATFORM
+ENV TARGETPLATFORM=${TARGETPLATFORM:-linux/amd64}
 
 RUN apt-get update && \
   apt-get install -y unixodbc

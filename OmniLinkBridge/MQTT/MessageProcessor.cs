@@ -64,20 +64,63 @@ namespace OmniLinkBridge.MQTT
 
         private void ProcessAreaReceived(clsArea area, Topic command, string payload)
         {
-            int code;
-            (payload, code) = payload.ToCommandCode();
+            AreaCommandCode parser = payload.ToCommandCode(supportValidate: true);
 
-            if (command == Topic.command && Enum.TryParse(payload, true, out AreaCommands cmd))
+            if (parser.Success && command == Topic.command && Enum.TryParse(parser.Command, true, out AreaCommands cmd))
             {
                 if (area.Number == 0)
                     log.Debug("SetArea: 0 implies all areas will be changed");
 
-                log.Debug("SetArea: {id} to {value}", area.Number, cmd.ToString().Replace("arm_", "").Replace("_", " "));
-                OmniLink.SendCommand(AreaMapping[cmd], (byte)code, (ushort)area.Number);
+                if (parser.Validate)
+                {
+                    string sCode = parser.Code.ToString();
+
+                    if(sCode.Length != 4)
+                    {
+                        log.Warning("SetArea: {id}, Invalid security code: must be 4 digits", area.Number);
+                        return;
+                    }
+
+                    OmniLink.Controller.Connection.Send(new clsOL2MsgRequestValidateCode(OmniLink.Controller.Connection)
+                    {
+                        Area = (byte)area.Number,
+                        Digit1 = (byte)int.Parse(sCode[0].ToString()),
+                        Digit2 = (byte)int.Parse(sCode[1].ToString()),
+                        Digit3 = (byte)int.Parse(sCode[2].ToString()),
+                        Digit4 = (byte)int.Parse(sCode[3].ToString())
+                    }, (M, B, Timeout) =>
+                    {
+                        if (Timeout || !((B.Length > 3) && (B[0] == 0x21) && (enuOmniLink2MessageType)B[2] == enuOmniLink2MessageType.ValidateCode))
+                            return;
+
+                        var validateCode = new clsOL2MsgValidateCode(OmniLink.Controller.Connection, B);
+
+                        if(validateCode.AuthorityLevel == 0)
+                        {
+                            log.Warning("SetArea: {id}, Invalid security code: validation failed", area.Number);
+                            return;
+                        }
+
+                        log.Debug("SetArea: {id}, Validated security code, Code Number: {code}, Authority: {authority}",
+                            area.Number, validateCode.CodeNumber, validateCode.AuthorityLevel.ToString());
+
+                        log.Debug("SetArea: {id} to {value}, Code Number: {code}",
+                            area.Number, cmd.ToString().Replace("arm_", "").Replace("_", " "), validateCode.CodeNumber);
+
+                        OmniLink.SendCommand(AreaMapping[cmd], validateCode.CodeNumber, (ushort)area.Number);
+                    });
+
+                    return;
+                }
+
+                log.Debug("SetArea: {id} to {value}, Code Number: {code}",
+                    area.Number, cmd.ToString().Replace("arm_", "").Replace("_", " "), parser.Code);
+
+                OmniLink.SendCommand(AreaMapping[cmd], (byte)parser.Code, (ushort)area.Number);
             }
-            else if (command == Topic.alarm_command && area.Number > 0 && Enum.TryParse(payload, true, out AlarmCommands alarm))
+            else if (command == Topic.alarm_command && area.Number > 0 && Enum.TryParse(parser.Command, true, out AlarmCommands alarm))
             {
-                log.Debug("SetAreaAlarm: {id} to {value}", area.Number, payload);
+                log.Debug("SetAreaAlarm: {id} to {value}", area.Number, parser.Command);
 
                 OmniLink.Controller.Connection.Send(new clsOL2MsgActivateKeypadEmg(OmniLink.Controller.Connection)
                 {
@@ -95,17 +138,16 @@ namespace OmniLinkBridge.MQTT
 
         private void ProcessZoneReceived(clsZone zone, Topic command, string payload)
         {
-            int code;
-            (payload, code) = payload.ToCommandCode();
+            AreaCommandCode parser = payload.ToCommandCode();
 
-            if (command == Topic.command && Enum.TryParse(payload, true, out ZoneCommands cmd) && 
+            if (parser.Success && command == Topic.command && Enum.TryParse(parser.Command, true, out ZoneCommands cmd) && 
                 !(zone.Number == 0 && cmd == ZoneCommands.bypass))
             {
                 if (zone.Number == 0)
                     log.Debug("SetZone: 0 implies all zones will be restored");
 
-                log.Debug("SetZone: {id} to {value}", zone.Number, payload);
-                OmniLink.SendCommand(ZoneMapping[cmd], (byte)code, (ushort)zone.Number);
+                log.Debug("SetZone: {id} to {value}", zone.Number, parser.Command);
+                OmniLink.SendCommand(ZoneMapping[cmd], (byte)parser.Code, (ushort)zone.Number);
             }
         }
 

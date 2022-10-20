@@ -53,6 +53,7 @@ namespace OmniLinkBridge
         public static string mqtt_discovery_name_prefix;
         public static HashSet<int> mqtt_discovery_ignore_zones;
         public static HashSet<int> mqtt_discovery_ignore_units;
+        public static HashSet<int> mqtt_discovery_area_code_required;
         public static ConcurrentDictionary<int, MQTT.OverrideZone> mqtt_discovery_override_zone;
 
         // Notifications
