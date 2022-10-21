@@ -4,6 +4,8 @@ namespace OmniLinkBridge.MQTT
 {
     public class Climate : Device
     {
+        public string status { get; set; }
+
         public string action_topic { get; set; }
         public string current_temperature_topic { get; set; }
 

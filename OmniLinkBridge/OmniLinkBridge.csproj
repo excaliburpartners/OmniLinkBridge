@@ -87,6 +87,7 @@
     <Compile Include="MQTT\AreaCommandCode.cs" />
     <Compile Include="MQTT\AreaCommands.cs" />
     <Compile Include="MQTT\AreaState.cs" />
+    <Compile Include="MQTT\Availability.cs" />
     <Compile Include="MQTT\BinarySensor.cs" />
     <Compile Include="MQTT\CommandTypes.cs" />
     <Compile Include="MQTT\Device.cs" />

@@ -153,7 +153,7 @@ namespace OmniLinkBridge.Modules
         private void PublishControllerStatus(string status)
         {
             log.Information("Publishing controller {status}", status);
-            PublishAsync($"{Global.mqtt_prefix}/status", status);
+            PublishAsync($"{Global.mqtt_prefix}/{Topic.status}", status);
         }
 
         private void PublishConfig()
@@ -357,6 +357,7 @@ namespace OmniLinkBridge.Modules
                 PublishThermostatState(thermostat);
 
                 PublishAsync(thermostat.ToTopic(Topic.name), thermostat.Name);
+                PublishAsync(thermostat.ToTopic(Topic.status), ONLINE);
                 PublishAsync($"{Global.mqtt_discovery_prefix}/climate/{Global.mqtt_prefix}/thermostat{i}/config",
                     JsonConvert.SerializeObject(thermostat.ToConfig(OmniLink.Controller.TempFormat)));
                 PublishAsync($"{Global.mqtt_discovery_prefix}/number/{Global.mqtt_prefix}/thermostat{i}humidify/config",
@@ -470,8 +471,17 @@ namespace OmniLinkBridge.Modules
                 return;
 
             // Ignore events fired by thermostat polling
-            if (!e.EventTimer)
-                PublishThermostatState(e.Thermostat);
+            if (e.EventTimer)
+                return;
+
+            if (e.Offline)
+            {
+                PublishAsync(e.Thermostat.ToTopic(Topic.status), OFFLINE);
+                return;
+            }
+
+            PublishAsync(e.Thermostat.ToTopic(Topic.status), ONLINE);
+            PublishThermostatState(e.Thermostat);
         }
 
         private async void OmniLink_OnButtonStatus(object sender, ButtonStatusEventArgs e)

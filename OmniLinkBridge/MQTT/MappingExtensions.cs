@@ -484,6 +484,17 @@ namespace OmniLinkBridge.MQTT
         {
             Climate ret = new Climate
             {
+                unique_id = $"{Global.mqtt_prefix}thermostat{thermostat.Number}",
+                name = Global.mqtt_discovery_name_prefix + thermostat.Name,
+
+                availability_topic = null,
+                availability_mode = Device.AvailabilityMode.all,
+                availability = new List<Availability>()
+                {
+                    new Availability(),
+                    new Availability() { topic = thermostat.ToTopic(Topic.status) }
+                },
+
                 modes = thermostat.Type switch
                 {
                     enuThermostatType.AutoHeatCool => new List<string>(new string[] { "auto", "off", "cool", "heat" }),
@@ -491,7 +502,25 @@ namespace OmniLinkBridge.MQTT
                     enuThermostatType.HeatOnly => new List<string>(new string[] { "off", "heat" }),
                     enuThermostatType.CoolOnly => new List<string>(new string[] { "off", "cool" }),
                     _ => new List<string>(new string[] { "off" }),
-                }
+                },
+
+                action_topic = thermostat.ToTopic(Topic.current_operation),
+                current_temperature_topic = thermostat.ToTopic(Topic.current_temperature),
+
+                temperature_low_state_topic = thermostat.ToTopic(Topic.temperature_heat_state),
+                temperature_low_command_topic = thermostat.ToTopic(Topic.temperature_heat_command),
+
+                temperature_high_state_topic = thermostat.ToTopic(Topic.temperature_cool_state),
+                temperature_high_command_topic = thermostat.ToTopic(Topic.temperature_cool_command),
+
+                mode_state_topic = thermostat.ToTopic(Topic.mode_basic_state),
+                mode_command_topic = thermostat.ToTopic(Topic.mode_command),
+
+                fan_mode_state_topic = thermostat.ToTopic(Topic.fan_mode_state),
+                fan_mode_command_topic = thermostat.ToTopic(Topic.fan_mode_command),
+
+                preset_mode_state_topic = thermostat.ToTopic(Topic.hold_state),
+                preset_mode_command_topic = thermostat.ToTopic(Topic.hold_command)
             };
 
             if (format == enuTempFormat.Celsius)
@@ -500,26 +529,6 @@ namespace OmniLinkBridge.MQTT
                 ret.max_temp = "35";
             }
 
-            ret.unique_id = $"{Global.mqtt_prefix}thermostat{thermostat.Number}";
-            ret.name = Global.mqtt_discovery_name_prefix + thermostat.Name;
-
-            ret.action_topic = thermostat.ToTopic(Topic.current_operation);
-            ret.current_temperature_topic = thermostat.ToTopic(Topic.current_temperature);
-
-            ret.temperature_low_state_topic = thermostat.ToTopic(Topic.temperature_heat_state);
-            ret.temperature_low_command_topic = thermostat.ToTopic(Topic.temperature_heat_command);
-
-            ret.temperature_high_state_topic = thermostat.ToTopic(Topic.temperature_cool_state);
-            ret.temperature_high_command_topic = thermostat.ToTopic(Topic.temperature_cool_command);
-
-            ret.mode_state_topic = thermostat.ToTopic(Topic.mode_basic_state);
-            ret.mode_command_topic = thermostat.ToTopic(Topic.mode_command);
-
-            ret.fan_mode_state_topic = thermostat.ToTopic(Topic.fan_mode_state);
-            ret.fan_mode_command_topic = thermostat.ToTopic(Topic.fan_mode_command);
-
-            ret.preset_mode_state_topic = thermostat.ToTopic(Topic.hold_state);
-            ret.preset_mode_command_topic = thermostat.ToTopic(Topic.hold_command);
             return ret;
         }
 

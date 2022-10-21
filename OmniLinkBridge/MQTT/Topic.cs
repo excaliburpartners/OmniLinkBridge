@@ -3,6 +3,7 @@
     public enum Topic
     {
         name,
+        status,
         state,
         command,
         alarm_command,

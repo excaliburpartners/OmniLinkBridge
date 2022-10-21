@@ -636,19 +636,13 @@ namespace OmniLinkBridge.Modules
                         {
                             Controller.Thermostats[MSG.ObjectNumber(i)].CopyExtendedStatus(MSG, i);
 
-                            // Don't fire event when invalid temperature of 0 is sometimes received
-                            if (Controller.Thermostats[MSG.ObjectNumber(i)].Temp > 0)
+                            OnThermostatStatus?.Invoke(this, new ThermostatStatusEventArgs()
                             {
-                                OnThermostatStatus?.Invoke(this, new ThermostatStatusEventArgs()
-                                {
-                                    ID = MSG.ObjectNumber(i),
-                                    Thermostat = Controller.Thermostats[MSG.ObjectNumber(i)],
-                                    EventTimer = false
-                                });
-                            }
-                            else if (Global.verbose_thermostat_timer)
-                                log.Debug("Ignoring unsolicited unknown temp for Thermostat {thermostatName}", 
-                                    Controller.Thermostats[MSG.ObjectNumber(i)].Name);
+                                ID = MSG.ObjectNumber(i),
+                                Thermostat = Controller.Thermostats[MSG.ObjectNumber(i)],
+                                Offline = Controller.Thermostats[MSG.ObjectNumber(i)].Temp == 0,
+                                EventTimer = false
+                            });
 
                             if (!tstats.ContainsKey(MSG.ObjectNumber(i)))
                                 tstats.Add(MSG.ObjectNumber(i), DateTime.Now);
@@ -732,19 +726,13 @@ namespace OmniLinkBridge.Modules
                         (Controller.Connection.ConnectionState == enuOmniLinkConnectionState.Online ||
                         Controller.Connection.ConnectionState == enuOmniLinkConnectionState.OnlineSecure))
                     {
-                        // Don't fire event when invalid temperature of 0 is sometimes received
-                        if (Controller.Thermostats[tstat.Key].Temp > 0)
+                        OnThermostatStatus?.Invoke(this, new ThermostatStatusEventArgs()
                         {
-                            OnThermostatStatus?.Invoke(this, new ThermostatStatusEventArgs()
-                            {
-                                ID = tstat.Key,
-                                Thermostat = Controller.Thermostats[tstat.Key],
-                                EventTimer = true
-                            });
-                        }
-                        else if (Global.verbose_thermostat_timer)
-                            log.Warning("Ignoring unknown temp for Thermostat {thermostatName}",
-                                Controller.Thermostats[tstat.Key].Name);
+                            ID = tstat.Key,
+                            Thermostat = Controller.Thermostats[tstat.Key],
+                            Offline = Controller.Thermostats[tstat.Key].Temp == 0,
+                            EventTimer = true
+                        });
                     }
                     else if (Global.verbose_thermostat_timer)
                         log.Warning("Not logging out of date status for Thermostat {thermostatName}",

@@ -15,7 +15,7 @@ OmniLink Bridge is divided into the following modules and configurable settings.
     - Maintains connection to the OmniLink controller
     - Thermostats
 	    - If no status update has been received after 4 minutes a request is issued
-        - A status update containing a temperature of 0 is ignored
+        - A status update containing a temperature of 0 marks the thermostat offline
             - This can occur when a ZigBee thermostat has lost communication
 - Time Sync: time_
     - Controller time is checked and compared to the local computer time disregarding time zones
@@ -146,6 +146,17 @@ systemctl start omnilinkbridge.service
 ```
 
 ## MQTT
+```
+SUB omnilink/status
+string online, offline
+
+SUB omnilink/model
+string Controller model
+
+SUB omnilink/version
+string Controller version
+```
+
 ### System
 ```
 SUB omnilink/system/phone/state
@@ -230,6 +241,9 @@ string A-L
 ```
 SUB omnilink/thermostatX/name
 string Thermostat name
+
+SUB omnilink/thermostatX/status
+string online, offline
 
 SUB omnilink/thermostatX/current_operation  
 string idle, cooling, heating

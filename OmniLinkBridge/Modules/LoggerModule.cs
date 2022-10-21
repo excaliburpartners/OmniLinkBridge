@@ -246,6 +246,10 @@ namespace OmniLinkBridge.Modules
                     humidity + "','" + humidify + "','" + dehumidify + "','" +
                     e.Thermostat.ModeText() + "','" + e.Thermostat.FanModeText() + "','" + e.Thermostat.HoldStatusText() + "')");
 
+            if (e.Offline)
+                log.Warning("Unknown temp for Thermostat {thermostatName}, verify thermostat is online",
+                    e.Thermostat.Name);
+
             // Ignore events fired by thermostat polling
             if (!e.EventTimer && Global.verbose_thermostat)
                 log.Verbose("ThermostatStatus {id} {name}, Status: {temp} {status}, " +
