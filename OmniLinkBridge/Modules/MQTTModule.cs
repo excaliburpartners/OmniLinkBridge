@@ -9,10 +9,13 @@ using MQTTnet.Extensions.ManagedClient;
 using MQTTnet.Protocol;
 using Newtonsoft.Json;
 using OmniLinkBridge.MQTT;
+using OmniLinkBridge.MQTT.HomeAssistant;
+using OmniLinkBridge.MQTT.Parser;
 using OmniLinkBridge.OmniLink;
 using Serilog;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading;
@@ -108,6 +111,7 @@ namespace OmniLinkBridge.Modules
                 Topic.command,
                 Topic.alarm_command,
                 Topic.brightness_command,
+                Topic.flag_command,
                 Topic.scene_command,
                 Topic.temperature_heat_command,
                 Topic.temperature_cool_command,
@@ -216,8 +220,8 @@ namespace OmniLinkBridge.Modules
             {
                 clsArea area = OmniLink.Controller.Areas[i];
 
-                // PC Access doesn't let you customize the area name for the Omni LTe or Omni IIe
-                // (configured for 1 area). To workaround ignore default properties for the first area.
+                // PC Access doesn't let you customize the area name when configured for one area.
+                // Ignore default properties for the first area.
                 if (i > 1 && area.DefaultProperties == true)
                 {
                     PublishAsync(area.ToTopic(Topic.name), null);
@@ -308,6 +312,7 @@ namespace OmniLinkBridge.Modules
             for (ushort i = 1; i <= OmniLink.Controller.Units.Count; i++)
             {
                 clsUnit unit = OmniLink.Controller.Units[i];
+                UnitType unitType = unit.ToUnitType();
 
                 if (unit.DefaultProperties == true)
                 {
@@ -321,17 +326,26 @@ namespace OmniLinkBridge.Modules
 
                 if (unit.DefaultProperties == true || Global.mqtt_discovery_ignore_units.Contains(unit.Number))
                 {
-                    string type = i < 385 ? "light" : "switch";
-                    PublishAsync($"{Global.mqtt_discovery_prefix}/{type}/{Global.mqtt_prefix}/unit{i}/config", null);
+                    foreach(UnitType entry in Enum.GetValues(typeof(UnitType)))
+                        PublishAsync($"{Global.mqtt_discovery_prefix}/{entry}/{Global.mqtt_prefix}/unit{i}/config", null);
+
                     continue;
                 }
 
-                if (i < 385)
-                    PublishAsync($"{Global.mqtt_discovery_prefix}/light/{Global.mqtt_prefix}/unit{i}/config",
-                        JsonConvert.SerializeObject(unit.ToConfig()));
-                else
-                    PublishAsync($"{Global.mqtt_discovery_prefix}/switch/{Global.mqtt_prefix}/unit{i}/config",
+                foreach (UnitType entry in Enum.GetValues(typeof(UnitType)).Cast<UnitType>().Where(x => x != unitType))
+                        PublishAsync($"{Global.mqtt_discovery_prefix}/{entry}/{Global.mqtt_prefix}/unit{i}/config", null);
+
+                log.Verbose("Publishing {type} {id} {name} as {unitType}", "units", i, unit.Name, unitType);
+
+                if (unitType == UnitType.@switch)
+                    PublishAsync($"{Global.mqtt_discovery_prefix}/{unitType}/{Global.mqtt_prefix}/unit{i}/config",
                         JsonConvert.SerializeObject(unit.ToConfigSwitch()));
+                else if (unitType == UnitType.light)
+                    PublishAsync($"{Global.mqtt_discovery_prefix}/{unitType}/{Global.mqtt_prefix}/unit{i}/config",
+                        JsonConvert.SerializeObject(unit.ToConfig()));
+                else if (unitType == UnitType.number)
+                    PublishAsync($"{Global.mqtt_discovery_prefix}/{unitType}/{Global.mqtt_prefix}/unit{i}/config",
+                        JsonConvert.SerializeObject(unit.ToConfigNumber()));
             }
         }
 
@@ -537,7 +551,11 @@ namespace OmniLinkBridge.Modules
         {
             PublishAsync(unit.ToTopic(Topic.state), unit.ToState());
 
-            if (unit.Number < 385)
+            if (unit.Type == enuOL2UnitType.Flag)
+            {
+                PublishAsync(unit.ToTopic(Topic.flag_state), ((ushort)unit.Status).ToString());
+            }
+            else if(unit.Type != enuOL2UnitType.Output)
             {
                 PublishAsync(unit.ToTopic(Topic.brightness_state), unit.ToBrightnessState().ToString());
                 PublishAsync(unit.ToTopic(Topic.scene_state), unit.ToSceneState());

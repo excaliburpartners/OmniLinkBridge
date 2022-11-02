@@ -1,9 +1,7 @@
-﻿using System;
-using System.Text;
-using System.Collections.Generic;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using OmniLinkBridge;
 using OmniLinkBridge.MQTT;
+using System.Collections.Generic;
 
 namespace OmniLinkBridgeTest
 {

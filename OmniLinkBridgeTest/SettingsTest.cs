@@ -1,9 +1,8 @@
-﻿using System;
-using System.Text;
-using System.Collections.Generic;
-using System.Collections.Concurrent;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using OmniLinkBridge;
+using System;
+using System.Collections.Generic;
+using ha = OmniLinkBridge.MQTT.HomeAssistant;
 
 namespace OmniLinkBridgeTest
 {
@@ -156,8 +155,11 @@ namespace OmniLinkBridgeTest
                 "mqtt_discovery_name_prefix = mynameprefix",
                 "mqtt_discovery_ignore_zones = 1,2-3,4",
                 "mqtt_discovery_ignore_units = 2-5,7",
+                "mqtt_discovery_area_code_required = 1",
                 "mqtt_discovery_override_zone = id=5;device_class=garage_door",
                 "mqtt_discovery_override_zone = id=7;device_class=motion",
+                "mqtt_discovery_override_unit = id=1;type=switch",
+                "mqtt_discovery_override_unit = id=395;type=light",
             });
             Settings.LoadSettings(lines.ToArray());
             Assert.AreEqual("myuser", Global.mqtt_username);
@@ -167,11 +169,12 @@ namespace OmniLinkBridgeTest
             Assert.AreEqual("mynameprefix ", Global.mqtt_discovery_name_prefix);
             Assert.IsTrue(Global.mqtt_discovery_ignore_zones.SetEquals(new int[] { 1, 2, 3, 4 }));
             Assert.IsTrue(Global.mqtt_discovery_ignore_units.SetEquals(new int[] { 2, 3, 4, 5, 7 }));
+            Assert.IsTrue(Global.mqtt_discovery_area_code_required.SetEquals(new int[] { 1 }));
 
             Dictionary<int, OmniLinkBridge.MQTT.OverrideZone> override_zone = new Dictionary<int, OmniLinkBridge.MQTT.OverrideZone>()
             {
-                { 5, new OmniLinkBridge.MQTT.OverrideZone { device_class = OmniLinkBridge.MQTT.BinarySensor.DeviceClass.garage_door }},
-                { 7, new OmniLinkBridge.MQTT.OverrideZone { device_class = OmniLinkBridge.MQTT.BinarySensor.DeviceClass.motion }}
+                { 5, new OmniLinkBridge.MQTT.OverrideZone { device_class = ha.BinarySensor.DeviceClass.garage_door }},
+                { 7, new OmniLinkBridge.MQTT.OverrideZone { device_class = ha.BinarySensor.DeviceClass.motion }}
             };
 
             Assert.AreEqual(override_zone.Count, Global.mqtt_discovery_override_zone.Count);
@@ -179,6 +182,19 @@ namespace OmniLinkBridgeTest
             {
                 Global.mqtt_discovery_override_zone.TryGetValue(pair.Key, out OmniLinkBridge.MQTT.OverrideZone value);
                 Assert.AreEqual(override_zone[pair.Key].device_class, value.device_class);
+            }
+
+            Dictionary<int, OmniLinkBridge.MQTT.OverrideUnit> override_unit = new Dictionary<int, OmniLinkBridge.MQTT.OverrideUnit>()
+            {
+                { 1, new OmniLinkBridge.MQTT.OverrideUnit { type = OmniLinkBridge.MQTT.UnitType.@switch }},
+                { 395, new OmniLinkBridge.MQTT.OverrideUnit { type = OmniLinkBridge.MQTT.UnitType.light }}
+            };
+
+            Assert.AreEqual(override_unit.Count, Global.mqtt_discovery_override_unit.Count);
+            foreach (KeyValuePair<int, OmniLinkBridge.MQTT.OverrideUnit> pair in override_unit)
+            {
+                Global.mqtt_discovery_override_unit.TryGetValue(pair.Key, out OmniLinkBridge.MQTT.OverrideUnit value);
+                Assert.AreEqual(override_unit[pair.Key].type, value.type);
             }
         }
 

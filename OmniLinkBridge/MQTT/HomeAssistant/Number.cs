@@ -1,18 +1,18 @@
 ﻿using Newtonsoft.Json;
 
-namespace OmniLinkBridge.MQTT
+namespace OmniLinkBridge.MQTT.HomeAssistant
 {
-    public class Switch : Device
+    public class Number : Device
     {
         public string command_topic { get; set; }
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
-        public string payload_off { get; set; }
+        public string icon { get; set; }
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
-        public string payload_on { get; set; }
+        public int? min { get; set; } 
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
-        public string value_template { get; set; }
+        public int? max { get; set; }
     }
 }

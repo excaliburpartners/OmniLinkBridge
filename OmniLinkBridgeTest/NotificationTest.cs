@@ -1,9 +1,6 @@
-﻿using System;
-using System.Text;
-using System.Collections.Generic;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-using OmniLinkBridge.Notifications;
+﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using OmniLinkBridge;
+using OmniLinkBridge.Notifications;
 using System.Net.Mail;
 
 namespace OmniLinkBridgeTest

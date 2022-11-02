@@ -1,5 +1,4 @@
-﻿using OmniLinkBridge.MQTT;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -24,39 +23,6 @@ namespace OmniLinkBridge
         {
             return (b & (1 << pos)) != 0;
         }
-
-        public static AreaCommandCode ToCommandCode(this string payload, bool supportValidate = false)
-        {
-            string[] payloads = payload.Split(',');
-            int code = 0;
-
-            AreaCommandCode ret = new AreaCommandCode()
-            {
-                Command = payloads[0]
-            };
-
-            if (payload.Length == 1)
-                return ret;
-
-            if (payloads.Length == 2)
-            {
-                ret.Success = int.TryParse(payloads[1], out code);
-            }
-            else if (supportValidate && payloads.Length == 3)
-            {
-                if (string.Compare(payloads[1], "validate", true) == 0)
-                {
-                    ret.Validate = true;
-                    ret.Success = int.TryParse(payloads[2], out code);
-                }
-                else
-                    ret.Success = false;
-            }
-
-            ret.Code = code;
-            return ret;
-        }
-
         public static string ToSpaceTitleCase(this string phrase)
         {
             return Regex.Replace(phrase, "(\\B[A-Z])", " $1");

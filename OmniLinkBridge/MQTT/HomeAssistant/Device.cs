@@ -3,7 +3,7 @@ using Newtonsoft.Json.Converters;
 using OmniLinkBridge.Modules;
 using System.Collections.Generic;
 
-namespace OmniLinkBridge.MQTT
+namespace OmniLinkBridge.MQTT.HomeAssistant
 {
     public class Device
     {

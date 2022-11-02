@@ -1,4 +1,4 @@
-﻿namespace OmniLinkBridge.MQTT
+﻿namespace OmniLinkBridge.MQTT.Parser
 {
     enum UnitCommands
     {

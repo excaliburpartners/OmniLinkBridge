@@ -51,7 +51,7 @@ namespace OmniLinkBridge.Modules
             
             Controller.Connection.NetworkAddress = address;
             Controller.Connection.NetworkPort = (ushort)port;
-            Controller.Connection.ControllerKey = clsUtil.HexString2ByteArray(String.Concat(key1, key2));
+            Controller.Connection.ControllerKey = clsUtil.HexString2ByteArray(string.Concat(key1, key2));
 
             Controller.PreferredNetworkProtocol = clsHAC.enuPreferredNetworkProtocol.TCP;
             Controller.Connection.ConnectionType = enuOmniLinkConnectionType.Network_TCP;
@@ -316,7 +316,8 @@ namespace OmniLinkBridge.Modules
                                 Controller.Zones.CopyProperties(MSG);
 
                                 if (Controller.Zones[MSG.ObjectNumber].IsTemperatureZone() || Controller.Zones[MSG.ObjectNumber].IsHumidityZone())
-                                    Controller.Connection.Send(new clsOL2MsgRequestExtendedStatus(Controller.Connection, enuObjectType.Auxillary, MSG.ObjectNumber, MSG.ObjectNumber), HandleRequestAuxillaryStatus);
+                                    Controller.Connection.Send(new clsOL2MsgRequestExtendedStatus(Controller.Connection, 
+                                        enuObjectType.Auxillary, MSG.ObjectNumber, MSG.ObjectNumber), HandleRequestAuxillaryStatus);
 
                                 break;
                             case enuObjectType.Thermostat:
@@ -327,7 +328,8 @@ namespace OmniLinkBridge.Modules
                                 else
                                     tstats[MSG.ObjectNumber] = DateTime.MinValue;
 
-                                Controller.Connection.Send(new clsOL2MsgRequestExtendedStatus(Controller.Connection, enuObjectType.Thermostat, MSG.ObjectNumber, MSG.ObjectNumber), HandleRequestThermostatStatus);
+                                Controller.Connection.Send(new clsOL2MsgRequestExtendedStatus(Controller.Connection, 
+                                    enuObjectType.Thermostat, MSG.ObjectNumber, MSG.ObjectNumber), HandleRequestThermostatStatus);
                                 log.Debug("Added thermostat to watch list {thermostatName}",
                                     Controller.Thermostats[MSG.ObjectNumber].Name);
                                 break;
@@ -714,7 +716,8 @@ namespace OmniLinkBridge.Modules
                         (Controller.Connection.ConnectionState == enuOmniLinkConnectionState.Online ||
                         Controller.Connection.ConnectionState == enuOmniLinkConnectionState.OnlineSecure))
                     {
-                        Controller.Connection.Send(new clsOL2MsgRequestExtendedStatus(Controller.Connection, enuObjectType.Thermostat, tstat.Key, tstat.Key), HandleRequestThermostatStatus);
+                        Controller.Connection.Send(new clsOL2MsgRequestExtendedStatus(Controller.Connection, 
+                            enuObjectType.Thermostat, tstat.Key, tstat.Key), HandleRequestThermostatStatus);
 
                         if (Global.verbose_thermostat_timer)
                             log.Debug("Polling status for Thermostat {thermostatName}",

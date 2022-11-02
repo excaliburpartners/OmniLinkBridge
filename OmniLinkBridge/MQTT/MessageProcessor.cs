@@ -1,4 +1,5 @@
 ﻿using HAI_Shared;
+using OmniLinkBridge.MQTT.Parser;
 using OmniLinkBridge.OmniLink;
 using Serilog;
 using System;
@@ -167,10 +168,16 @@ namespace OmniLinkBridge.MQTT
                     OmniLink.SendCommand(UnitMapping[cmd], 0, (ushort)unit.Number);
                 }
             }
-            else if (command == Topic.brightness_command && int.TryParse(payload, out int unitValue))
+            else if (unit.Type == enuOL2UnitType.Flag &&
+                command == Topic.flag_command && int.TryParse(payload, out int flagValue))
+            {
+                log.Debug("SetUnit: {id} to {value}", unit.Number, payload);
+                OmniLink.SendCommand(enuUnitCommand.Set, BitConverter.GetBytes(flagValue)[0], (ushort)unit.Number);
+            }
+            else if (unit.Type != enuOL2UnitType.Output && 
+                command == Topic.brightness_command && int.TryParse(payload, out int unitValue))
             {
                 log.Debug("SetUnit: {id} to {value}%", unit.Number, payload);
-
                 OmniLink.SendCommand(enuUnitCommand.Level, BitConverter.GetBytes(unitValue)[0], (ushort)unit.Number);
 
                 // Force status change instead of waiting on controller to update
@@ -178,10 +185,10 @@ namespace OmniLinkBridge.MQTT
                 // which will cause light to go to 100% brightness
                 unit.Status = (byte)(100 + unitValue);
             }
-            else if (command == Topic.scene_command && char.TryParse(payload, out char scene))
+            else if (unit.Type != enuOL2UnitType.Output && 
+                command == Topic.scene_command && char.TryParse(payload, out char scene))
             {
                 log.Debug("SetUnit: {id} to {value}", unit.Number, payload);
-
                 OmniLink.SendCommand(enuUnitCommand.Compose, (byte)(scene - 63), (ushort)unit.Number);
             }
         }

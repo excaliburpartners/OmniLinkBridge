@@ -1,4 +1,4 @@
-﻿namespace OmniLinkBridge.MQTT
+﻿namespace OmniLinkBridge.MQTT.Parser
 {
     public enum Topic
     {
@@ -11,6 +11,8 @@
         json_state,
         brightness_state,
         brightness_command,
+        flag_state,
+        flag_command,
         scene_state,
         scene_command,
         current_operation,

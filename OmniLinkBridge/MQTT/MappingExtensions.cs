@@ -1,6 +1,8 @@
 ﻿using HAI_Shared;
 using Newtonsoft.Json;
 using System.Collections.Generic;
+using OmniLinkBridge.MQTT.HomeAssistant;
+using OmniLinkBridge.MQTT.Parser;
 
 namespace OmniLinkBridge.MQTT
 {
@@ -395,6 +397,20 @@ namespace OmniLinkBridge.MQTT
                 name = Global.mqtt_discovery_name_prefix + unit.Name,
                 state_topic = unit.ToTopic(Topic.state),
                 command_topic = unit.ToTopic(Topic.command)
+            };
+            return ret;
+        }
+
+        public static Number ToConfigNumber(this clsUnit unit)
+        {
+            Number ret = new Number
+            {
+                unique_id = $"{Global.mqtt_prefix}unit{unit.Number}number",
+                name = Global.mqtt_discovery_name_prefix + unit.Name,
+                state_topic = unit.ToTopic(Topic.flag_state),
+                command_topic = unit.ToTopic(Topic.flag_command),
+                min = 0,
+                max = 255
             };
             return ret;
         }

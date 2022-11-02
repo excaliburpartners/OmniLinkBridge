@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace OmniLinkBridge.MQTT
+namespace OmniLinkBridge.MQTT.HomeAssistant
 {
     public class Climate : Device
     {

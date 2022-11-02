@@ -7,7 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Net.Mail;
 using System.Reflection;
-using System.Threading;
+using ha = OmniLinkBridge.MQTT.HomeAssistant;
 
 namespace OmniLinkBridge
 {
@@ -86,6 +86,7 @@ namespace OmniLinkBridge
                 Global.mqtt_discovery_ignore_units = settings.ValidateRange("mqtt_discovery_ignore_units");
                 Global.mqtt_discovery_area_code_required = settings.ValidateRange("mqtt_discovery_area_code_required");
                 Global.mqtt_discovery_override_zone = settings.LoadOverrideZone<MQTT.OverrideZone>("mqtt_discovery_override_zone");
+                Global.mqtt_discovery_override_unit = settings.LoadOverrideUnit<MQTT.OverrideUnit>("mqtt_discovery_override_unit");
             }
 
             // Notifications
@@ -157,7 +158,7 @@ namespace OmniLinkBridge
                     }
                     else if (override_zone is MQTT.OverrideZone mqtt_zone)
                     {
-                        if (!attributes.ContainsKey("device_class") || !Enum.TryParse(attributes["device_class"], out MQTT.BinarySensor.DeviceClass attrib_device_class))
+                        if (!attributes.ContainsKey("device_class") || !Enum.TryParse(attributes["device_class"], out ha.BinarySensor.DeviceClass attrib_device_class))
                             throw new Exception("Missing or invalid device_class attribute");
 
                         mqtt_zone.device_class = attrib_device_class;
@@ -171,6 +172,50 @@ namespace OmniLinkBridge
             catch (Exception ex)
             {
                 log.Error(ex, "Invalid override zone specified for {section}", section);
+                throw;
+            }
+        }
+
+        private static ConcurrentDictionary<int, T> LoadOverrideUnit<T>(this NameValueCollection settings, string section) where T : new()
+        {
+            try
+            {
+                ConcurrentDictionary<int, T> ret = new ConcurrentDictionary<int, T>();
+
+                string value = settings.CheckEnv(section);
+
+                if (string.IsNullOrEmpty(value))
+                    return ret;
+
+                string[] ids = value.Split(',');
+
+                for (int i = 0; i < ids.Length; i++)
+                {
+                    Dictionary<string, string> attributes = ids[i].TrimEnd(new char[] { ';' }).Split(';')
+                        .Select(s => s.Split('='))
+                        .ToDictionary(a => a[0].Trim(), a => a[1].Trim(), StringComparer.InvariantCultureIgnoreCase);
+
+                    if (!attributes.ContainsKey("id") || !int.TryParse(attributes["id"], out int attrib_id))
+                        throw new Exception("Missing or invalid id attribute");
+
+                    T override_unit = new T();
+
+                    if (override_unit is MQTT.OverrideUnit mqtt_unit)
+                    {
+                        if (!attributes.ContainsKey("type") || !Enum.TryParse(attributes["type"], out MQTT.UnitType attrib_type))
+                            throw new Exception("Missing or invalid type attribute");
+
+                        mqtt_unit.type = attrib_type;
+                    }
+
+                    ret.TryAdd(attrib_id, override_unit);
+                }
+
+                return ret;
+            }
+            catch (Exception ex)
+            {
+                log.Error(ex, "Invalid override unit specified for {section}", section);
                 throw;
             }
         }

@@ -1,10 +1,9 @@
-﻿using System;
-using System.Text;
-using System.Collections.Generic;
-using HAI_Shared;
+﻿using HAI_Shared;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using OmniLinkBridge;
 using OmniLinkBridge.MQTT;
 using OmniLinkBridgeTest.Mock;
+using System.Collections.Concurrent;
 
 namespace OmniLinkBridgeTest
 {
@@ -19,6 +18,8 @@ namespace OmniLinkBridgeTest
         {
             omniLink = new MockOmniLinkII();
             messageProcessor = new MessageProcessor(omniLink);
+
+            omniLink.Controller.Units[395].Type = enuOL2UnitType.Flag;
         }
 
         [TestMethod]
@@ -132,6 +133,28 @@ namespace OmniLinkBridgeTest
             check(1, "OFF", enuUnitCommand.Off);
 
             check(2, "on", enuUnitCommand.On);
+        }
+
+        [TestMethod]
+        public void UnitFlagCommand()
+        {
+            void check(ushort id, string payload, enuUnitCommand command, int value)
+            {
+                SendCommandEventArgs actual = null;
+                omniLink.OnSendCommand += (sender, e) => { actual = e; };
+                messageProcessor.Process($"omnilink/unit{id}/flag_command", payload);
+                SendCommandEventArgs expected = new SendCommandEventArgs()
+                {
+                    Cmd = command,
+                    Par = (byte)value,
+                    Pr2 = id
+                };
+                Assert.AreEqual(expected, actual);
+            }
+
+            check(395, "0", enuUnitCommand.Set, 0);
+            check(395, "1", enuUnitCommand.Set, 1);
+            check(395, "255", enuUnitCommand.Set, 255);
         }
 
         [TestMethod]

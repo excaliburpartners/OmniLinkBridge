@@ -1,4 +1,4 @@
-﻿namespace OmniLinkBridge.MQTT
+﻿namespace OmniLinkBridge.MQTT.HomeAssistant
 {
     public class Light : Device
     {

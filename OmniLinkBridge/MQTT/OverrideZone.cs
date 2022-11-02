@@ -1,4 +1,6 @@
-﻿namespace OmniLinkBridge.MQTT
+﻿using OmniLinkBridge.MQTT.HomeAssistant;
+
+namespace OmniLinkBridge.MQTT
 {
     public class OverrideZone
     {

@@ -1,27 +1,37 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 
-namespace OmniLinkBridge.MQTT
+namespace OmniLinkBridge.MQTT.HomeAssistant
 {
-    public class Sensor : Device
+    public class BinarySensor : Device
     {
         [JsonConverter(typeof(StringEnumConverter))]
         public enum DeviceClass
         {
-            humidity,
-            temperature
+            battery,
+            cold,
+            door,
+            garage_door,
+            gas,
+            heat,
+            moisture,
+            motion,
+            problem,
+            safety,
+            smoke,
+            window
         }
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public DeviceClass? device_class { get; set; }
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
-        public string icon { get; set; }
-
-        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
-        public string unit_of_measurement { get; set; }
-
-        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public string value_template { get; set; }
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public string payload_off { get; set; }
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public string payload_on { get; set; }
     }
 }

@@ -9,7 +9,7 @@ You can use docker to build an image from git or download the [binary here](http
 - .NET Framework 4.7.2 (or Mono equivalent)
 
 ## Operation
-OmniLink Bridge is divided into the following modules and configurable settings. Configuration settings can also be set as environment variables by using their name in uppercase. Refer to [OmniLinkBridge.ini](https://github.com/excaliburpartners/OmniLinkBridge/blob/master/OmniLinkBridge/OmniLinkBridge.ini) for specifics.
+OmniLink Bridge is divided into the following modules and configurable settings. Configuration settings can also be set as environment variables by using their name in uppercase. Refer to [OmniLinkBridge.ini](OmniLinkBridge/OmniLinkBridge.ini) for specifics.
 
 - OmniLinkII: controller_
     - Maintains connection to the OmniLink controller
@@ -231,6 +231,10 @@ string OFF, ON
 SUB omnilink/unitX/brightness_state  
 PUB omnilink/unitX/brightness_command  
 int Level from 0 to 100 percent
+
+SUB omnilink/unitX/flag_state  
+PUB omnilink/unitX/flag_command  
+int Level from 0 to 255
 
 SUB omnilink/unitX/scene_state  
 PUB omnilink/unitX/scene_command  

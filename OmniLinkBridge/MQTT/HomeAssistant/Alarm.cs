@@ -1,7 +1,7 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 
-namespace OmniLinkBridge.MQTT
+namespace OmniLinkBridge.MQTT.HomeAssistant
 {
     public class Alarm : Device
     {

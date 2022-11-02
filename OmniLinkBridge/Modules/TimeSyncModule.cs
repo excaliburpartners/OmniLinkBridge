@@ -74,14 +74,15 @@ namespace OmniLinkBridge.Modules
                 // Extract the 2 digit prefix to use when parsing the time
                 int year = DateTime.Now.Year / 100;
 
-                time = new DateTime((int)MSG.Year + (year * 100), (int)MSG.Month, (int)MSG.Day, (int)MSG.Hour, (int)MSG.Minute, (int)MSG.Second);
+                time = new DateTime(MSG.Year + (year * 100), MSG.Month, MSG.Day, MSG.Hour, MSG.Minute, MSG.Second);
             }
             catch
             {
                 log.Warning("Controller time could not be parsed");
 
                 DateTime now = DateTime.Now;
-                OmniLink.Controller.Connection.Send(new clsOL2MsgSetTime(OmniLink.Controller.Connection, (byte)(now.Year % 100), (byte)now.Month, (byte)now.Day, (byte)now.DayOfWeek,
+                OmniLink.Controller.Connection.Send(new clsOL2MsgSetTime(OmniLink.Controller.Connection,
+                    (byte)(now.Year % 100), (byte)now.Month, (byte)now.Day, (byte)now.DayOfWeek,
                     (byte)now.Hour, (byte)now.Minute, (byte)(now.IsDaylightSavingTime() ? 1 : 0)), HandleSetTime);
 
                 return;
@@ -92,10 +93,11 @@ namespace OmniLinkBridge.Modules
             if (adj > Global.time_drift)
             {
                 log.Warning("Controller time {controllerTime} out of sync by {driftSeconds} seconds",
-                    time.ToString("MM/dd/yyyy HH:mm:ss"),  adj);
+                    time.ToString("MM/dd/yyyy HH:mm:ss"), adj);
 
                 DateTime now = DateTime.Now;
-                OmniLink.Controller.Connection.Send(new clsOL2MsgSetTime(OmniLink.Controller.Connection, (byte)(now.Year % 100), (byte)now.Month, (byte)now.Day, (byte)now.DayOfWeek,
+                OmniLink.Controller.Connection.Send(new clsOL2MsgSetTime(OmniLink.Controller.Connection,
+                    (byte)(now.Year % 100), (byte)now.Month, (byte)now.Day, (byte)now.DayOfWeek,
                     (byte)now.Hour, (byte)now.Minute, (byte)(now.IsDaylightSavingTime() ? 1 : 0)), HandleSetTime);
             }
         }

@@ -2,6 +2,7 @@
 using OmniLinkBridge.Notifications;
 using OmniLinkBridge.OmniLink;
 using Serilog;
+using Serilog.Context;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -125,15 +126,18 @@ namespace OmniLinkBridge.Modules
 
         private void Omnilink_OnConnect(object sender, EventArgs e)
         {
-            if (Global.verbose_area)
+            ushort areaUsage = 0;
+            for (ushort i = 1; i <= omnilink.Controller.Areas.Count; i++)
             {
-                for (ushort i = 1; i <= omnilink.Controller.Areas.Count; i++)
+                clsArea area = omnilink.Controller.Areas[i];
+
+                if (i > 1 && area.DefaultProperties == true)
+                    continue;
+
+                areaUsage++;
+
+                if (Global.verbose_area)
                 {
-                    clsArea area = omnilink.Controller.Areas[i];
-
-                    if (i > 1 && area.DefaultProperties == true)
-                        continue;
-
                     string status = area.ModeText();
 
                     if (area.ExitTimer > 0)
@@ -146,21 +150,59 @@ namespace OmniLinkBridge.Modules
                 }
             }
 
-            if (Global.verbose_zone)
+            ushort zoneUsage = 0;
+            for (ushort i = 1; i <= omnilink.Controller.Zones.Count; i++)
             {
-                for (ushort i = 1; i <= omnilink.Controller.Zones.Count; i++)
+                clsZone zone = omnilink.Controller.Zones[i];
+
+                if (zone.DefaultProperties == true)
+                    continue;
+
+                zoneUsage++;
+
+                if (Global.verbose_zone)
                 {
-                    clsZone zone = omnilink.Controller.Zones[i];
-
-                    if (zone.DefaultProperties == true)
-                        continue;
-
                     if (zone.IsTemperatureZone())
                         log.Verbose("Initial ZoneStatus {id} {name}, Temp: {temp}", i, zone.Name, zone.TempText());
                     else
                         log.Verbose("Initial ZoneStatus {id} {name}, Status: {status}", i, zone.Name, zone.StatusText());
                 }
             }
+
+            ushort unitUsage = 0, outputUsage = 0, flagUsage = 0;
+            for (ushort i = 1; i <= omnilink.Controller.Units.Count; i++)
+            {
+                clsUnit unit = omnilink.Controller.Units[i];
+
+                if (unit.DefaultProperties == true)
+                    continue;
+
+                if (unit.Type == enuOL2UnitType.Output)
+                    outputUsage++;
+                else if (unit.Type == enuOL2UnitType.Flag)
+                    flagUsage++;
+                else
+                    unitUsage++;
+
+                if (Global.verbose_unit)
+                    log.Verbose("Initial UnitStatus {id} {name}, Status: {status}", i, unit.Name, unit.StatusText);
+            }
+
+            ushort thermostatUsage = 0;
+            for (ushort i = 1; i <= omnilink.Controller.Thermostats.Count; i++)
+            {
+                clsThermostat thermostat = omnilink.Controller.Thermostats[i];
+
+                if (thermostat.DefaultProperties == true)
+                    continue;
+
+                thermostatUsage++;
+            }
+
+            using (LogContext.PushProperty("Telemetry", "ControllerUsage"))
+                log.Debug("Controller has {AreaUsage} areas, {ZoneUsage} zones, {UnitUsage} units, " +
+                    "{OutputUsage} outputs, {FlagUsage} flags, {ThermostatUsage} thermostats",
+                    areaUsage, zoneUsage, unitUsage, outputUsage, flagUsage, thermostatUsage);
         }
 
         private void Omnilink_OnAreaStatus(object sender, AreaStatusEventArgs e)
