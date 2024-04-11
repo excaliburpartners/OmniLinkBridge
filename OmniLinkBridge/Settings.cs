@@ -52,6 +52,7 @@ namespace OmniLinkBridge
             Global.verbose_thermostat = settings.ValidateBool("verbose_thermostat");
             Global.verbose_unit = settings.ValidateBool("verbose_unit");
             Global.verbose_message = settings.ValidateBool("verbose_message");
+            Global.verbose_lock = settings.ValidateBool("verbose_lock");
 
             // mySQL Logging
             Global.mysql_logging = settings.ValidateBool("mysql_logging");

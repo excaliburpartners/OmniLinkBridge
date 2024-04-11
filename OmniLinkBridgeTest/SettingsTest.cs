@@ -78,7 +78,8 @@ namespace OmniLinkBridgeTest
                 "verbose_thermostat_timer",
                 "verbose_thermostat",
                 "verbose_unit",
-                "verbose_message"
+                "verbose_message",
+                "verbose_lock"
             })
             {
                 List<string> lines = new List<string>(RequiredSettings())

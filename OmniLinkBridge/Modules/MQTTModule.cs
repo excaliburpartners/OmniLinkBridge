@@ -50,6 +50,7 @@ namespace OmniLinkBridge.Modules
             OmniLink.OnThermostatStatus += Omnilink_OnThermostatStatus;
             OmniLink.OnButtonStatus += OmniLink_OnButtonStatus;
             OmniLink.OnMessageStatus += OmniLink_OnMessageStatus;
+            OmniLink.OnLockStatus += OmniLink_OnLockStatus;
             OmniLink.OnSystemStatus += OmniLink_OnSystemStatus;
 
             MessageProcessor = new MessageProcessor(omni);
@@ -169,6 +170,7 @@ namespace OmniLinkBridge.Modules
             PublishThermostats();
             PublishButtons();
             PublishMessages();
+            PublishLocks();
 
             PublishControllerStatus(ONLINE);
             PublishAsync($"{Global.mqtt_prefix}/model", OmniLink.Controller.GetModelText());
@@ -429,6 +431,29 @@ namespace OmniLinkBridge.Modules
             }
         }
 
+        private void PublishLocks()
+        {
+            log.Debug("Publishing {type}", "locks");
+
+            for (ushort i = 1; i <= OmniLink.Controller.AccessControlReaders.Count; i++)
+            {
+                clsAccessControlReader reader = OmniLink.Controller.AccessControlReaders[i];
+
+                if (reader.DefaultProperties == true)
+                {
+                    PublishAsync(reader.ToTopic(Topic.name), null);
+                    PublishAsync($"{Global.mqtt_discovery_prefix}/lock/{Global.mqtt_prefix}/lock{i}/config", null);
+                    continue;
+                }
+
+                PublishLockStateAsync(reader);
+
+                PublishAsync(reader.ToTopic(Topic.name), reader.Name);
+                PublishAsync($"{Global.mqtt_discovery_prefix}/lock/{Global.mqtt_prefix}/lock{i}/config",
+                    JsonConvert.SerializeObject(reader.ToConfig()));
+            }
+        }
+
         private void Omnilink_OnAreaStatus(object sender, AreaStatusEventArgs e)
         {
             if (!MqttClient.IsConnected)
@@ -514,6 +539,14 @@ namespace OmniLinkBridge.Modules
             PublishMessageStateAsync(e.Message);
         }
 
+        private void OmniLink_OnLockStatus(object sender, LockStatusEventArgs e)
+        {
+            if (!MqttClient.IsConnected)
+                return;
+
+            PublishLockStateAsync(e.Reader);
+        }
+
         private void OmniLink_OnSystemStatus(object sender, SystemStatusEventArgs e)
         {
             if (!MqttClient.IsConnected)
@@ -588,6 +621,11 @@ namespace OmniLinkBridge.Modules
         private Task PublishMessageStateAsync(clsMessage message)
         {
             return PublishAsync(message.ToTopic(Topic.state), message.ToState());
+        }
+
+        private Task PublishLockStateAsync(clsAccessControlReader reader)
+        {
+            return PublishAsync(reader.ToTopic(Topic.state), reader.ToState());
         }
 
         private Task PublishAsync(string topic, string payload)

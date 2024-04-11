@@ -31,6 +31,7 @@ namespace OmniLinkBridge
         public static bool verbose_thermostat;
         public static bool verbose_unit;
         public static bool verbose_message;
+        public static bool verbose_lock;
 
         // mySQL Logging
         public static bool mysql_logging;

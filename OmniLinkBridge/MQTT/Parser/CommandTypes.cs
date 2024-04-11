@@ -7,6 +7,7 @@
         unit,
         thermostat,
         button,
-        message
+        message,
+        @lock
     }
 }

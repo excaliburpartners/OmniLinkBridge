@@ -39,6 +39,7 @@ namespace OmniLinkBridge.Modules
             omnilink.OnThermostatStatus += Omnilink_OnThermostatStatus;
             omnilink.OnUnitStatus += Omnilink_OnUnitStatus;
             omnilink.OnMessageStatus += Omnilink_OnMessageStatus;
+            omnilink.OnLockStatus += Omnilink_OnLockStatus;
             omnilink.OnSystemStatus += Omnilink_OnSystemStatus;
         }
 
@@ -199,10 +200,24 @@ namespace OmniLinkBridge.Modules
                 thermostatUsage++;
             }
 
+            ushort lockUsage = 0;
+            for (ushort i = 1; i <= omnilink.Controller.AccessControlReaders.Count; i++)
+            {
+                clsAccessControlReader reader = omnilink.Controller.AccessControlReaders[i];
+
+                if (reader.DefaultProperties == true)
+                    continue;
+
+                lockUsage++;
+
+                if(Global.verbose_lock)
+                    log.Verbose("Initial LockStatus {id} {name}, Status: {status}", i, reader.Name, reader.LockStatusText());
+            }
+
             using (LogContext.PushProperty("Telemetry", "ControllerUsage"))
                 log.Debug("Controller has {AreaUsage} areas, {ZoneUsage} zones, {UnitUsage} units, " +
-                    "{OutputUsage} outputs, {FlagUsage} flags, {ThermostatUsage} thermostats",
-                    areaUsage, zoneUsage, unitUsage, outputUsage, flagUsage, thermostatUsage);
+                    "{OutputUsage} outputs, {FlagUsage} flags, {ThermostatUsage} thermostats, {LockUsage} locks",
+                    areaUsage, zoneUsage, unitUsage, outputUsage, flagUsage, thermostatUsage, lockUsage);
         }
 
         private void Omnilink_OnAreaStatus(object sender, AreaStatusEventArgs e)
@@ -335,6 +350,12 @@ namespace OmniLinkBridge.Modules
 
             if (Global.notify_message)
                 Notification.Notify("Message", e.ID + " " + e.Message.Name + ", " + e.Message.StatusText());
+        }
+
+        private void Omnilink_OnLockStatus(object sender, LockStatusEventArgs e)
+        {
+            if (Global.verbose_lock)
+                log.Verbose("LockStatus {id} {name}, Status: {status}", e.ID, e.Reader.Name, e.Reader.LockStatusText());
         }
 
         private void Omnilink_OnSystemStatus(object sender, SystemStatusEventArgs e)

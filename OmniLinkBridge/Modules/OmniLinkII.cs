@@ -40,6 +40,7 @@ namespace OmniLinkBridge.Modules
         public event EventHandler<UnitStatusEventArgs> OnUnitStatus;
         public event EventHandler<ButtonStatusEventArgs> OnButtonStatus;
         public event EventHandler<MessageStatusEventArgs> OnMessageStatus;
+        public event EventHandler<LockStatusEventArgs> OnLockStatus;
         public event EventHandler<SystemStatusEventArgs> OnSystemStatus;
 
         private readonly AutoResetEvent trigger = new AutoResetEvent(false);
@@ -214,6 +215,7 @@ namespace OmniLinkBridge.Modules
             await GetNamed(enuObjectType.Unit);
             await GetNamed(enuObjectType.Message);
             await GetNamed(enuObjectType.Button);
+            await GetNamed(enuObjectType.AccessControlReader);
         }
 
         private async Task GetSystemFormats()
@@ -341,6 +343,9 @@ namespace OmniLinkBridge.Modules
                                 break;
                             case enuObjectType.Button:
                                 Controller.Buttons.CopyProperties(MSG);
+                                break;
+                            case enuObjectType.AccessControlReader:
+                                Controller.AccessControlReaders.CopyProperties(MSG);
                                 break;
                             default:
                                 break;
@@ -676,6 +681,17 @@ namespace OmniLinkBridge.Modules
                         {
                             ID = MSG.ObjectNumber(i),
                             Message = Controller.Messages[MSG.ObjectNumber(i)]
+                        });
+                    }
+                    break;
+                case enuObjectType.AccessControlLock:
+                    for (byte i = 0; i < MSG.AccessControlLockCount(); i++)
+                    {
+                        Controller.AccessControlReaders[MSG.ObjectNumber(i)].CopyExtendedStatus(MSG, i);
+                        OnLockStatus?.Invoke(this, new LockStatusEventArgs()
+                        {
+                            ID = MSG.ObjectNumber(i),
+                            Reader = Controller.AccessControlReaders[MSG.ObjectNumber(i)]
                         });
                     }
                     break;

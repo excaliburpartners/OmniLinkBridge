@@ -605,5 +605,35 @@ namespace OmniLinkBridge.MQTT
             else
                 return "off";
         }
+
+        public static string ToTopic(this clsAccessControlReader reader, Topic topic)
+        {
+            return $"{Global.mqtt_prefix}/lock{reader.Number}/{topic}";
+        }
+
+        public static Lock ToConfig(this clsAccessControlReader reader)
+        {
+            Lock ret = new Lock
+            {
+                unique_id = $"{Global.mqtt_prefix}lock{reader.Number}",
+                name = Global.mqtt_discovery_name_prefix + reader.Name,
+                state_topic = reader.ToTopic(Topic.state),
+                command_topic = reader.ToTopic(Topic.command),
+                payload_lock = "lock",
+                payload_unlock = "unlock",
+                state_locked = "locked",
+                state_unlocked = "unlocked"
+            };
+
+            return ret;
+        }
+
+        public static string ToState(this clsAccessControlReader reader)
+        {
+            if (reader.LockStatus == 0)
+                return "locked";
+            else
+                return "unlocked";
+        }
     }
 }

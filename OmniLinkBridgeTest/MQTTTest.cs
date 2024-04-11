@@ -286,6 +286,33 @@ namespace OmniLinkBridgeTest
 
             check(2, "SHOW", enuUnitCommand.ShowMsgWBeep, 0);
         }
+
+        [TestMethod]
+        public void LockCommand()
+        {
+            void check(ushort id, string payload, enuUnitCommand command)
+            {
+                SendCommandEventArgs actual = null;
+                omniLink.OnSendCommand += (sender, e) => { actual = e; };
+                messageProcessor.Process($"omnilink/lock{id}/command", payload);
+                SendCommandEventArgs expected = new SendCommandEventArgs()
+                {
+                    Cmd = command,
+                    Par = 0,
+                    Pr2 = id
+                };
+                Assert.AreEqual(expected, actual);
+            }
+
+            check(1, "lock", enuUnitCommand.Lock);
+            check(1, "unlock", enuUnitCommand.Unlock);
+
+            // Check all locks
+            check(0, "lock", enuUnitCommand.Lock);
+
+            // Check case insensitivity
+            check(2, "LOCK", enuUnitCommand.Lock);
+        }
     }
 }
 

@@ -83,6 +83,7 @@
     <Compile Include="CoreServer.cs" />
     <Compile Include="Modules\TimeSyncModule.cs" />
     <Compile Include="MQTT\HomeAssistant\Alarm.cs" />
+    <Compile Include="MQTT\HomeAssistant\Lock.cs" />
     <Compile Include="MQTT\OverrideUnit.cs" />
     <Compile Include="MQTT\Parser\AlarmCommands.cs" />
     <Compile Include="MQTT\AreaCommandCode.cs" />
@@ -95,6 +96,7 @@
     <Compile Include="MQTT\HomeAssistant\Climate.cs" />
     <Compile Include="MQTT\HomeAssistant\DeviceRegistry.cs" />
     <Compile Include="MQTT\Extensions.cs" />
+    <Compile Include="MQTT\Parser\LockCommands.cs" />
     <Compile Include="MQTT\Parser\MessageCommands.cs" />
     <Compile Include="MQTT\MessageProcessor.cs" />
     <Compile Include="MQTT\HomeAssistant\Number.cs" />
@@ -115,6 +117,7 @@
     <Compile Include="OmniLink\ButtonStatusEventArgs.cs" />
     <Compile Include="OmniLink\IOmniLinkII.cs" />
     <Compile Include="OmniLink\SystemEventType.cs" />
+    <Compile Include="OmniLink\LockStatusEventArgs.cs" />
     <Compile Include="OmniLink\UnitStatusEventArgs.cs" />
     <Compile Include="OmniLink\ThermostatStatusEventArgs.cs" />
     <Compile Include="OmniLink\MessageStatusEventArgs.cs" />

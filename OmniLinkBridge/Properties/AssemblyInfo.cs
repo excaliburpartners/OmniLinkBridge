@@ -10,7 +10,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Excalibur Partners, LLC")]
 [assembly: AssemblyProduct("OmniLinkBridge")]
-[assembly: AssemblyCopyright("Copyright © Excalibur Partners, LLC 2022")]
+[assembly: AssemblyCopyright("Copyright © Excalibur Partners, LLC 2024")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 

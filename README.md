@@ -312,6 +312,18 @@ PUB omnilink/messageX/command
 string show, show_no_beep, show_no_beep_or_led, clear
 ```
 
+### Locks
+```
+SUB omnilink/lockX/name
+string Lock name
+
+SUB omnilink/lockX/state
+string locked, unlocked
+
+PUB omnilink/lockX/command
+string lock, unlock
+```
+
 ## Web API
 To test the web service API you can use your browser to view a page or PowerShell (see below) to change a value.
 

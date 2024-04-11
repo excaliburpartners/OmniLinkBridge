@@ -49,6 +49,8 @@ namespace OmniLinkBridge.MQTT
                 ProcessButtonReceived(OmniLink.Controller.Buttons[id], topic, payload);
             else if (type == CommandTypes.message && id > 0 && id <= OmniLink.Controller.Messages.Count)
                 ProcessMessageReceived(OmniLink.Controller.Messages[id], topic, payload);
+            else if (type == CommandTypes.@lock && id <= OmniLink.Controller.AccessControlReaders.Count)
+                ProcessLockReceived(OmniLink.Controller.AccessControlReaders[id], topic, payload);
         }
 
         private static readonly IDictionary<AreaCommands, enuUnitCommand> AreaMapping = new Dictionary<AreaCommands, enuUnitCommand>
@@ -292,6 +294,25 @@ namespace OmniLinkBridge.MQTT
                     par = 2;
 
                 OmniLink.SendCommand(MessageMapping[cmd], par, (ushort)message.Number);
+            }
+        }
+
+        private static readonly IDictionary<LockCommands, enuUnitCommand> LockMapping = new Dictionary<LockCommands, enuUnitCommand>
+        {
+            { LockCommands.@lock, enuUnitCommand.Lock },
+            { LockCommands.unlock, enuUnitCommand.Unlock },
+        };
+
+        private void ProcessLockReceived(clsAccessControlReader reader, Topic command, string payload)
+        {
+            if (command == Topic.command && Enum.TryParse(payload, true, out LockCommands cmd))
+            {
+                if (reader.Number == 0)
+                    log.Debug("SetLock: 0 implies all locks will be changed");
+
+                log.Debug("SetLock: {id} to {value}", reader.Number, payload);
+
+                OmniLink.SendCommand(LockMapping[cmd], 0, (ushort)reader.Number);
             }
         }
     }
