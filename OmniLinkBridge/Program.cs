@@ -77,7 +77,7 @@ namespace OmniLinkBridge
                 .MinimumLevel.Verbose()
                 .Enrich.WithProperty("Application", "OmniLinkBridge")
                 .Enrich.WithProperty("Session", Guid.NewGuid())
-                .Enrich.WithProperty("User", (Environment.UserName + Environment.MachineName).GetHashCode())
+                .Enrich.With<ControllerEnricher>()
                 .Enrich.FromLogContext();
 
             if (log_file != null)

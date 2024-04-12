@@ -30,9 +30,10 @@ namespace OmniLinkBridge
             // HAI / Leviton Omni Controller
             Global.controller_address = settings.ValidateHasValue("controller_address");
             Global.controller_port = settings.ValidatePort("controller_port");
-            Global.controller_key1 = settings.ValidateHasValue("controller_key1");
-            Global.controller_key2 = settings.ValidateHasValue("controller_key2");
+            Global.controller_key1 = settings.ValidateEncryptionKey("controller_key1");
+            Global.controller_key2 = settings.ValidateEncryptionKey("controller_key2");
             Global.controller_name = settings.CheckEnv("controller_name") ?? "OmniLinkBridge";
+            Global.controller_id = (Global.controller_address + Global.controller_key1 + Global.controller_key2).ComputeGuid();
 
             // Controller Time Sync
             Global.time_sync = settings.ValidateBool("time_sync");
@@ -228,6 +229,19 @@ namespace OmniLinkBridge
             if(string.IsNullOrEmpty(value))
             {
                 log.Error("Empty string specified for {section}", section);
+                throw new Exception();
+            }
+
+            return value;
+        }
+
+        private static string ValidateEncryptionKey(this NameValueCollection settings, string section)
+        {
+            string value = settings.CheckEnv(section).Replace("-","");
+
+            if (string.IsNullOrEmpty(value) || value.Length != 16)
+            {
+                log.Error("Invalid encryption key specified for {section}", section);
                 throw new Exception();
             }
 

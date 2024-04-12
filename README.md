@@ -1,8 +1,10 @@
 # OmniLink Bridge
 Provides MQTT bridge, web service API, time sync, and logging for [HAI/Leviton OmniPro II controllers](https://www.leviton.com/en/products/brands/omni-security-automation). Provides integration with [Samsung SmartThings via web service API](https://github.com/excaliburpartners/SmartThings-OmniPro) and [Home Assistant via MQTT](https://www.home-assistant.io/components/mqtt/).
 
+Please note that OmniLink Bridge is not in active development. The MQTT and Home Assistant integrations are in maintenance mode. The SmartThings Web API and MySQL logging are deprecated and not feature consistent with MQTT.
+
 ## Download
-You can use docker to build an image from git or download the [binary here](https://github.com/excaliburpartners/OmniLinkBridge/releases/latest/download/OmniLinkBridge.zip).
+You can use docker to build an image from git or download the [binary here](https://github.com/excaliburpartners/OmniLinkBridge/releases/latest/download/OmniLinkBridge.zip). You can also install it as a [Home Assistant Add-on](https://github.com/excaliburpartners/hassio-addons).
 
 ## Requirements
 - [Docker](https://www.docker.com/)
@@ -28,7 +30,7 @@ OmniLink Bridge is divided into the following modules and configurable settings.
     - Provides integration with [Samsung SmartThings](https://github.com/excaliburpartners/SmartThings-OmniPro)
     - Allows an application to subscribe to receive POST notifications status updates are received from the OmniLinkII module
         - On failure to POST to callback URL subscription is removed
-        - Recommended for application to send subscribe reqeusts every few minutes
+        - Recommended for application to send subscribe requests every few minutes
     - Requests to GET endpoints return status from the OmniLinkII module
     - Requests to POST endpoints send commands to the OmniLinkII module
 - Logger
@@ -388,7 +390,7 @@ POST /PushButton
 ```
 
 ## MySQL
-The [MySQL ODBC Connector](http://dev.mysql.com/downloads/connector/odbc/) is required for MySQL logging. The docker image comes with the MySQL ODBC connector installed. For Windows and Linux you will need to download and install it.
+The [MySQL ODBC Connector](http://dev.mysql.com/downloads/connector/odbc/) is required for MySQL logging. The docker image comes with the MySQL ODBC connector installed. For Windows and Linux you will need to download and install it. The Home Assistant Add-on does not support MySQL logging.
 
 Configure mysql_connection in OmniLinkBridge.ini. For Windows change DRIVER={MySQL} to name of the driver shown in the ODBC Data Source Administrator.
 ```

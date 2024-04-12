@@ -47,6 +47,7 @@ namespace OmniLinkBridge.Modules
         {
             if (Global.mysql_logging)
             {
+                log.Warning("MySQL logging is deprecated");
                 log.Information("Connecting to database");
 
                 mysql_conn = new OdbcConnection(Global.mysql_connection);
@@ -214,10 +215,34 @@ namespace OmniLinkBridge.Modules
                     log.Verbose("Initial LockStatus {id} {name}, Status: {status}", i, reader.Name, reader.LockStatusText());
             }
 
+            ushort audioSourceUsage = 0;
+            for (ushort i = 1; i <= omnilink.Controller.AudioSources.Count; i++)
+            {
+                clsAudioSource audioSource = omnilink.Controller.AudioSources[i];
+
+                if (audioSource.DefaultProperties == true)
+                    continue;
+
+                audioSourceUsage++;
+            }
+
+            ushort audioZoneUsage = 0;
+            for (ushort i = 1; i <= omnilink.Controller.AudioZones.Count; i++)
+            {
+                clsAudioZone audioZone = omnilink.Controller.AudioZones[i];
+
+                if (audioZone.DefaultProperties == true)
+                    continue;
+
+                audioZoneUsage++;
+            }
+
             using (LogContext.PushProperty("Telemetry", "ControllerUsage"))
                 log.Debug("Controller has {AreaUsage} areas, {ZoneUsage} zones, {UnitUsage} units, " +
-                    "{OutputUsage} outputs, {FlagUsage} flags, {ThermostatUsage} thermostats, {LockUsage} locks",
-                    areaUsage, zoneUsage, unitUsage, outputUsage, flagUsage, thermostatUsage, lockUsage);
+                    "{OutputUsage} outputs, {FlagUsage} flags, {ThermostatUsage} thermostats, {LockUsage} locks, " +
+                    "{AudioSourceUsage} audio sources, {AudioZoneUsage} audio zones",
+                    areaUsage, zoneUsage, unitUsage, outputUsage, flagUsage, thermostatUsage, lockUsage,
+                    audioSourceUsage, audioZoneUsage);
         }
 
         private void Omnilink_OnAreaStatus(object sender, AreaStatusEventArgs e)

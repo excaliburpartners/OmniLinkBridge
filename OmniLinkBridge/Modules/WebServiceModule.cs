@@ -33,6 +33,8 @@ namespace OmniLinkBridge
 
         public void Startup()
         {
+            log.Warning("WebAPI is deprecated");
+
             WebNotification.RestoreSubscriptions();
 
             Uri uri = new Uri("http://0.0.0.0:" + Global.webapi_port + "/");

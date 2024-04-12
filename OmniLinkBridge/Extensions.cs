@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography;
+using System.Text;
 using System.Text.RegularExpressions;
 
 namespace OmniLinkBridge
@@ -42,6 +44,15 @@ namespace OmniLinkBridge
                 .Where(t => !string.IsNullOrWhiteSpace(t)) // Only if has a value
                 .Select(t => int.Parse(t)).ToList(); // digit to int
             return RangeNums.Count.Equals(2) ? Enumerable.Range(RangeNums.Min(), (RangeNums.Max() + 1) - RangeNums.Min()).ToList() : RangeNums;
+        }
+
+        public static Guid ComputeGuid(this string data)
+        {
+            using SHA256 hash = SHA256.Create();
+            byte[] bytes = hash.ComputeHash(Encoding.UTF8.GetBytes(data));
+            byte[] guidBytes = new byte[16];
+            Array.Copy(bytes, guidBytes, 16);
+            return new Guid(guidBytes);
         }
     }
 }

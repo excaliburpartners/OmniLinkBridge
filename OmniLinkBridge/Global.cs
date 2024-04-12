@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Net.Mail;
@@ -16,6 +17,7 @@ namespace OmniLinkBridge
         public static string controller_key1;
         public static string controller_key2;
         public static string controller_name;
+        public static Guid controller_id;
 
         // Time Sync
         public static bool time_sync;
