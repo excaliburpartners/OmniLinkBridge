@@ -1,12 +1,16 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
-using OmniLinkBridge.Modules;
 using System.Collections.Generic;
 
 namespace OmniLinkBridge.MQTT.HomeAssistant
 {
     public class Device
     {
+        public Device(DeviceRegistry deviceRegistry)
+        {
+            device = deviceRegistry;
+        }
+
         [JsonConverter(typeof(StringEnumConverter))]
         public enum AvailabilityMode
         {
@@ -18,6 +22,9 @@ namespace OmniLinkBridge.MQTT.HomeAssistant
         public string unique_id { get; set; }
 
         public string name { get; set; }
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public string icon { get; set; }
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public string state_topic { get; set; }
@@ -32,6 +39,6 @@ namespace OmniLinkBridge.MQTT.HomeAssistant
         public AvailabilityMode? availability_mode { get; set; }
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
-        public DeviceRegistry device { get; set; } = MQTTModule.MqttDeviceRegistry;
+        public DeviceRegistry device { get; set; }
     }
 }

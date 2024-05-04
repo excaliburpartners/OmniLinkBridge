@@ -33,5 +33,11 @@
         fan_mode_command,
         hold_state,
         hold_command,
+        mute_state,
+        mute_command,
+        source_state,
+        source_command,
+        volume_state,
+        volume_command,
     }
 }

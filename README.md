@@ -326,6 +326,37 @@ PUB omnilink/lockX/command
 string lock, unlock
 ```
 
+### Audio Sources
+```
+SUB omnilink/sourceXX/name
+string Audio source name
+```
+
+### Audio Zones
+```
+SUB omnilink/audioXX/name
+string Audio zone name
+
+SUB omnilink/audioXX/state
+PUB omnilink/audioXX/command
+string OFF, ON
+note Use audio 0 to change all audio zones
+
+SUB omnilink/audioXX/mute_state
+PUB omnilink/audioXX/mute_command
+string OFF, ON
+note Use audio 0 to change all audio zones
+
+SUB omnilink/audioXX/source_state
+PUB omnilink/audioXX/source_command
+string Source name
+note Refer to omnilink/sourceXX/name
+
+SUB omnilink/audioXX/volume_state
+PUB omnilink/audioXX/volume_command
+int Level from 0 to 100 percent
+```
+
 ## Web API
 To test the web service API you can use your browser to view a page or PowerShell (see below) to change a value.
 

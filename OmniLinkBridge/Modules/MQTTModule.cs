@@ -34,10 +34,15 @@ namespace OmniLinkBridge.Modules
         private bool ControllerConnected { get; set; }
         private MessageProcessor MessageProcessor { get; set; }
 
+        private Dictionary<string, int> AudioSources { get; set; } = new Dictionary<string, int>();
+
         private readonly AutoResetEvent trigger = new AutoResetEvent(false);
 
         private const string ONLINE = "online";
         private const string OFFLINE = "offline";
+
+        private const string SECURE = "secure";
+        private const string TROUBLE = "trouble";
 
         public MQTTModule(OmniLinkII omni)
         {
@@ -51,9 +56,10 @@ namespace OmniLinkBridge.Modules
             OmniLink.OnButtonStatus += OmniLink_OnButtonStatus;
             OmniLink.OnMessageStatus += OmniLink_OnMessageStatus;
             OmniLink.OnLockStatus += OmniLink_OnLockStatus;
+            OmniLink.OnAudioZoneStatus += OmniLink_OnAudioZoneStatus;
             OmniLink.OnSystemStatus += OmniLink_OnSystemStatus;
 
-            MessageProcessor = new MessageProcessor(omni);
+            MessageProcessor = new MessageProcessor(omni, AudioSources, omni.Controller.CAP.numAudioZones);
         }
 
         public void Startup()
@@ -120,7 +126,10 @@ namespace OmniLinkBridge.Modules
                 Topic.dehumidify_command,
                 Topic.mode_command,
                 Topic.fan_mode_command,
-                Topic.hold_command
+                Topic.hold_command,
+                Topic.mute_command,
+                Topic.source_command,
+                Topic.volume_command
             };
 
             toSubscribe.ForEach((command) => MqttClient.SubscribeAsync(
@@ -171,6 +180,8 @@ namespace OmniLinkBridge.Modules
             PublishButtons();
             PublishMessages();
             PublishLocks();
+            PublishAudioSources();
+            PublishAudioZones();
 
             PublishControllerStatus(ONLINE);
             PublishAsync($"{Global.mqtt_prefix}/model", OmniLink.Controller.GetModelText());
@@ -190,10 +201,10 @@ namespace OmniLinkBridge.Modules
             PublishAsync($"{Global.mqtt_discovery_prefix}/binary_sensor/{Global.mqtt_prefix}/system_dcm/config",
                 JsonConvert.SerializeObject(SystemTroubleConfig("dcm", "DCM")));
 
-            PublishAsync(SystemTroubleTopic("phone"), OmniLink.TroublePhone ? "trouble" : "secure");
-            PublishAsync(SystemTroubleTopic("ac"), OmniLink.TroubleAC ? "trouble" : "secure");
-            PublishAsync(SystemTroubleTopic("battery"), OmniLink.TroubleBattery ? "trouble" : "secure");
-            PublishAsync(SystemTroubleTopic("dcm"), OmniLink.TroubleDCM ? "trouble" : "secure");
+            PublishAsync(SystemTroubleTopic("phone"), OmniLink.TroublePhone ? TROUBLE : SECURE);
+            PublishAsync(SystemTroubleTopic("ac"), OmniLink.TroubleAC ? TROUBLE : SECURE);
+            PublishAsync(SystemTroubleTopic("battery"), OmniLink.TroubleBattery ? TROUBLE : SECURE);
+            PublishAsync(SystemTroubleTopic("dcm"), OmniLink.TroubleDCM ? TROUBLE : SECURE);
         }
 
         public string SystemTroubleTopic(string type)
@@ -203,14 +214,14 @@ namespace OmniLinkBridge.Modules
 
         public BinarySensor SystemTroubleConfig(string type, string name)
         {
-            return new BinarySensor
+            return new BinarySensor(MQTTModule.MqttDeviceRegistry)
             {
                 unique_id = $"{Global.mqtt_prefix}system{type}",
                 name = $"{Global.mqtt_discovery_name_prefix}System {name}",
                 state_topic = SystemTroubleTopic(type),
                 device_class = BinarySensor.DeviceClass.problem,
-                payload_off = "secure",
-                payload_on = "trouble"
+                payload_off = SECURE,
+                payload_on = TROUBLE
             };
         }
 
@@ -399,6 +410,7 @@ namespace OmniLinkBridge.Modules
                 {
                     PublishAsync(button.ToTopic(Topic.name), null);
                     PublishAsync($"{Global.mqtt_discovery_prefix}/switch/{Global.mqtt_prefix}/button{i}/config", null);
+                    PublishAsync($"{Global.mqtt_discovery_prefix}/button/{Global.mqtt_prefix}/button{i}/config", null);
                     continue;
                 }
 
@@ -406,8 +418,21 @@ namespace OmniLinkBridge.Modules
                 PublishAsync(button.ToTopic(Topic.state), "OFF");
 
                 PublishAsync(button.ToTopic(Topic.name), button.Name);
-                PublishAsync($"{Global.mqtt_discovery_prefix}/switch/{Global.mqtt_prefix}/button{i}/config",
-                    JsonConvert.SerializeObject(button.ToConfig()));
+
+                if (Global.mqtt_discovery_button_type == typeof(Switch))
+                {
+                    log.Information("See {setting} for new option when publishing {type}", "mqtt_discovery_button_type", "buttons");
+
+                    PublishAsync($"{Global.mqtt_discovery_prefix}/button/{Global.mqtt_prefix}/button{i}/config", null);
+                    PublishAsync($"{Global.mqtt_discovery_prefix}/switch/{Global.mqtt_prefix}/button{i}/config",
+                        JsonConvert.SerializeObject(button.ToConfigSwitch()));
+                }
+                else if (Global.mqtt_discovery_button_type == typeof(Button))
+                {
+                    PublishAsync($"{Global.mqtt_discovery_prefix}/switch/{Global.mqtt_prefix}/button{i}/config", null);
+                    PublishAsync($"{Global.mqtt_discovery_prefix}/button/{Global.mqtt_prefix}/button{i}/config",
+                        JsonConvert.SerializeObject(button.ToConfigButton()));
+                }
             }
         }
 
@@ -452,6 +477,74 @@ namespace OmniLinkBridge.Modules
                 PublishAsync($"{Global.mqtt_discovery_prefix}/lock/{Global.mqtt_prefix}/lock{i}/config",
                     JsonConvert.SerializeObject(reader.ToConfig()));
             }
+        }
+
+        private void PublishAudioSources()
+        {
+            log.Debug("Publishing {type}", "audio sources");
+
+            for (ushort i = 1; i <= OmniLink.Controller.AudioSources.Count; i++)
+            {
+                clsAudioSource audioSource = OmniLink.Controller.AudioSources[i];
+
+                if (audioSource.DefaultProperties == true)
+                {
+                    PublishAsync(audioSource.ToTopic(Topic.name), null);
+                    continue;
+                }
+
+                PublishAsync(audioSource.ToTopic(Topic.name), audioSource.rawName);
+
+                if (AudioSources.ContainsKey(audioSource.rawName))
+                {
+                    log.Warning("Duplicate audio source name {name}", audioSource.rawName);
+                    continue;
+                }
+
+                AudioSources.Add(audioSource.rawName, i);
+            }
+        }
+
+        private void PublishAudioZones()
+        {
+            log.Debug("Publishing {type}", "audio zones");
+
+            for (ushort i = 1; i <= OmniLink.Controller.AudioZones.Count; i++)
+            {
+                clsAudioZone audioZone = OmniLink.Controller.AudioZones[i];
+
+                if (audioZone.DefaultProperties == true)
+                {
+                    PublishAsync(audioZone.ToTopic(Topic.name), null);
+                    PublishAsync($"{Global.mqtt_discovery_prefix}/switch/{Global.mqtt_prefix}/audio{i}/config", null);
+                    PublishAsync($"{Global.mqtt_discovery_prefix}/switch/{Global.mqtt_prefix}/audio{i}mute/config", null);
+                    PublishAsync($"{Global.mqtt_discovery_prefix}/select/{Global.mqtt_prefix}/audio{i}source/config", null);
+                    PublishAsync($"{Global.mqtt_discovery_prefix}/number/{Global.mqtt_prefix}/audio{i}volume/config", null);
+                    continue;
+                }
+
+                PublishAudioZoneStateAsync(audioZone);
+
+                PublishAsync(audioZone.ToTopic(Topic.name), audioZone.rawName);
+                PublishAsync($"{Global.mqtt_discovery_prefix}/switch/{Global.mqtt_prefix}/audio{i}/config",
+                    JsonConvert.SerializeObject(audioZone.ToConfig()));
+                PublishAsync($"{Global.mqtt_discovery_prefix}/switch/{Global.mqtt_prefix}/audio{i}mute/config",
+                    JsonConvert.SerializeObject(audioZone.ToConfigMute()));
+                PublishAsync($"{Global.mqtt_discovery_prefix}/select/{Global.mqtt_prefix}/audio{i}source/config",
+                    JsonConvert.SerializeObject(audioZone.ToConfigSource(new List<string>(AudioSources.Keys))));
+                PublishAsync($"{Global.mqtt_discovery_prefix}/number/{Global.mqtt_prefix}/audio{i}volume/config",
+                    JsonConvert.SerializeObject(audioZone.ToConfigVolume()));
+            }
+
+            PublishAsync($"{Global.mqtt_discovery_prefix}/button/{Global.mqtt_prefix}/audio0/config",
+                JsonConvert.SerializeObject(new Button(MqttDeviceRegistry)
+                {
+                    unique_id = $"{Global.mqtt_prefix}audio0",
+                    name = Global.mqtt_discovery_name_prefix + "Audio All Off",
+                    icon = "mdi:speaker",
+                    command_topic = $"{Global.mqtt_prefix}/audio0/{Topic.command}",
+                    payload_press = "OFF"
+                }));
         }
 
         private void Omnilink_OnAreaStatus(object sender, AreaStatusEventArgs e)
@@ -547,19 +640,27 @@ namespace OmniLinkBridge.Modules
             PublishLockStateAsync(e.Reader);
         }
 
+        private void OmniLink_OnAudioZoneStatus(object sender, AudioZoneStatusEventArgs e)
+        {
+            if (!MqttClient.IsConnected)
+                return;
+
+            PublishAudioZoneStateAsync(e.AudioZone);
+        }
+
         private void OmniLink_OnSystemStatus(object sender, SystemStatusEventArgs e)
         {
             if (!MqttClient.IsConnected)
                 return;
 
             if(e.Type == SystemEventType.Phone)
-                PublishAsync(SystemTroubleTopic("phone"), e.Trouble ? "trouble" : "secure");
+                PublishAsync(SystemTroubleTopic("phone"), e.Trouble ? TROUBLE : SECURE);
             else if (e.Type == SystemEventType.AC)
-                PublishAsync(SystemTroubleTopic("ac"), e.Trouble ? "trouble" : "secure");
+                PublishAsync(SystemTroubleTopic("ac"), e.Trouble ? TROUBLE : SECURE);
             else if (e.Type == SystemEventType.Button)
-                PublishAsync(SystemTroubleTopic("battery"), e.Trouble ? "trouble" : "secure");
+                PublishAsync(SystemTroubleTopic("battery"), e.Trouble ? TROUBLE : SECURE);
             else if (e.Type == SystemEventType.DCM)
-                PublishAsync(SystemTroubleTopic("dcm"), e.Trouble ? "trouble" : "secure");
+                PublishAsync(SystemTroubleTopic("dcm"), e.Trouble ? TROUBLE : SECURE);
         }
 
         private void PublishAreaState(clsArea area)
@@ -626,6 +727,15 @@ namespace OmniLinkBridge.Modules
         private Task PublishLockStateAsync(clsAccessControlReader reader)
         {
             return PublishAsync(reader.ToTopic(Topic.state), reader.ToState());
+        }
+
+        private void PublishAudioZoneStateAsync(clsAudioZone audioZone)
+        {
+            PublishAsync(audioZone.ToTopic(Topic.state), audioZone.ToState());
+            PublishAsync(audioZone.ToTopic(Topic.mute_state), audioZone.ToMuteState());
+            PublishAsync(audioZone.ToTopic(Topic.source_state), 
+                OmniLink.Controller.AudioSources[audioZone.ToSourceState()].rawName);
+            PublishAsync(audioZone.ToTopic(Topic.volume_state), audioZone.ToVolumeState().ToString());
         }
 
         private Task PublishAsync(string topic, string payload)

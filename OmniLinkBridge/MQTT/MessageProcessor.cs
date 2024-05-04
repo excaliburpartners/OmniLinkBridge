@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Text.RegularExpressions;
+using System.Threading;
 
 namespace OmniLinkBridge.MQTT
 {
@@ -15,11 +16,18 @@ namespace OmniLinkBridge.MQTT
 
         private readonly Regex regexTopic = new Regex(Global.mqtt_prefix + "/([A-Za-z]+)([0-9]+)/(.*)", RegexOptions.Compiled);
 
-        private IOmniLinkII OmniLink { get; set; }
+        private readonly int[] audioMuteVolumes;
+        private const int VOLUME_DEFAULT = 10;
 
-        public MessageProcessor(IOmniLinkII omni)
+        private IOmniLinkII OmniLink { get; }
+        private Dictionary<string, int> AudioSources { get; }
+
+        public MessageProcessor(IOmniLinkII omni, Dictionary<string, int> audioSources, int numAudioZones)
         {
             OmniLink = omni;
+            AudioSources = audioSources;
+
+            audioMuteVolumes = new int[numAudioZones];
         }
 
         public void Process(string messageTopic, string payload)
@@ -29,8 +37,8 @@ namespace OmniLinkBridge.MQTT
             if (!match.Success)
                 return;
 
-            if (!Enum.TryParse(match.Groups[1].Value, true, out CommandTypes type) 
-                || !Enum.TryParse(match.Groups[3].Value, true, out Topic topic) 
+            if (!Enum.TryParse(match.Groups[1].Value, true, out CommandTypes type)
+                || !Enum.TryParse(match.Groups[3].Value, true, out Topic topic)
                 || !ushort.TryParse(match.Groups[2].Value, out ushort id))
                 return;
 
@@ -51,6 +59,8 @@ namespace OmniLinkBridge.MQTT
                 ProcessMessageReceived(OmniLink.Controller.Messages[id], topic, payload);
             else if (type == CommandTypes.@lock && id <= OmniLink.Controller.AccessControlReaders.Count)
                 ProcessLockReceived(OmniLink.Controller.AccessControlReaders[id], topic, payload);
+            else if (type == CommandTypes.audio && id <= OmniLink.Controller.AudioZones.Count)
+                ProcessAudioReceived(OmniLink.Controller.AudioZones[id], topic, payload);
         }
 
         private static readonly IDictionary<AreaCommands, enuUnitCommand> AreaMapping = new Dictionary<AreaCommands, enuUnitCommand>
@@ -78,7 +88,7 @@ namespace OmniLinkBridge.MQTT
                 {
                     string sCode = parser.Code.ToString();
 
-                    if(sCode.Length != 4)
+                    if (sCode.Length != 4)
                     {
                         log.Warning("SetArea: {id}, Invalid security code: must be 4 digits", area.Number);
                         return;
@@ -98,7 +108,7 @@ namespace OmniLinkBridge.MQTT
 
                         var validateCode = new clsOL2MsgValidateCode(OmniLink.Controller.Connection, B);
 
-                        if(validateCode.AuthorityLevel == 0)
+                        if (validateCode.AuthorityLevel == 0)
                         {
                             log.Warning("SetArea: {id}, Invalid security code: validation failed", area.Number);
                             return;
@@ -143,7 +153,7 @@ namespace OmniLinkBridge.MQTT
         {
             AreaCommandCode parser = payload.ToCommandCode();
 
-            if (parser.Success && command == Topic.command && Enum.TryParse(parser.Command, true, out ZoneCommands cmd) && 
+            if (parser.Success && command == Topic.command && Enum.TryParse(parser.Command, true, out ZoneCommands cmd) &&
                 !(zone.Number == 0 && cmd == ZoneCommands.bypass))
             {
                 if (zone.Number == 0)
@@ -176,7 +186,7 @@ namespace OmniLinkBridge.MQTT
                 log.Debug("SetUnit: {id} to {value}", unit.Number, payload);
                 OmniLink.SendCommand(enuUnitCommand.Set, BitConverter.GetBytes(flagValue)[0], (ushort)unit.Number);
             }
-            else if (unit.Type != enuOL2UnitType.Output && 
+            else if (unit.Type != enuOL2UnitType.Output &&
                 command == Topic.brightness_command && int.TryParse(payload, out int unitValue))
             {
                 log.Debug("SetUnit: {id} to {value}%", unit.Number, payload);
@@ -187,7 +197,7 @@ namespace OmniLinkBridge.MQTT
                 // which will cause light to go to 100% brightness
                 unit.Status = (byte)(100 + unitValue);
             }
-            else if (unit.Type != enuOL2UnitType.Output && 
+            else if (unit.Type != enuOL2UnitType.Output &&
                 command == Topic.scene_command && char.TryParse(payload, out char scene))
             {
                 log.Debug("SetUnit: {id} to {value}", unit.Number, payload);
@@ -313,6 +323,85 @@ namespace OmniLinkBridge.MQTT
                 log.Debug("SetLock: {id} to {value}", reader.Number, payload);
 
                 OmniLink.SendCommand(LockMapping[cmd], 0, (ushort)reader.Number);
+            }
+        }
+
+        private void ProcessAudioReceived(clsAudioZone audioZone, Topic command, string payload)
+        {
+            if (command == Topic.command && Enum.TryParse(payload, true, out UnitCommands cmd))
+            {
+                if (audioZone.Number == 0)
+                    log.Debug("SetAudio: 0 implies all audio zones will be changed");
+
+                log.Debug("SetAudio: {id} to {value}", audioZone.Number, payload);
+
+                OmniLink.SendCommand(enuUnitCommand.AudioZone, (byte)cmd, (ushort)audioZone.Number);
+
+                // Send power ON twice to workaround Russound standby
+                if(cmd == UnitCommands.ON)
+                {
+                    Thread.Sleep(500);
+                    OmniLink.SendCommand(enuUnitCommand.AudioZone, (byte)cmd, (ushort)audioZone.Number);
+                }
+            }
+            else if (command == Topic.mute_command && Enum.TryParse(payload, true, out UnitCommands mute))
+            {
+                if (audioZone.Number == 0)
+                {
+                    if (Global.mqtt_audio_local_mute)
+                    {
+                        log.Warning("SetAudioMute: 0 not supported with local mute");
+                        return;
+                    }
+                    else
+                        log.Debug("SetAudioMute: 0 implies all audio zones will be changed");
+                }
+
+                if (Global.mqtt_audio_local_mute)
+                {
+                    if (mute == UnitCommands.ON)
+                    {
+                        log.Debug("SetAudioMute: {id} local mute, previous volume {level}",
+                            audioZone.Number, audioZone.Volume);
+                        audioMuteVolumes[audioZone.Number] = audioZone.Volume;
+
+                        OmniLink.SendCommand(enuUnitCommand.AudioVolume, 0, (ushort)audioZone.Number);
+                    }
+                    else
+                    {
+                        if (audioMuteVolumes[audioZone.Number] == 0)
+                        {
+                            log.Debug("SetAudioMute: {id} local mute, defaulting to volume {level}",
+                                audioZone.Number, VOLUME_DEFAULT);
+                            audioMuteVolumes[audioZone.Number] = VOLUME_DEFAULT;
+                        }
+                        else
+                        {
+                            log.Debug("SetAudioMute: {id} local mute, restoring to volume {level}",
+                                audioZone.Number, audioMuteVolumes[audioZone.Number]);
+                        }
+
+                        OmniLink.SendCommand(enuUnitCommand.AudioVolume, (byte)audioMuteVolumes[audioZone.Number], (ushort)audioZone.Number);
+                    }
+                }
+                else
+                {
+                    log.Debug("SetAudioMute: {id} to {value}", audioZone.Number, payload);
+
+                    OmniLink.SendCommand(enuUnitCommand.AudioZone, (byte)(mute + 2), (ushort)audioZone.Number);
+                }
+            }
+            else if (command == Topic.source_command && AudioSources.TryGetValue(payload, out int source))
+            {
+                log.Debug("SetAudioSource: {id} to {value}", audioZone.Number, payload);
+
+                OmniLink.SendCommand(enuUnitCommand.AudioSource, (byte)source, (ushort)audioZone.Number);
+            }
+            else if (command == Topic.volume_command && int.TryParse(payload, out int volume))
+            {
+                log.Debug("SetAudioVolume: {id} to {value}", audioZone.Number, payload);
+
+                OmniLink.SendCommand(enuUnitCommand.AudioVolume, (byte)volume, (ushort)audioZone.Number);
             }
         }
     }

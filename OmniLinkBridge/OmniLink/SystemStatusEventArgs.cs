@@ -1,5 +1,4 @@
-﻿using HAI_Shared;
-using System;
+﻿using System;
 
 namespace OmniLinkBridge.OmniLink
 {

@@ -41,6 +41,7 @@ namespace OmniLinkBridge.Modules
         public event EventHandler<ButtonStatusEventArgs> OnButtonStatus;
         public event EventHandler<MessageStatusEventArgs> OnMessageStatus;
         public event EventHandler<LockStatusEventArgs> OnLockStatus;
+        public event EventHandler<AudioZoneStatusEventArgs> OnAudioZoneStatus;
         public event EventHandler<SystemStatusEventArgs> OnSystemStatus;
 
         private readonly AutoResetEvent trigger = new AutoResetEvent(false);
@@ -86,6 +87,7 @@ namespace OmniLinkBridge.Modules
 
         public bool SendCommand(enuUnitCommand Cmd, byte Par, ushort Pr2)
         {
+            log.Verbose("Sending: {command}, Par1: {par1}, Par2: {par2}", Cmd, Par, Pr2);
             return Controller.SendCommand(Cmd, Par, Pr2);
         }
 
@@ -216,6 +218,8 @@ namespace OmniLinkBridge.Modules
             await GetNamed(enuObjectType.Message);
             await GetNamed(enuObjectType.Button);
             await GetNamed(enuObjectType.AccessControlReader);
+            await GetNamed(enuObjectType.AudioSource);
+            await GetNamed(enuObjectType.AudioZone);
         }
 
         private async Task GetSystemFormats()
@@ -347,6 +351,14 @@ namespace OmniLinkBridge.Modules
                             case enuObjectType.AccessControlReader:
                                 Controller.AccessControlReaders.CopyProperties(MSG);
                                 break;
+                            case enuObjectType.AudioSource:
+                                Controller.AudioSources.CopyProperties(MSG);
+                                Controller.AudioSources[MSG.ObjectNumber].rawName = MSG.ObjectName;
+                                break;
+                            case enuObjectType.AudioZone:
+                                Controller.AudioZones.CopyProperties(MSG);
+                                Controller.AudioZones[MSG.ObjectNumber].rawName = MSG.ObjectName;
+                                break;
                             default:
                                 break;
                         }
@@ -427,6 +439,8 @@ namespace OmniLinkBridge.Modules
                     case enuOmniLink2MessageType.CmdExtSecurity:
                         break;
                     case enuOmniLink2MessageType.AudioSourceStatus:
+                        // Ignore audio source metadata status updates
+                        handled = true;
                         break;
                     case enuOmniLink2MessageType.SystemEvents:
                         HandleUnsolicitedSystemEvent(B);
@@ -692,6 +706,17 @@ namespace OmniLinkBridge.Modules
                         {
                             ID = MSG.ObjectNumber(i),
                             Reader = Controller.AccessControlReaders[MSG.ObjectNumber(i)]
+                        });
+                    }
+                    break;
+                case enuObjectType.AudioZone:
+                    for (byte i = 0; i < MSG.AudioZoneStatusCount(); i++)
+                    {
+                        Controller.AudioZones[MSG.ObjectNumber(i)].CopyExtendedStatus(MSG, i);
+                        OnAudioZoneStatus?.Invoke(this, new AudioZoneStatusEventArgs()
+                        {
+                            ID = MSG.ObjectNumber(i),
+                            AudioZone = Controller.AudioZones[MSG.ObjectNumber(i)]
                         });
                     }
                     break;

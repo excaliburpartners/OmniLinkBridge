@@ -1,10 +1,14 @@
 ﻿using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
 
 namespace OmniLinkBridge.MQTT.HomeAssistant
 {
     public class Alarm : Device
     {
+        public Alarm(DeviceRegistry deviceRegistry) : base(deviceRegistry)
+        {
+
+        }
+
         public string command_topic { get; set; }
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]

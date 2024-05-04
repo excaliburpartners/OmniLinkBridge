@@ -1,5 +1,6 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using OmniLinkBridge;
+using OmniLinkBridge.MQTT.HomeAssistant;
 using System;
 using System.Collections.Generic;
 using ha = OmniLinkBridge.MQTT.HomeAssistant;
@@ -36,8 +37,8 @@ namespace OmniLinkBridgeTest
             Settings.LoadSettings(lines.ToArray());
             Assert.AreEqual("1.1.1.1", Global.controller_address);
             Assert.AreEqual(4369, Global.controller_port);
-            Assert.AreEqual("00-00-00-00-00-00-00-01", Global.controller_key1);
-            Assert.AreEqual("00-00-00-00-00-00-00-02", Global.controller_key2);
+            Assert.AreEqual("0000000000000001", Global.controller_key1);
+            Assert.AreEqual("0000000000000002", Global.controller_key2);
             Assert.AreEqual("MyController", Global.controller_name);
         }
 
@@ -197,6 +198,17 @@ namespace OmniLinkBridgeTest
                 Global.mqtt_discovery_override_unit.TryGetValue(pair.Key, out OmniLinkBridge.MQTT.OverrideUnit value);
                 Assert.AreEqual(override_unit[pair.Key].type, value.type);
             }
+
+            Assert.AreEqual(Global.mqtt_discovery_button_type, typeof(Switch));
+
+            // Test additional settings
+            lines.AddRange(new string[]
+            {
+                "mqtt_discovery_button_type = button"
+            });
+            Settings.LoadSettings(lines.ToArray());
+
+            Assert.AreEqual(Global.mqtt_discovery_button_type, typeof(Button));
         }
 
         [TestMethod]

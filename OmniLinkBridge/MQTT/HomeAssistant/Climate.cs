@@ -4,6 +4,11 @@ namespace OmniLinkBridge.MQTT.HomeAssistant
 {
     public class Climate : Device
     {
+        public Climate(DeviceRegistry deviceRegistry) : base(deviceRegistry)
+        {
+
+        }
+
         public string status { get; set; }
 
         public string action_topic { get; set; }

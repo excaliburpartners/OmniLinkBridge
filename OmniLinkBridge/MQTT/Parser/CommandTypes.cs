@@ -8,6 +8,7 @@
         thermostat,
         button,
         message,
-        @lock
+        @lock,
+        audio
     }
 }

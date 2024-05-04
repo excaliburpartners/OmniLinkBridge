@@ -34,6 +34,7 @@ namespace OmniLinkBridge
         public static bool verbose_unit;
         public static bool verbose_message;
         public static bool verbose_lock;
+        public static bool verbose_audio;
 
         // mySQL Logging
         public static bool mysql_logging;
@@ -59,6 +60,8 @@ namespace OmniLinkBridge
         public static HashSet<int> mqtt_discovery_area_code_required;
         public static ConcurrentDictionary<int, MQTT.OverrideZone> mqtt_discovery_override_zone;
         public static ConcurrentDictionary<int, MQTT.OverrideUnit> mqtt_discovery_override_unit;
+        public static Type mqtt_discovery_button_type;
+        public static bool mqtt_audio_local_mute;
 
         // Notifications
         public static bool notify_area;

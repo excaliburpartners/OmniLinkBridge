@@ -3,6 +3,7 @@ using Newtonsoft.Json;
 using System.Collections.Generic;
 using OmniLinkBridge.MQTT.HomeAssistant;
 using OmniLinkBridge.MQTT.Parser;
+using OmniLinkBridge.Modules;
 
 namespace OmniLinkBridge.MQTT
 {
@@ -15,7 +16,7 @@ namespace OmniLinkBridge.MQTT
 
         public static Alarm ToConfig(this clsArea area)
         {
-            Alarm ret = new Alarm
+            Alarm ret = new Alarm(MQTTModule.MqttDeviceRegistry)
             {
                 unique_id = $"{Global.mqtt_prefix}area{area.Number}",
                 name = Global.mqtt_discovery_name_prefix + area.Name,
@@ -83,7 +84,7 @@ namespace OmniLinkBridge.MQTT
 
         public static BinarySensor ToConfigBurglary(this clsArea area)
         {
-            BinarySensor ret = new BinarySensor
+            BinarySensor ret = new BinarySensor(MQTTModule.MqttDeviceRegistry)
             {
                 unique_id = $"{Global.mqtt_prefix}area{area.Number}burglary",
                 name = $"{Global.mqtt_discovery_name_prefix}{area.Name} Burglary",
@@ -96,7 +97,7 @@ namespace OmniLinkBridge.MQTT
 
         public static BinarySensor ToConfigFire(this clsArea area)
         {
-            BinarySensor ret = new BinarySensor
+            BinarySensor ret = new BinarySensor(MQTTModule.MqttDeviceRegistry)
             {
                 unique_id = $"{Global.mqtt_prefix}area{area.Number}fire",
                 name = $"{Global.mqtt_discovery_name_prefix}{area.Name} Fire",
@@ -109,7 +110,7 @@ namespace OmniLinkBridge.MQTT
 
         public static BinarySensor ToConfigGas(this clsArea area)
         {
-            BinarySensor ret = new BinarySensor
+            BinarySensor ret = new BinarySensor(MQTTModule.MqttDeviceRegistry)
             {
                 unique_id = $"{Global.mqtt_prefix}area{area.Number}gas",
                 name = $"{Global.mqtt_discovery_name_prefix}{area.Name} Gas",
@@ -122,7 +123,7 @@ namespace OmniLinkBridge.MQTT
 
         public static BinarySensor ToConfigAux(this clsArea area)
         {
-            BinarySensor ret = new BinarySensor
+            BinarySensor ret = new BinarySensor(MQTTModule.MqttDeviceRegistry)
             {
                 unique_id = $"{Global.mqtt_prefix}area{area.Number}auxiliary",
                 name = $"{Global.mqtt_discovery_name_prefix}{area.Name} Auxiliary",
@@ -135,7 +136,7 @@ namespace OmniLinkBridge.MQTT
 
         public static BinarySensor ToConfigFreeze(this clsArea area)
         {
-            BinarySensor ret = new BinarySensor
+            BinarySensor ret = new BinarySensor(MQTTModule.MqttDeviceRegistry)
             {
                 unique_id = $"{Global.mqtt_prefix}area{area.Number}freeze",
                 name = $"{Global.mqtt_discovery_name_prefix}{area.Name} Freeze",
@@ -148,7 +149,7 @@ namespace OmniLinkBridge.MQTT
 
         public static BinarySensor ToConfigWater(this clsArea area)
         {
-            BinarySensor ret = new BinarySensor
+            BinarySensor ret = new BinarySensor(MQTTModule.MqttDeviceRegistry)
             {
                 unique_id = $"{Global.mqtt_prefix}area{area.Number}water",
                 name = $"{Global.mqtt_discovery_name_prefix}{area.Name} Water",
@@ -161,7 +162,7 @@ namespace OmniLinkBridge.MQTT
 
         public static BinarySensor ToConfigDuress(this clsArea area)
         {
-            BinarySensor ret = new BinarySensor
+            BinarySensor ret = new BinarySensor(MQTTModule.MqttDeviceRegistry)
             {
                 unique_id = $"{Global.mqtt_prefix}area{area.Number}duress",
                 name = $"{Global.mqtt_discovery_name_prefix}{area.Name} Duress",
@@ -174,7 +175,7 @@ namespace OmniLinkBridge.MQTT
 
         public static BinarySensor ToConfigTemp(this clsArea area)
         {
-            BinarySensor ret = new BinarySensor
+            BinarySensor ret = new BinarySensor(MQTTModule.MqttDeviceRegistry)
             {
                 unique_id = $"{Global.mqtt_prefix}area{area.Number}temp",
                 name = $"{Global.mqtt_discovery_name_prefix}{area.Name} Temp",
@@ -219,7 +220,7 @@ namespace OmniLinkBridge.MQTT
 
         public static Sensor ToConfigTemp(this clsZone zone, enuTempFormat format)
         {
-            Sensor ret = new Sensor
+            Sensor ret = new Sensor(MQTTModule.MqttDeviceRegistry)
             {
                 unique_id = $"{Global.mqtt_prefix}zone{zone.Number}temp",
                 name = $"{Global.mqtt_discovery_name_prefix}{zone.Name} Temp",
@@ -232,7 +233,7 @@ namespace OmniLinkBridge.MQTT
 
         public static Sensor ToConfigHumidity(this clsZone zone)
         {
-            Sensor ret = new Sensor
+            Sensor ret = new Sensor(MQTTModule.MqttDeviceRegistry)
             {
                 unique_id = $"{Global.mqtt_prefix}zone{zone.Number}humidity",
                 name = $"{Global.mqtt_discovery_name_prefix}{zone.Name} Humidity",
@@ -245,7 +246,7 @@ namespace OmniLinkBridge.MQTT
 
         public static Sensor ToConfigSensor(this clsZone zone)
         {
-            Sensor ret = new Sensor
+            Sensor ret = new Sensor(MQTTModule.MqttDeviceRegistry)
             {
                 unique_id = $"{Global.mqtt_prefix}zone{zone.Number}",
                 name = Global.mqtt_discovery_name_prefix + zone.Name
@@ -287,7 +288,7 @@ namespace OmniLinkBridge.MQTT
 
         public static Switch ToConfigSwitch(this clsZone zone)
         {
-            Switch ret = new Switch
+            Switch ret = new Switch(MQTTModule.MqttDeviceRegistry)
             {
                 unique_id = $"{Global.mqtt_prefix}zone{zone.Number}switch",
                 name = $"{Global.mqtt_discovery_name_prefix}{zone.Name} Bypass",
@@ -302,7 +303,7 @@ namespace OmniLinkBridge.MQTT
 
         public static BinarySensor ToConfig(this clsZone zone)
         {
-            BinarySensor ret = new BinarySensor
+            BinarySensor ret = new BinarySensor(MQTTModule.MqttDeviceRegistry)
             {
                 unique_id = $"{Global.mqtt_prefix}zone{zone.Number}binary",
                 name = Global.mqtt_discovery_name_prefix + zone.Name
@@ -377,7 +378,7 @@ namespace OmniLinkBridge.MQTT
 
         public static Light ToConfig(this clsUnit unit)
         {
-            Light ret = new Light
+            Light ret = new Light(MQTTModule.MqttDeviceRegistry)
             {
                 unique_id = $"{Global.mqtt_prefix}unit{unit.Number}light",
                 name = Global.mqtt_discovery_name_prefix + unit.Name,
@@ -391,7 +392,7 @@ namespace OmniLinkBridge.MQTT
 
         public static Switch ToConfigSwitch(this clsUnit unit)
         {
-            Switch ret = new Switch
+            Switch ret = new Switch(MQTTModule.MqttDeviceRegistry)
             {
                 unique_id = $"{Global.mqtt_prefix}unit{unit.Number}switch",
                 name = Global.mqtt_discovery_name_prefix + unit.Name,
@@ -403,7 +404,7 @@ namespace OmniLinkBridge.MQTT
 
         public static Number ToConfigNumber(this clsUnit unit)
         {
-            Number ret = new Number
+            Number ret = new Number(MQTTModule.MqttDeviceRegistry)
             {
                 unique_id = $"{Global.mqtt_prefix}unit{unit.Number}number",
                 name = Global.mqtt_discovery_name_prefix + unit.Name,
@@ -446,7 +447,7 @@ namespace OmniLinkBridge.MQTT
 
         public static Sensor ToConfigTemp(this clsThermostat thermostat, enuTempFormat format)
         {
-            Sensor ret = new Sensor
+            Sensor ret = new Sensor(MQTTModule.MqttDeviceRegistry)
             {
                 unique_id = $"{Global.mqtt_prefix}thermostat{thermostat.Number}temp",
                 name = $"{Global.mqtt_discovery_name_prefix}{thermostat.Name} Temp",
@@ -459,7 +460,7 @@ namespace OmniLinkBridge.MQTT
 
         public static Number ToConfigHumidify(this clsThermostat thermostat)
         {
-            Number ret = new Number
+            Number ret = new Number(MQTTModule.MqttDeviceRegistry)
             {
                 unique_id = $"{Global.mqtt_prefix}thermostat{thermostat.Number}humidify",
                 name = $"{Global.mqtt_discovery_name_prefix}{thermostat.Name} Humidify",
@@ -472,7 +473,7 @@ namespace OmniLinkBridge.MQTT
 
         public static Number ToConfigDehumidify(this clsThermostat thermostat)
         {
-            Number ret = new Number
+            Number ret = new Number(MQTTModule.MqttDeviceRegistry)
             {
                 unique_id = $"{Global.mqtt_prefix}thermostat{thermostat.Number}dehumidify",
                 name = $"{Global.mqtt_discovery_name_prefix}{thermostat.Name} Dehumidify",
@@ -485,7 +486,7 @@ namespace OmniLinkBridge.MQTT
 
         public static Sensor ToConfigHumidity(this clsThermostat thermostat)
         {
-            Sensor ret = new Sensor
+            Sensor ret = new Sensor(MQTTModule.MqttDeviceRegistry)
             {
                 unique_id = $"{Global.mqtt_prefix}thermostat{thermostat.Number}humidity",
                 name = $"{Global.mqtt_discovery_name_prefix}{thermostat.Name} Humidity",
@@ -498,7 +499,7 @@ namespace OmniLinkBridge.MQTT
 
         public static Climate ToConfig(this clsThermostat thermostat, enuTempFormat format)
         {
-            Climate ret = new Climate
+            Climate ret = new Climate(MQTTModule.MqttDeviceRegistry)
             {
                 unique_id = $"{Global.mqtt_prefix}thermostat{thermostat.Number}",
                 name = Global.mqtt_discovery_name_prefix + thermostat.Name,
@@ -579,14 +580,26 @@ namespace OmniLinkBridge.MQTT
             return $"{Global.mqtt_prefix}/button{button.Number}/{topic}";
         }
 
-        public static Switch ToConfig(this clsButton button)
+        public static Switch ToConfigSwitch(this clsButton button)
         {
-            Switch ret = new Switch
+            Switch ret = new Switch(MQTTModule.MqttDeviceRegistry)
             {
                 unique_id = $"{Global.mqtt_prefix}button{button.Number}",
                 name = Global.mqtt_discovery_name_prefix + button.Name,
                 state_topic = button.ToTopic(Topic.state),
                 command_topic = button.ToTopic(Topic.command)
+            };
+            return ret;
+        }
+
+        public static Button ToConfigButton(this clsButton button)
+        {
+            Button ret = new Button(MQTTModule.MqttDeviceRegistry)
+            {
+                unique_id = $"{Global.mqtt_prefix}button{button.Number}",
+                name = Global.mqtt_discovery_name_prefix + button.Name,
+                command_topic = button.ToTopic(Topic.command),
+                payload_press = "ON"
             };
             return ret;
         }
@@ -613,7 +626,7 @@ namespace OmniLinkBridge.MQTT
 
         public static Lock ToConfig(this clsAccessControlReader reader)
         {
-            Lock ret = new Lock
+            Lock ret = new Lock(MQTTModule.MqttDeviceRegistry)
             {
                 unique_id = $"{Global.mqtt_prefix}lock{reader.Number}",
                 name = Global.mqtt_discovery_name_prefix + reader.Name,
@@ -634,6 +647,92 @@ namespace OmniLinkBridge.MQTT
                 return "locked";
             else
                 return "unlocked";
+        }
+
+        public static string ToTopic(this clsAudioSource audioSource, Topic topic)
+        {
+            return $"{Global.mqtt_prefix}/source{audioSource.Number}/{topic}";
+        }
+
+        public static string ToTopic(this clsAudioZone audioZone, Topic topic)
+        {
+            return $"{Global.mqtt_prefix}/audio{audioZone.Number}/{topic}";
+        }
+
+        public static Switch ToConfig(this clsAudioZone audioZone)
+        {
+            Switch ret = new Switch(MQTTModule.MqttDeviceRegistry)
+            {
+                unique_id = $"{Global.mqtt_prefix}audio{audioZone.Number}",
+                name = Global.mqtt_discovery_name_prefix + audioZone.rawName,
+                icon = "mdi:speaker",
+                state_topic = audioZone.ToTopic(Topic.state),
+                command_topic = audioZone.ToTopic(Topic.command)
+            };
+            return ret;
+        }
+
+        public static string ToState(this clsAudioZone audioZone)
+        {
+            return audioZone.Power ? "ON" : "OFF";
+        }
+
+        public static Switch ToConfigMute(this clsAudioZone audioZone)
+        {
+            Switch ret = new Switch(MQTTModule.MqttDeviceRegistry)
+            {
+                unique_id = $"{Global.mqtt_prefix}audio{audioZone.Number}mute",
+                name = $"{Global.mqtt_discovery_name_prefix}{audioZone.rawName} Mute",
+                icon = "mdi:volume-mute",
+                state_topic = audioZone.ToTopic(Topic.mute_state),
+                command_topic = audioZone.ToTopic(Topic.mute_command)
+            };
+            return ret;
+        }
+
+        public static string ToMuteState(this clsAudioZone audioZone)
+        {
+            if(Global.mqtt_audio_local_mute)
+                return audioZone.Volume == 0 ? "ON" : "OFF";
+            else
+                return audioZone.Mute ? "ON" : "OFF";
+        }
+
+        public static Select ToConfigSource(this clsAudioZone audioZone, List<string> audioSources)
+        {
+            Select ret = new Select(MQTTModule.MqttDeviceRegistry)
+            {
+                unique_id = $"{Global.mqtt_prefix}audio{audioZone.Number}source",
+                name = $"{Global.mqtt_discovery_name_prefix}{audioZone.rawName} Source",
+                icon = "mdi:volume-source",
+                state_topic = audioZone.ToTopic(Topic.source_state),
+                command_topic = audioZone.ToTopic(Topic.source_command),
+                options = audioSources
+            };
+            return ret;
+        }
+
+        public static int ToSourceState(this clsAudioZone audioZone)
+        {
+            return audioZone.Source;
+        }
+
+        public static Number ToConfigVolume(this clsAudioZone audioZone)
+        {
+            Number ret = new Number(MQTTModule.MqttDeviceRegistry)
+            {
+                unique_id = $"{Global.mqtt_prefix}audio{audioZone.Number}volume",
+                name = $"{Global.mqtt_discovery_name_prefix}{audioZone.rawName} Volume",
+                icon = "mdi:volume-low",
+                state_topic = audioZone.ToTopic(Topic.volume_state),
+                command_topic = audioZone.ToTopic(Topic.volume_command),
+            };
+            return ret;
+        }
+
+        public static int ToVolumeState(this clsAudioZone audioZone)
+        {
+            return audioZone.Volume;
         }
     }
 }

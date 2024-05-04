@@ -5,6 +5,11 @@ namespace OmniLinkBridge.MQTT.HomeAssistant
 {
     public class BinarySensor : Device
     {
+        public BinarySensor(DeviceRegistry deviceRegistry) : base(deviceRegistry)
+        {
+
+        }
+
         [JsonConverter(typeof(StringEnumConverter))]
         public enum DeviceClass
         {

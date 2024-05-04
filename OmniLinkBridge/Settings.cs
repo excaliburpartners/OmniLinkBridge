@@ -1,3 +1,4 @@
+using OmniLinkBridge.MQTT.HomeAssistant;
 using Serilog;
 using System;
 using System.Collections.Concurrent;
@@ -54,6 +55,7 @@ namespace OmniLinkBridge
             Global.verbose_unit = settings.ValidateBool("verbose_unit");
             Global.verbose_message = settings.ValidateBool("verbose_message");
             Global.verbose_lock = settings.ValidateBool("verbose_lock");
+            Global.verbose_audio = settings.ValidateBool("verbose_audio");
 
             // mySQL Logging
             Global.mysql_logging = settings.ValidateBool("mysql_logging");
@@ -89,6 +91,8 @@ namespace OmniLinkBridge
                 Global.mqtt_discovery_area_code_required = settings.ValidateRange("mqtt_discovery_area_code_required");
                 Global.mqtt_discovery_override_zone = settings.LoadOverrideZone<MQTT.OverrideZone>("mqtt_discovery_override_zone");
                 Global.mqtt_discovery_override_unit = settings.LoadOverrideUnit<MQTT.OverrideUnit>("mqtt_discovery_override_unit");
+                Global.mqtt_discovery_button_type = settings.ValidateType("mqtt_discovery_button_type", typeof(Switch), typeof(Button));
+                Global.mqtt_audio_local_mute = settings.ValidateBool("mqtt_audio_local_mute");
             }
 
             // Notifications
@@ -365,6 +369,21 @@ namespace OmniLinkBridge
                 log.Error("Invalid yes/no or true/false specified for {section}", section);
                 throw new Exception();
             }
+        }
+
+        private static Type ValidateType(this NameValueCollection settings, string section, params Type[] types)
+        {
+            string value = settings.CheckEnv(section);
+
+            if (value == null)
+                return types[0];
+
+            foreach (Type type in types)
+                if (string.Compare(value, type.Name, true) == 0)
+                    return type;
+
+            log.Error("Invalid type specified for {section}", section);
+            throw new Exception();
         }
 
         private static NameValueCollection LoadCollection(string[] lines)

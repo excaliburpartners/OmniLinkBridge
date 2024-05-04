@@ -83,8 +83,10 @@
     <Compile Include="ControllerEnricher.cs" />
     <Compile Include="CoreServer.cs" />
     <Compile Include="Modules\TimeSyncModule.cs" />
+    <Compile Include="MQTT\HomeAssistant\Button.cs" />
     <Compile Include="MQTT\HomeAssistant\Alarm.cs" />
     <Compile Include="MQTT\HomeAssistant\Lock.cs" />
+    <Compile Include="MQTT\HomeAssistant\Select.cs" />
     <Compile Include="MQTT\OverrideUnit.cs" />
     <Compile Include="MQTT\Parser\AlarmCommands.cs" />
     <Compile Include="MQTT\AreaCommandCode.cs" />
@@ -117,6 +119,7 @@
     <Compile Include="Notifications\PushoverNotification.cs" />
     <Compile Include="OmniLink\ButtonStatusEventArgs.cs" />
     <Compile Include="OmniLink\IOmniLinkII.cs" />
+    <Compile Include="OmniLink\AudioZoneStatusEventArgs.cs" />
     <Compile Include="OmniLink\SystemEventType.cs" />
     <Compile Include="OmniLink\LockStatusEventArgs.cs" />
     <Compile Include="OmniLink\UnitStatusEventArgs.cs" />

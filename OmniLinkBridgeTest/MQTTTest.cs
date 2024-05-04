@@ -1,9 +1,13 @@
 ﻿using HAI_Shared;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using OmniLinkBridge;
+using OmniLinkBridge.Modules;
 using OmniLinkBridge.MQTT;
 using OmniLinkBridgeTest.Mock;
+using Serilog;
+using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 
 namespace OmniLinkBridgeTest
 {
@@ -16,8 +20,24 @@ namespace OmniLinkBridgeTest
         [TestInitialize]
         public void Initialize()
         {
+            string log_format = "{Timestamp:yyyy-MM-dd HH:mm:ss} [{SourceContext} {Level:u3}] {Message:lj}{NewLine}{Exception}";
+
+            var log_config = new LoggerConfiguration()
+                .MinimumLevel.Verbose()
+                .Enrich.FromLogContext()
+                .WriteTo.Console(outputTemplate: log_format);
+
+            Log.Logger = log_config.CreateLogger();
+
+            Dictionary<string, int> audioSources = new Dictionary<string, int>
+            {
+                { "Radio", 1 },
+                { "Streaming", 2 },
+                { "TV", 4 }
+            };
+
             omniLink = new MockOmniLinkII();
-            messageProcessor = new MessageProcessor(omniLink);
+            messageProcessor = new MessageProcessor(omniLink, audioSources, 8);
 
             omniLink.Controller.Units[395].Type = enuOL2UnitType.Flag;
         }
@@ -312,6 +332,107 @@ namespace OmniLinkBridgeTest
 
             // Check case insensitivity
             check(2, "LOCK", enuUnitCommand.Lock);
+        }
+
+        [TestMethod]
+        public void AudioCommand()
+        {
+            void check(ushort id, string payload, enuUnitCommand command, int value)
+            {
+                SendCommandEventArgs actual = null;
+                omniLink.OnSendCommand += (sender, e) => { actual = e; };
+                messageProcessor.Process($"omnilink/audio{id}/command", payload);
+                SendCommandEventArgs expected = new SendCommandEventArgs()
+                {
+                    Cmd = command,
+                    Par = (byte)value,
+                    Pr2 = id
+                };
+                Assert.AreEqual(expected, actual);
+            }
+
+            check(1, "ON", enuUnitCommand.AudioZone, 1);
+            check(1, "OFF", enuUnitCommand.AudioZone, 0);
+
+            check(2, "on", enuUnitCommand.AudioZone, 1);
+        }
+
+        [TestMethod]
+        public void AudioMuteCommand()
+        {
+            void check(ushort id, string payload, enuUnitCommand command, int value)
+            {
+                SendCommandEventArgs actual = null;
+                omniLink.OnSendCommand += (sender, e) => { actual = e; };
+                messageProcessor.Process($"omnilink/audio{id}/mute_command", payload);
+                SendCommandEventArgs expected = new SendCommandEventArgs()
+                {
+                    Cmd = command,
+                    Par = (byte)value,
+                    Pr2 = id
+                };
+                Assert.AreEqual(expected, actual);
+            }
+
+            check(1, "ON", enuUnitCommand.AudioZone, 3);
+            check(1, "OFF", enuUnitCommand.AudioZone, 2);
+
+            Global.mqtt_audio_local_mute = true;
+            omniLink.Controller.AudioZones[2].Volume = 50;
+
+            check(2, "on", enuUnitCommand.AudioVolume, 0);
+            check(2, "off", enuUnitCommand.AudioVolume, 50);
+
+            omniLink.Controller.AudioZones[2].Volume = 0;
+
+            check(2, "on", enuUnitCommand.AudioVolume, 0);
+            check(2, "off", enuUnitCommand.AudioVolume, 10);
+        }
+
+        [TestMethod]
+        public void AudioSourceCommand()
+        {
+            void check(ushort id, string payload, enuUnitCommand command, int value)
+            {
+                SendCommandEventArgs actual = null;
+                omniLink.OnSendCommand += (sender, e) => { actual = e; };
+                messageProcessor.Process($"omnilink/audio{id}/source_command", payload);
+                SendCommandEventArgs expected = new SendCommandEventArgs()
+                {
+                    Cmd = command,
+                    Par = (byte)value,
+                    Pr2 = id
+                };
+                Assert.AreEqual(expected, actual);
+            }
+
+            check(1, "Radio", enuUnitCommand.AudioSource, 1);
+            check(1, "Streaming", enuUnitCommand.AudioSource, 2);
+
+            check(2, "TV", enuUnitCommand.AudioSource, 4);
+        }
+
+        [TestMethod]
+        public void AudioVolumeCommand()
+        {
+            void check(ushort id, string payload, enuUnitCommand command, int value)
+            {
+                SendCommandEventArgs actual = null;
+                omniLink.OnSendCommand += (sender, e) => { actual = e; };
+                messageProcessor.Process($"omnilink/audio{id}/volume_command", payload);
+                SendCommandEventArgs expected = new SendCommandEventArgs()
+                {
+                    Cmd = command,
+                    Par = (byte)value,
+                    Pr2 = id
+                };
+                Assert.AreEqual(expected, actual);
+            }
+
+            check(1, "100", enuUnitCommand.AudioVolume, 100);
+            check(1, "75", enuUnitCommand.AudioVolume, 75);
+
+            check(2, "0", enuUnitCommand.AudioVolume, 0);
         }
     }
 }

@@ -4,10 +4,12 @@ namespace OmniLinkBridge.MQTT.HomeAssistant
 {
     public class Number : Device
     {
-        public string command_topic { get; set; }
+        public Number(DeviceRegistry deviceRegistry) : base(deviceRegistry)
+        {
 
-        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
-        public string icon { get; set; }
+        }
+
+        public string command_topic { get; set; }
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public int? min { get; set; } 

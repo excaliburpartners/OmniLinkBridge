@@ -9,6 +9,18 @@ namespace OmniLinkBridgeTest.Mock
         public byte Par;
         public ushort Pr2;
 
+        public SendCommandEventArgs()
+        {
+
+        }
+
+        public SendCommandEventArgs(enuUnitCommand cmd, byte par, ushort pr2)
+        {
+            Cmd = cmd;
+            Par = par;
+            Pr2 = pr2;
+        }
+
         public override bool Equals(object other)
         {
             if (!(other is SendCommandEventArgs toCompareWith))

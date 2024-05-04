@@ -40,6 +40,7 @@ namespace OmniLinkBridge.Modules
             omnilink.OnUnitStatus += Omnilink_OnUnitStatus;
             omnilink.OnMessageStatus += Omnilink_OnMessageStatus;
             omnilink.OnLockStatus += Omnilink_OnLockStatus;
+            omnilink.OnAudioZoneStatus += Omnilink_OnAudioZoneStatus;
             omnilink.OnSystemStatus += Omnilink_OnSystemStatus;
         }
 
@@ -224,6 +225,9 @@ namespace OmniLinkBridge.Modules
                     continue;
 
                 audioSourceUsage++;
+
+                if (Global.verbose_audio)
+                    log.Verbose("Initial AudioSource {id} {name}", i, audioSource.rawName);
             }
 
             ushort audioZoneUsage = 0;
@@ -235,6 +239,10 @@ namespace OmniLinkBridge.Modules
                     continue;
 
                 audioZoneUsage++;
+
+                if (Global.verbose_audio)
+                    log.Verbose("Initial AudioZoneStatus {id} {name}, Power: {power}, Source: {source}, Volume: {volume}, Mute: {mute}", 
+                        i, audioZone.rawName, audioZone.Power, audioZone.Source, audioZone.Volume, audioZone.Mute);
             }
 
             using (LogContext.PushProperty("Telemetry", "ControllerUsage"))
@@ -270,7 +278,7 @@ namespace OmniLinkBridge.Modules
                     e.Area.AreaDuressAlarmText + "','" + status + "')");
 
             if (Global.verbose_area)
-                log.Verbose("AreaStatus {id} {name}, Status: {status}, Alarams: {alarms}", e.ID, e.Area.Name, status, e.Area.AreaAlarms);
+                log.Verbose("AreaStatus {id} {name}, Status: {status}, Alarms: {alarms}", e.ID, e.Area.Name, status, e.Area.AreaAlarms);
 
             if (Global.notify_area && e.Area.LastMode != e.Area.AreaMode)
                 Notification.Notify("Security", e.Area.Name + " " + e.Area.ModeText());
@@ -381,6 +389,13 @@ namespace OmniLinkBridge.Modules
         {
             if (Global.verbose_lock)
                 log.Verbose("LockStatus {id} {name}, Status: {status}", e.ID, e.Reader.Name, e.Reader.LockStatusText());
+        }
+
+        private void Omnilink_OnAudioZoneStatus(object sender, AudioZoneStatusEventArgs e)
+        {
+            if (Global.verbose_audio)
+                log.Verbose("AudioZoneStatus {id} {name}, Power: {power}, Source: {source}, Volume: {volume}, Mute: {mute}",
+                    e.ID, e.AudioZone.rawName, e.AudioZone.Power, e.AudioZone.Source, e.AudioZone.Volume, e.AudioZone.Mute);
         }
 
         private void Omnilink_OnSystemStatus(object sender, SystemStatusEventArgs e)
