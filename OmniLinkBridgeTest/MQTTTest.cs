@@ -433,6 +433,12 @@ namespace OmniLinkBridgeTest
             check(1, "75", enuUnitCommand.AudioVolume, 75);
 
             check(2, "0", enuUnitCommand.AudioVolume, 0);
+
+            Global.mqtt_audio_volume_media_player = true;
+
+            check(2, "1", enuUnitCommand.AudioVolume, 100);
+            check(2, "0.75", enuUnitCommand.AudioVolume, 75);
+            check(2, "0", enuUnitCommand.AudioVolume, 0);
         }
     }
 }

@@ -62,6 +62,7 @@ namespace OmniLinkBridge
         public static ConcurrentDictionary<int, MQTT.OverrideUnit> mqtt_discovery_override_unit;
         public static Type mqtt_discovery_button_type;
         public static bool mqtt_audio_local_mute;
+        public static bool mqtt_audio_volume_media_player;
 
         // Notifications
         public static bool notify_area;

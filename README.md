@@ -355,6 +355,7 @@ note Refer to omnilink/sourceXX/name
 SUB omnilink/audioXX/volume_state
 PUB omnilink/audioXX/volume_command
 int Level from 0 to 100 percent
+double Level from 0.00 to 1.00 (mqtt_audio_volume_media_player = yes)
 ```
 
 ## Web API

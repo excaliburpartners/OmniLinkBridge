@@ -12,9 +12,12 @@ namespace OmniLinkBridge.MQTT.HomeAssistant
         public string command_topic { get; set; }
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
-        public int? min { get; set; } 
+        public int? min { get; set; }
 
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public int? max { get; set; }
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public double? step { get; set; }
     }
 }

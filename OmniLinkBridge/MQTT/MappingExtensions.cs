@@ -726,13 +726,27 @@ namespace OmniLinkBridge.MQTT
                 icon = "mdi:volume-low",
                 state_topic = audioZone.ToTopic(Topic.volume_state),
                 command_topic = audioZone.ToTopic(Topic.volume_command),
+                min = 0,
+                max = 100,
+                step = 1,
             };
+
+            if(Global.mqtt_audio_volume_media_player)
+            {
+                ret.min = 0;
+                ret.max = 1;
+                ret.step = 0.01;
+            }
+
             return ret;
         }
 
-        public static int ToVolumeState(this clsAudioZone audioZone)
+        public static double ToVolumeState(this clsAudioZone audioZone)
         {
-            return audioZone.Volume;
+            if (Global.mqtt_audio_volume_media_player)
+                return audioZone.Volume * 0.01;
+            else
+                return audioZone.Volume;
         }
     }
 }

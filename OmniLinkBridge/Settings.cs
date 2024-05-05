@@ -93,6 +93,7 @@ namespace OmniLinkBridge
                 Global.mqtt_discovery_override_unit = settings.LoadOverrideUnit<MQTT.OverrideUnit>("mqtt_discovery_override_unit");
                 Global.mqtt_discovery_button_type = settings.ValidateType("mqtt_discovery_button_type", typeof(Switch), typeof(Button));
                 Global.mqtt_audio_local_mute = settings.ValidateBool("mqtt_audio_local_mute");
+                Global.mqtt_audio_volume_media_player = settings.ValidateBool("mqtt_audio_volume_media_player");
             }
 
             // Notifications

@@ -397,9 +397,17 @@ namespace OmniLinkBridge.MQTT
 
                 OmniLink.SendCommand(enuUnitCommand.AudioSource, (byte)source, (ushort)audioZone.Number);
             }
-            else if (command == Topic.volume_command && int.TryParse(payload, out int volume))
+            else if (command == Topic.volume_command && double.TryParse(payload, out double volume))
             {
-                log.Debug("SetAudioVolume: {id} to {value}", audioZone.Number, payload);
+                if (Global.mqtt_audio_volume_media_player)
+                    volume *= 100;
+
+                if (volume > 100)
+                    volume = 100;
+                else if (volume < 0)
+                    volume = 0;
+
+                log.Debug("SetAudioVolume: {id} to {value}", audioZone.Number, volume);
 
                 OmniLink.SendCommand(enuUnitCommand.AudioVolume, (byte)volume, (ushort)audioZone.Number);
             }
