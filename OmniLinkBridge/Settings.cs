@@ -59,7 +59,7 @@ namespace OmniLinkBridge
 
             // mySQL Logging
             Global.mysql_logging = settings.ValidateBool("mysql_logging");
-            Global.mysql_connection = settings.CheckEnv("mysql_connection");
+            Global.mysql_connection = settings.CheckEnv("mysql_connection", true);
 
             // Web Service
             Global.webapi_enabled = settings.ValidateBool("webapi_enabled");
@@ -77,8 +77,8 @@ namespace OmniLinkBridge
             {
                 Global.mqtt_server = settings.CheckEnv("mqtt_server");
                 Global.mqtt_port = settings.ValidatePort("mqtt_port");
-                Global.mqtt_username = settings.CheckEnv("mqtt_username");
-                Global.mqtt_password = settings.CheckEnv("mqtt_password");
+                Global.mqtt_username = settings.CheckEnv("mqtt_username", true);
+                Global.mqtt_password = settings.CheckEnv("mqtt_password", true);
                 Global.mqtt_prefix = settings.CheckEnv("mqtt_prefix") ?? "omnilink";
                 Global.mqtt_discovery_prefix = settings.CheckEnv("mqtt_discovery_prefix") ?? "homeassistant";
                 Global.mqtt_discovery_name_prefix = settings.CheckEnv("mqtt_discovery_name_prefix") ?? string.Empty;
@@ -107,27 +107,29 @@ namespace OmniLinkBridge
             {
                 Global.mail_tls = settings.ValidateBool("mail_tls");
                 Global.mail_port = settings.ValidatePort("mail_port");
-                Global.mail_username = settings.CheckEnv("mail_username");
-                Global.mail_password = settings.CheckEnv("mail_password");
+                Global.mail_username = settings.CheckEnv("mail_username", true);
+                Global.mail_password = settings.CheckEnv("mail_password", true);
                 Global.mail_from = settings.ValidateMailFrom("mail_from");
                 Global.mail_to = settings.ValidateMailTo("mail_to");
             }
 
             // Prowl Notifications
-            Global.prowl_key = settings.ValidateMultipleStrings("prowl_key");
+            Global.prowl_key = settings.ValidateMultipleStrings("prowl_key", true);
 
             // Pushover Notifications
-            Global.pushover_token = settings.CheckEnv("pushover_token");
-            Global.pushover_user = settings.ValidateMultipleStrings("pushover_user");
+            Global.pushover_token = settings.CheckEnv("pushover_token", true);
+            Global.pushover_user = settings.ValidateMultipleStrings("pushover_user", true);
         }
 
-        private static string CheckEnv(this NameValueCollection settings, string name)
+        private static string CheckEnv(this NameValueCollection settings, string name, bool sensitive = false)
         {
             string env = Global.UseEnvironment ? Environment.GetEnvironmentVariable(name.ToUpper()) : null;
             string value = !string.IsNullOrEmpty(env) ? env : settings[name];
 
             if (Global.DebugSettings)
-                log.Debug((!string.IsNullOrEmpty(env) ? "ENV" : "CONF").PadRight(5) + $"{name}: {value}");
+                log.Debug("{ConfigType} {ConfigName}: {ConfigValue}", 
+                    (!string.IsNullOrEmpty(env) ? "ENV" : "CONF").PadRight(4), name, 
+                    sensitive && value != null ? value.Truncate(3) + "***MASKED***" : value);
 
             return value;
         }
@@ -242,7 +244,7 @@ namespace OmniLinkBridge
 
         private static string ValidateEncryptionKey(this NameValueCollection settings, string section)
         {
-            string value = settings.CheckEnv(section).Replace("-","");
+            string value = settings.CheckEnv(section, true).Replace("-","");
 
             if (string.IsNullOrEmpty(value) || value.Length != 16)
             {
@@ -339,14 +341,14 @@ namespace OmniLinkBridge
             }
         }
 
-        private static string[] ValidateMultipleStrings(this NameValueCollection settings, string section)
+        private static string[] ValidateMultipleStrings(this NameValueCollection settings, string section, bool sensitive = false)
         {
             try
             {
-                if (settings.CheckEnv(section) == null)
+                if (settings.CheckEnv(section, true) == null)
                     return new string[] { };
 
-                return settings.CheckEnv(section).Split(',');
+                return settings.CheckEnv(section, sensitive).Split(',');
             }
             catch
             {

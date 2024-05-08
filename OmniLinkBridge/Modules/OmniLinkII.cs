@@ -201,6 +201,8 @@ namespace OmniLinkBridge.Modules
             tstat_timer.Start();
 
             OnConnect?.Invoke(this, new EventArgs());
+
+            Program.ShowSendLogsWarning();
         }
         #endregion
 
@@ -231,7 +233,8 @@ namespace OmniLinkBridge.Modules
 
             await Task.Run(() =>
             {
-                nameWait.WaitOne(new TimeSpan(0, 0, 10));
+                if(!nameWait.WaitOne(new TimeSpan(0, 0, 10)))
+                    log.Error("Timeout occurred waiting system formats");
             });
         }
 
@@ -244,7 +247,8 @@ namespace OmniLinkBridge.Modules
 
             await Task.Run(() =>
             {
-                nameWait.WaitOne(new TimeSpan(0, 0, 10));
+                if(!nameWait.WaitOne(new TimeSpan(0, 0, 10)))
+                    log.Error("Timeout occurred waiting for system troubles");
             });
         }
 
@@ -256,7 +260,8 @@ namespace OmniLinkBridge.Modules
 
             await Task.Run(() =>
             {
-                nameWait.WaitOne(new TimeSpan(0, 0, 10));
+                if (!nameWait.WaitOne(new TimeSpan(0, 0, 30)))
+                    log.Error("Timeout occurred waiting for named units {unitType}", type.ToString());
             });
         }
 

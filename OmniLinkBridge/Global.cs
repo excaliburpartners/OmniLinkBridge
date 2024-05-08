@@ -10,6 +10,8 @@ namespace OmniLinkBridge
     {
         public static bool DebugSettings { get; set; }
         public static bool UseEnvironment { get; set; }
+        public static bool SendLogs { get; set; }
+        public static Guid SessionID { get; } = Guid.NewGuid();
 
         // HAI / Leviton Omni Controller
         public static string controller_address;

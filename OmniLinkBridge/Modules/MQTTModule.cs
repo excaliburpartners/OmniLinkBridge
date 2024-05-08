@@ -402,6 +402,9 @@ namespace OmniLinkBridge.Modules
         {
             log.Debug("Publishing {type}", "buttons");
 
+            if (Global.mqtt_discovery_button_type == typeof(Switch))
+                log.Information("See {setting} for new option when publishing {type}", "mqtt_discovery_button_type", "buttons");
+
             for (ushort i = 1; i <= OmniLink.Controller.Buttons.Count; i++)
             {
                 clsButton button = OmniLink.Controller.Buttons[i];
@@ -421,8 +424,6 @@ namespace OmniLinkBridge.Modules
 
                 if (Global.mqtt_discovery_button_type == typeof(Switch))
                 {
-                    log.Information("See {setting} for new option when publishing {type}", "mqtt_discovery_button_type", "buttons");
-
                     PublishAsync($"{Global.mqtt_discovery_prefix}/button/{Global.mqtt_prefix}/button{i}/config", null);
                     PublishAsync($"{Global.mqtt_discovery_prefix}/switch/{Global.mqtt_prefix}/button{i}/config",
                         JsonConvert.SerializeObject(button.ToConfigSwitch()));

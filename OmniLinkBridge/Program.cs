@@ -4,7 +4,9 @@ using Serilog.Events;
 using Serilog.Filters;
 using Serilog.Formatting.Compact;
 using System;
+using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Reflection;
 using System.ServiceProcess;
@@ -12,11 +14,11 @@ using System.Threading.Tasks;
 
 namespace OmniLinkBridge
 {
-    class Program
+    internal class Program
     {
-        static CoreServer server;
+        private static CoreServer server;
 
-        static int Main(string[] args)
+        private static int Main(string[] args)
         {
             bool interactive = false;
 
@@ -55,6 +57,10 @@ namespace OmniLinkBridge
                     case "-ll":
                         Enum.TryParse(args[++i], out log_level);
                         break;
+                    case "-ld":
+                        Global.DebugSettings = true;
+                        Global.SendLogs = true;
+                        break;
                     case "-s":
                         Global.webapi_subscriptions_file = args[++i];
                         break;
@@ -62,6 +68,12 @@ namespace OmniLinkBridge
                         interactive = true;
                         break;
                 }
+            }
+
+            if (string.Compare(Environment.GetEnvironmentVariable("SEND_LOGS"), "1") == 0)
+            {
+                Global.DebugSettings = true;
+                Global.SendLogs = true;
             }
 
             config_file = GetFullPath(config_file);
@@ -76,7 +88,7 @@ namespace OmniLinkBridge
             var log_config = new LoggerConfiguration()
                 .MinimumLevel.Verbose()
                 .Enrich.WithProperty("Application", "OmniLinkBridge")
-                .Enrich.WithProperty("Session", Guid.NewGuid())
+                .Enrich.WithProperty("Session", Global.SessionID)
                 .Enrich.With<ControllerEnricher>()
                 .Enrich.FromLogContext();
 
@@ -92,7 +104,10 @@ namespace OmniLinkBridge
                         rollingInterval: RollingInterval.Day, retainedFileCountLimit: 15));
             }
 
-            if (UseTelemetry())
+            if (Global.SendLogs)
+                log_config = log_config.WriteTo.Logger(lc => lc
+                    .WriteTo.Http("https://telemetry.excalibur-partners.com"));
+            else if (UseTelemetry())
                 log_config = log_config.WriteTo.Logger(lc => lc
                     .Filter.ByIncludingOnly(Matching.WithProperty("Telemetry"))
                     .WriteTo.Http("https://telemetry.excalibur-partners.com"));
@@ -155,7 +170,7 @@ namespace OmniLinkBridge
             return 0;
         }
 
-        static string GetFullPath(string file)
+        private static string GetFullPath(string file)
         {
             if (Path.IsPathRooted(file))
                 return file;
@@ -169,21 +184,38 @@ namespace OmniLinkBridge
             args.Cancel = true;
         }
 
-        static bool IsRunningOnMono()
+        private static bool IsRunningOnMono()
         {
             return Type.GetType("Mono.Runtime") != null;
         }
 
-        static bool UseTelemetry()
+        public static string GetEnvironment()
+        {
+            if (Environment.GetEnvironmentVariable("HASSIO_TOKEN") != null)
+                return "Home Assistant";
+            else if (IsRunningOnMono())
+                return Process.GetProcesses().Any(w => w.Id == 2) ? "Mono" : "Docker";
+            else
+                return "Native";
+        }
+
+        private static bool UseTelemetry()
         {
             return string.Compare(Environment.GetEnvironmentVariable("TELEMETRY_OPTOUT"), "1") != 0;
         }
 
-        static void ShowHelp()
+        public static void ShowSendLogsWarning()
+        {
+            if (Global.SendLogs)
+                Log.Warning("SENDING LOGS TO DEVELOPER Controller: {ControllerID}, Session: {Session}",
+                    Global.controller_id, Global.SessionID);
+        }
+
+        private static void ShowHelp()
         {
             Console.WriteLine(
                 AppDomain.CurrentDomain.FriendlyName + " [-c config_file] [-e] [-d] [-j] [-s subscriptions_file]\n" +
-                "\t[-lf log_file|disable] [-lj [-ll verbose|debug|information|warning|error] [-i]\n" +
+                "\t[-lf log_file|disable] [-lj [-ll verbose|debug|information|warning|error] [-ld] [-i]\n" +
                 "\t-c  Specifies the configuration file. Default is OmniLinkBridge.ini\n" +
                 "\t-e  Check environment variables for configuration settings\n" +
                 "\t-d  Show debug ouput for configuration loading\n" +
@@ -191,7 +223,13 @@ namespace OmniLinkBridge
                 "\t-lf Specifies the rolling log file. Retention is 15 days. Default is log.txt.\n" +
                 "\t-lj Write logs as CLEF (compact log event format) JSON.\n" +
                 "\t-ll Minimum level at which events will be logged. Default is information.\n" +
+                "\t-ld Send logs to developer. ONLY USE WHEN ASKED.\n" +
+                "\t    Also enabled by setting a SEND_LOGS environment variable to 1.\n" +
                 "\t-i  Run in interactive mode");
+
+            Console.WriteLine(
+                "\nVersion: " + Assembly.GetExecutingAssembly().GetName().Version + 
+                "\nEnvironment: " + GetEnvironment());
 
             Console.WriteLine(
                 "\nOmniLink Bridge collects anonymous telemetry data to help improve the software.\n" +

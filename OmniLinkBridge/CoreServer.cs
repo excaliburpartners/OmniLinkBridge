@@ -44,9 +44,11 @@ namespace OmniLinkBridge
 
             startTime = DateTime.Now;
 
+            Program.ShowSendLogsWarning();
+
             using (LogContext.PushProperty("Telemetry", "Startup"))
-                log.Information("Started version {Version} on {OperatingSystem} with {Modules}",
-                    Assembly.GetExecutingAssembly().GetName().Version, Environment.OSVersion, modules);
+                log.Information("Started version {Version} in {Environment} on {OperatingSystem} with {Modules}",
+                    Assembly.GetExecutingAssembly().GetName().Version, Program.GetEnvironment(), Environment.OSVersion, modules);
 
             // Startup modules         
             foreach (IModule module in modules)
