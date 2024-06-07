@@ -87,6 +87,7 @@
     <Compile Include="MQTT\HomeAssistant\Alarm.cs" />
     <Compile Include="MQTT\HomeAssistant\Lock.cs" />
     <Compile Include="MQTT\HomeAssistant\Select.cs" />
+    <Compile Include="MQTT\OverrideArea.cs" />
     <Compile Include="MQTT\OverrideUnit.cs" />
     <Compile Include="MQTT\Parser\AlarmCommands.cs" />
     <Compile Include="MQTT\AreaCommandCode.cs" />

@@ -25,10 +25,27 @@ namespace OmniLinkBridge.MQTT
 
             };
 
-            if(Global.mqtt_discovery_area_code_required.Contains(area.Number))
+            Global.mqtt_discovery_override_area.TryGetValue(area.Number, out OverrideArea override_area);
+
+            if (override_area != null)
             {
-                ret.command_template = "{{ action }},validate,{{ code }}";
-                ret.code = "REMOTE_CODE";
+                if(override_area.code_arm || override_area.code_disarm)
+                {
+                    ret.command_template = "{{ action }},validate,{{ code }}";
+                    ret.code = "REMOTE_CODE";
+                }
+                ret.code_arm_required = override_area.code_arm;
+                ret.code_disarm_required = override_area.code_disarm;
+
+                ret.supported_features.Clear();
+                if (override_area.arm_home)
+                    ret.supported_features.Add("arm_home");
+                if (override_area.arm_away)
+                    ret.supported_features.Add("arm_away");
+                if (override_area.arm_night)
+                    ret.supported_features.Add("arm_night");
+                if (override_area.arm_vacation)
+                    ret.supported_features.Add("arm_vacation");
             }
 
             return ret;

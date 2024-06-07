@@ -1,9 +1,4 @@
 ﻿using HAI_Shared;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace OmniLinkBridge.MQTT
 {
@@ -28,7 +23,13 @@ namespace OmniLinkBridge.MQTT
             }
             else if (supportValidate && payloads.Length == 3)
             {
-                if (string.Compare(payloads[1], "validate", true) == 0)
+                // Special case for Home Assistant when code not required
+                if (string.Compare(payloads[1], "validate", true) == 0 &&
+                    string.Compare(payloads[2], "None", true) == 0)
+                {
+                    ret.Success = true;
+                }
+                else if (string.Compare(payloads[1], "validate", true) == 0)
                 {
                     ret.Validate = true;
                     ret.Success = int.TryParse(payloads[2], out code);

@@ -88,7 +88,7 @@ namespace OmniLinkBridge
 
                 Global.mqtt_discovery_ignore_zones = settings.ValidateRange("mqtt_discovery_ignore_zones");
                 Global.mqtt_discovery_ignore_units = settings.ValidateRange("mqtt_discovery_ignore_units");
-                Global.mqtt_discovery_area_code_required = settings.ValidateRange("mqtt_discovery_area_code_required");
+                Global.mqtt_discovery_override_area = settings.LoadOverrideArea<MQTT.OverrideArea>("mqtt_discovery_override_area");
                 Global.mqtt_discovery_override_zone = settings.LoadOverrideZone<MQTT.OverrideZone>("mqtt_discovery_override_zone");
                 Global.mqtt_discovery_override_unit = settings.LoadOverrideUnit<MQTT.OverrideUnit>("mqtt_discovery_override_unit");
                 Global.mqtt_discovery_button_type = settings.ValidateType("mqtt_discovery_button_type", typeof(Switch), typeof(Button));
@@ -132,6 +132,86 @@ namespace OmniLinkBridge
                     sensitive && value != null ? value.Truncate(3) + "***MASKED***" : value);
 
             return value;
+        }
+
+        private static ConcurrentDictionary<int, T> LoadOverrideArea<T>(this NameValueCollection settings, string section) where T : new()
+        {
+            try
+            {
+                ConcurrentDictionary<int, T> ret = new ConcurrentDictionary<int, T>();
+
+                string value = settings.CheckEnv(section);
+
+                if (string.IsNullOrEmpty(value))
+                    return ret;
+
+                string[] ids = value.Split(',');
+
+                for (int i = 0; i < ids.Length; i++)
+                {
+                    Dictionary<string, string> attributes = ids[i].TrimEnd(new char[] { ';' }).Split(';')
+                        .Select(s => s.Split('='))
+                        .ToDictionary(a => a[0].Trim(), a => a[1].Trim(), StringComparer.InvariantCultureIgnoreCase);
+
+                    if (!attributes.ContainsKey("id") || !int.TryParse(attributes["id"], out int attrib_id))
+                        throw new Exception("Missing or invalid id attribute");
+
+                    T override_area = new T();
+
+                    if (override_area is MQTT.OverrideArea mqtt_area)
+                    {
+                        foreach (string attribute in attributes.Keys)
+                        {
+                            switch(attribute)
+                            {
+                                case "id":
+                                    continue;
+                                case "code_arm":
+                                    if (!bool.TryParse(attributes["code_arm"], out bool code_arm))
+                                        throw new Exception("Invalid code_arm attribute");
+                                    mqtt_area.code_arm = code_arm;
+                                    break;
+                                case "code_disarm":
+                                    if (!bool.TryParse(attributes["code_disarm"], out bool code_disarm))
+                                        throw new Exception("Invalid code_disarm attribute");
+                                    mqtt_area.code_disarm = code_disarm;
+                                    break;
+                                case "arm_home":
+                                    if (!bool.TryParse(attributes["arm_home"], out bool arm_home))
+                                        throw new Exception("Invalid arm_home attribute");
+                                    mqtt_area.arm_home = arm_home;
+                                    break;
+                                case "arm_away":
+                                    if (!bool.TryParse(attributes["arm_away"], out bool arm_away))
+                                        throw new Exception("Invalid arm_away attribute");
+                                    mqtt_area.arm_away = arm_away;
+                                    break;
+                                case "arm_night":
+                                    if (!bool.TryParse(attributes["arm_night"], out bool arm_night))
+                                        throw new Exception("Invalid arm_night attribute");
+                                    mqtt_area.arm_night = arm_night;
+                                    break;
+                                case "arm_vacation":
+                                    if (!bool.TryParse(attributes["arm_vacation"], out bool arm_vacation))
+                                        throw new Exception("Invalid arm_vacation attribute");
+                                    mqtt_area.arm_vacation = arm_vacation;
+                                    break;
+                                default:
+                                    throw new Exception($"Unknown attribute {attribute}" );
+                            }
+                        }
+                    }
+
+                    ret.TryAdd(attrib_id, override_area);
+                }
+
+                return ret;
+            }
+            catch (Exception ex)
+            {
+                log.Error(ex, "Invalid override area specified for {section}", section);
+                throw;
+            }
         }
 
         private static ConcurrentDictionary<int, T> LoadOverrideZone<T>(this NameValueCollection settings, string section) where T : new()

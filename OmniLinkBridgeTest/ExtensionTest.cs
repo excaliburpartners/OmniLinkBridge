@@ -64,6 +64,14 @@ namespace OmniLinkBridgeTest
             Assert.AreEqual(parser.Validate, true);
             Assert.AreEqual(parser.Code, 1234);
 
+            // Special case for Home Assistant when code not required
+            payload = "disarm,validate,None";
+            parser = payload.ToCommandCode(supportValidate: true);
+            Assert.AreEqual(parser.Success, true);
+            Assert.AreEqual(parser.Command, "disarm");
+            Assert.AreEqual(parser.Validate, false);
+            Assert.AreEqual(parser.Code, 0);
+
             // Falures
             payload = "disarm,1a";
             parser = payload.ToCommandCode(supportValidate: true);

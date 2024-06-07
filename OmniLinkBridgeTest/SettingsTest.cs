@@ -157,7 +157,8 @@ namespace OmniLinkBridgeTest
                 "mqtt_discovery_name_prefix = mynameprefix",
                 "mqtt_discovery_ignore_zones = 1,2-3,4",
                 "mqtt_discovery_ignore_units = 2-5,7",
-                "mqtt_discovery_area_code_required = 1",
+                "mqtt_discovery_override_area = id=1",
+                "mqtt_discovery_override_area = id=2;code_arm=true;code_disarm=true;arm_home=false;arm_away=false;arm_night=false;arm_vacation=false",
                 "mqtt_discovery_override_zone = id=5;device_class=garage_door",
                 "mqtt_discovery_override_zone = id=7;device_class=motion",
                 "mqtt_discovery_override_unit = id=1;type=switch",
@@ -171,7 +172,25 @@ namespace OmniLinkBridgeTest
             Assert.AreEqual("mynameprefix ", Global.mqtt_discovery_name_prefix);
             Assert.IsTrue(Global.mqtt_discovery_ignore_zones.SetEquals(new int[] { 1, 2, 3, 4 }));
             Assert.IsTrue(Global.mqtt_discovery_ignore_units.SetEquals(new int[] { 2, 3, 4, 5, 7 }));
-            Assert.IsTrue(Global.mqtt_discovery_area_code_required.SetEquals(new int[] { 1 }));
+
+            Dictionary<int, OmniLinkBridge.MQTT.OverrideArea> override_area = new Dictionary<int, OmniLinkBridge.MQTT.OverrideArea>()
+            {
+                { 1, new OmniLinkBridge.MQTT.OverrideArea { }},
+                { 2, new OmniLinkBridge.MQTT.OverrideArea { code_arm = true, code_disarm = true, 
+                    arm_home = false, arm_away = false, arm_night = false, arm_vacation = false }},
+            };
+
+            Assert.AreEqual(override_area.Count, Global.mqtt_discovery_override_area.Count);
+            foreach (KeyValuePair<int, OmniLinkBridge.MQTT.OverrideArea> pair in override_area)
+            {
+                Global.mqtt_discovery_override_area.TryGetValue(pair.Key, out OmniLinkBridge.MQTT.OverrideArea value);
+                Assert.AreEqual(override_area[pair.Key].code_arm, value.code_arm);
+                Assert.AreEqual(override_area[pair.Key].code_disarm, value.code_disarm);
+                Assert.AreEqual(override_area[pair.Key].arm_home, value.arm_home);
+                Assert.AreEqual(override_area[pair.Key].arm_away, value.arm_away);
+                Assert.AreEqual(override_area[pair.Key].arm_night, value.arm_night);
+                Assert.AreEqual(override_area[pair.Key].arm_vacation, value.arm_vacation);
+            }
 
             Dictionary<int, OmniLinkBridge.MQTT.OverrideZone> override_zone = new Dictionary<int, OmniLinkBridge.MQTT.OverrideZone>()
             {
